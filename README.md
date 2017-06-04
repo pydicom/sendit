@@ -15,7 +15,20 @@ Although we have groupings on the level of study, images will be generally moved
 
 
 ## Configuration
-The configuration variables live in a file called `sendit/secrets.py`, and should include the following:
+The configuration for the application consists of the files in the [sendit/settings](sendit/settings) folder. The files that need attention are `secrets.py` and [config.py](sendit/settings/config.py).  First make your secrets.py like this:
+
+```
+cp sendit/settings/bogus_secrets.py sendit/settings/secrets.py
+vim sendit/settings/secrets.py
+```
+
+Once you have your `secrets.py`, it needs the following added:
+
+ - `SECRET_KEY`: Django will not run without one! You can generate one [here](http://www.miniwebtool.com/django-secret-key-generator/)
+ - `DEBUG`: Make sure to set this to `False` for production.
+
+
+For [config.py](sendit/settings/config.py) you should configure the following:
 
 ```
 # If True, we will have the images first go to a task to retrieve fields to deidentify
