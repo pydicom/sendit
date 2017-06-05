@@ -69,8 +69,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
-                'sendit.apps.main.context_processors.domain_processor', #custom context processor
-                'sendit.apps.main.context_processors.disqus_processor', #custom context processor
+                'sendit.apps.base.context_processors.domain_processor', #custom context processor
             ],
         },
     },
