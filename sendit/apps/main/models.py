@@ -97,7 +97,7 @@ class Study(models.Model):
         return "study"
 
     class Meta:
-        app_label = 'images'
+        app_label = 'main'
 
 
 
@@ -120,7 +120,7 @@ class Series(models.Model):
         return "series"
 
     class Meta:
-        app_label = 'images'
+        app_label = 'main'
  
 
     def get_absolute_url(self):
@@ -146,7 +146,7 @@ class Image(models.Model):
         return "image"
 
     class Meta:
-        app_label = 'images'
+        app_label = 'main'
  
     # Get the url for a report collection
     def get_absolute_url(self):
@@ -176,4 +176,4 @@ class SeriesIdentifiers(models.Model):
         return "series"
 
     class Meta:
-        app_label = 'images'
+        app_label = 'main'
