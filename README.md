@@ -68,6 +68,21 @@ GOOGLE_CLOUD_STORAGE='som-pacs'
 
 Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely)
 
+## Authentication
+If you look in [sendit/settings/auth.py](sendit/settings/auth.py) you will see something called `lockdown` and that it is turned on:
+
+```
+# Django Lockdown
+LOCKDOWN_ENABLED=True
+```
+
+This basically means that the entire site is locked down, or protected for use (from a web browser) with a password. It's just a little extra layer of security. You can set the password by defining it in your [sendit/settings/secrets.py](sendit/settings/secrets.py):
+
+```
+LOCKDOWN_PASSWORDS = ('mysecretpassword',)
+```
+
+
 ## Basic Pipeline
 This application lives in a docker-compose application running on `STRIDE-HL71`.
 
@@ -102,6 +117,9 @@ Only when all of the dicom files are finished copying will the driving function 
          image3.dcm 
 
 ```
+
+For more details about the water daemon, you can look at [his docs](docs/watcher.md).
+
 
 ### 2. Database Models
 The Dockerized application will check the folder at some frequency (once a minute perhaps) and look for folders that are not in the process of being populated. When a folder is found:

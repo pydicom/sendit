@@ -39,4 +39,3 @@ SOCIAL_AUTH_PIPELINE = (
 
 # Django Lockdown
 LOCKDOWN_ENABLED=True
-
