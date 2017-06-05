@@ -3,12 +3,15 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y \
     libopenblas-dev \
     gfortran \
+    pkg-config \
+    libxml2-dev \
+    libxmlsec1-dev \
     libhdf5-dev \
     libgeos-dev \
     build-essential \
     openssl \
-    nginx \
-    wget
+    wget \
+    vim
 
 RUN pip install cython
 RUN pip install numpy
@@ -16,6 +19,7 @@ RUN pip install scikit-learn pandas h5py matplotlib
 RUN pip install uwsgi
 RUN pip install Django==1.11.2
 RUN pip install social-auth-app-django
+RUN pip install social-auth-core[saml]
 RUN pip install djangorestframework
 RUN pip install django-filter
 RUN pip install django-taggit

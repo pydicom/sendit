@@ -37,8 +37,8 @@ DEIDENTIFY_RESTFUL=True
 
 If this variable is False, we skip this task, and images are instead sent to the next task (or tasks) to send them to different storage. If True, the images are first put in the queue to be de-identified, and then upon receival of the identifiers, then they are put into the same queues to be sent to storage. These functions can be modified to use different endpoints, or do different replacements in the data:
 
- - The function `get_identifiers` under [images/tasks.py](sendit/apps/images/tasks.py) should take in a series ID, and use that series to look up images, and send a RESTful call to some API point to return fields to replace in the data. The JSON response should be saved to an `SeriesIdentifiers` object along with a pointer to the Series.
- - The function `replace_identifers` also under [images/tasks.py](sendit/apps/images/tasks.py) should then load this object, do whatever work is necessary for the data, and then put the data in the queue for storage.
+ - The function `get_identifiers` under [main/tasks.py](sendit/apps/main/tasks.py) should take in a series ID, and use that series to look up images, and send a RESTful call to some API point to return fields to replace in the data. The JSON response should be saved to an `SeriesIdentifiers` object along with a pointer to the Series.
+ - The function `replace_identifers` also under [main/tasks.py](sendit/apps/main/tasks.py) should then load this object, do whatever work is necessary for the data, and then put the data in the queue for storage.
 
 You might want to tweak both of the above functions depending on your call endpoint, the response format (should be json as it goes into a jsonfield), and then how it is used to deidentify the data.
 

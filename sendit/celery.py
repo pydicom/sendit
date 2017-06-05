@@ -3,7 +3,7 @@ import os
 from celery import Celery
 from django.conf import settings
 from celery.schedules import crontab
-from whatisit.settings import (
+from sendit.settings import (
     INSTALLED_APPS,
     BROKER_URL
 )

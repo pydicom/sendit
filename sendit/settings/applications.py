@@ -8,6 +8,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_user_agents',
+    'sendit.apps.base',
     'sendit.apps.main',
     'sendit.apps.watcher',
     'sendit.apps.api',
@@ -15,7 +16,7 @@ INSTALLED_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    'social.apps.django_app.default',
+    'social_django',
     'crispy_forms',
     'opbeat.contrib.django',
     'djcelery',

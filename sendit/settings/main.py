@@ -67,8 +67,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'social.apps.django_app.context_processors.backends',
-                'social.apps.django_app.context_processors.login_redirect',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
                 'sendit.apps.main.context_processors.domain_processor', #custom context processor
                 'sendit.apps.main.context_processors.disqus_processor', #custom context processor
             ],
@@ -152,8 +152,8 @@ CACHES = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
-MEDIA_ROOT = '/var/www/images'
-MEDIA_URL = '/images/'
+MEDIA_ROOT = '/var/www/data'
+MEDIA_URL = '/data/'
 STATIC_ROOT = '/var/www/static'
 STATIC_URL = '/static/'
 
