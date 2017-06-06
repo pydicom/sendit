@@ -4,6 +4,8 @@
 .*
 !/.gitignore
 sendit/settings/secrets.py
+sendit/logs
+sendit/watcher.pid
 
 # Static #
 ##########

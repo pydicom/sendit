@@ -43,18 +43,31 @@ class DicomCelery(pyinotify.ProcessEvent):
         else:
             return False    
 
+    def check_dicomdir(self,event):
+        '''check_dicomdir is the main function to call on a folder
+        creation or modification, which both could signal new dicom directories
+        '''
+        if self.is_finished(event.pathname):
+            bot.log("FINISHED: %s" %(event.pathname))
+            if event.pathname.lower().startswith("test"):
+                bot.log("Here would be call to import_dicomdir for %s" %(event.pathname))
+            else:  
+                # Here is the celery task to use
+                import_dicomdir.apply_async(kwargs={"dicom_dir":event.pathname})
+        else:
+            bot.log("CREATED: %s" %(event.pathname))
+
+
     def process_IN_CREATE(self, event):
         '''Create should be called when the path is created (or modified)
         NOTE: if this isn't the case, use modify instead.
         '''
-        if self.is_finished(event.pathname):
-            bot.log("FINISHED: %s" %(event.pathname))
+        return self.check_dicomdir(event)
 
-            # Here is the celery task to use
-            import_dicomdir.apply_async(kwargs={"dicom_dir":event.pathname})
-        else:
-            bot.log("CREATED: %s" %(event.pathname))
-
+    def process_IN_MODIFY(self, event):
+        '''Modify should do the equivalent of create
+        '''
+        return self.check_dicomdir(event)
 
 
 class AllEventsPrinter(pyinotify.ProcessEvent):

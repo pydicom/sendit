@@ -2,7 +2,8 @@
 
 '''
 
-logger.py: Simple logger for sendit. 
+logger.py: Simple logger for sendit. Note that levels info and log are the 
+only two considered stdout, the rest are sent to stderr.
 
 Copyright (c) 2017 Vanessa Sochat
 
@@ -92,7 +93,6 @@ class SenditMessage:
         if level in [ABRT,
                      ERROR,
                      WARNING,
-                     LOG,
                      VERBOSE,
                      VERBOSE1,
                      VERBOSE2,
@@ -105,7 +105,8 @@ class SenditMessage:
     def emitOutput(self,level):
         '''determine if a level should print to stdout
         only includes INFO'''
-        if level in [INFO]:
+        if level in [LOG,
+                     INFO]:
             return True
         return False
 

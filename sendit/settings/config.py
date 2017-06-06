@@ -9,7 +9,7 @@ DEIDENTIFY_RESTFUL=True
 # Orthanc Storage
 SEND_TO_ORTHANC=True
 ORTHANC_IPADDRESS="127.0.0.1"
-ORTHAC_PORT=4747
+ORTHANC_PORT=4747
 
 # Google Storage
 # Should we send to Google at all?
