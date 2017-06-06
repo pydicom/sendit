@@ -11,7 +11,7 @@ This is a dummy server for testing sending and receiving of data from an endpoin
    - A "Study" is a collection of series
 
 
-Although we have groupings on the level of study, images will be generally moved around and processed on the level of Series.
+Although we have groupings on the level of study, images will be generally moved around and processed on the level of Series. For high level overview, continue reading. For module and modality specific docs, see our [docs](docs) folder. If anything is missing documentation please [open an issue](https://www.github.com/pydicom/sendit)
 
 
 ## Configuration
