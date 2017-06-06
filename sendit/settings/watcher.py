@@ -8,9 +8,9 @@ def generate_watch_paths():
     '''
     import pyinotify
     return (
-       ( os.path.join(BASE_DIR,'data'),
-         pyinotify.ALL_EVENTS,
-         'inotifier.event_processors.AllEventsSignaler',
+       (  os.path.join('/data'),
+          pyinotify.ALL_EVENTS,
+         'sendit.apps.watcher.event_processors.DicomCelery',
        ),
     )
 

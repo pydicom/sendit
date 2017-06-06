@@ -91,8 +91,8 @@ This application lives in a docker-compose application running on `STRIDE-HL71`.
 This initial setup is stupid in that it's going to be checking an input folder to find new images. We do this using the [watcher](sendit/apps/watcher) application, which is started and stopped with a manage.py command:
 
 ```
-python manage.py start_watcher
-python manage.py stop_watcher
+python manage.py watcher_start
+python manage.py watcher_stop
 ```
 
 And the default is to watch for files added to [data](data), which is mapped to '/data' in the container. This means that `STRIDE-HL71` will receive DICOM from somewhere. It should use an atomic download strategy, but with folders, into the application data input folder. This will mean that when it starts, the folder might look like:
@@ -118,7 +118,7 @@ Only when all of the dicom files are finished copying will the driving function 
 
 ```
 
-For more details about the water daemon, you can look at [his docs](docs/watcher.md).
+A directory is considered "finished" and ready for processing when it does **not** have an entension that starts with "tmp". For more details about the watcher daemon, you can look at [his docs](docs/watcher.md). While many examples are provided, for this application we use the celery task `import_dicomdir` in [main/tasks.py](sendit/apps/main/tasks.py) to read in a finished dicom directory from the directory being watched, and this uses the class `DicomCelery` in the [event_processors](sendit/apps/watcher/event_processors.py) file. Other examples are provided, in the case that you want to change or extend the watcher daemon.
 
 
 ### 2. Database Models
