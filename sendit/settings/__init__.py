@@ -1,5 +1,6 @@
 from .main import *
 from .auth import *
+from .config import *
 from .applications import INSTALLED_APPS
 from .queue import *
 from .watcher import *

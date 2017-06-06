@@ -62,6 +62,8 @@ def import_dicomdir(dicom_dir):
     bot.debug("Importing %s" %(dicom_dir))
     bot.warning('Vanessa write me!!')
 
+# A directory that is `FINISHED` and changed will have the series already found in the database, and will not be processed again.
+
 @shared_task
 def get_identifiers(sid):
     '''get identifiers is the celery task to get identifiers for 
@@ -116,7 +118,7 @@ def upload_storage(sid):
         return None
 
     if SEND_TO_ORTHANC is True:
-        bot.log("Sending %s to %s:%s" %(series,ORTHANC_IPADDRESS,ORTHANC_PORT)
+        bot.log("Sending %s to %s:%s" %(series,ORTHANC_IPADDRESS,ORTHANC_PORT))
         # do the send here!
 
     if SEND_TO_GOOGLE is True and GOOGLE_CLOUD_STORAGE not in [None,""]:

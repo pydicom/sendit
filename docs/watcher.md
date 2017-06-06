@@ -153,17 +153,18 @@ I made a testing mode so it's easy to shell into the Docker image and get a feel
 ```
 root@0b0b9c4f2a6e:/code# python manage.py watcher_start
 DEBUG Adding watch on /data, processed by sendit.apps.watcher.event_processors.DicomCelery
-root@0b0b9c4f2a6e:/code# mkdir data/test_finished
+root@0b0b9c4f2a6e:/code# mkdir /data/test_finished
 ```
 
 we can now look in the watcher's output log to see that it identified the finished directory:
 
 ```
 root@0b0b9c4f2a6e:/code# cat sendit/logs/watcher.out 
-LOG FINISHED: /data/test_finished
+LOG 1|CREATE EVENT: /data/test_finished
+LOG 2|FINISHED: /data/test_finished
 ```
 
-Now we can create an unfinished directory, indicated by having an extension `.tmp*`:
+The watcher will log the event type (the first line with `1|` always followed by if the event indicates the dicom directory being finished (the second line with `2|`). This first example is finished because there is no `*.tmp` extension. Now we can create an unfinished directory, indicated by having an extension `.tmp*`:
 
 ```
 root@0b0b9c4f2a6e:/code# mkdir data/test_notfinished.tmp1234
@@ -173,11 +174,32 @@ and we can again look at the output file to see that an addition has been made t
 
 ```
 root@0b0b9c4f2a6e:/code# cat sendit/logs/watcher.out 
-LOG FINISHED: /data/test_finished
-LOG CREATED: /data/test_notfinished.tmp1234
+LOG 1|CREATE EVENT: /data/test_finished
+LOG 2|FINISHED: /data/test_finished
+LOG 1|CREATE EVENT: /data/test_notfinished.tmp1234
+LOG 2|NOTFINISHED: /data/test_notfinished.tmp1234
 ```
 
-and then of course we should stop the watcher.
+In the example above, only a directory that is flagged as `FINISHED` in step `2|` would start through processing. A directory that is `FINISHED` and changed will have the series already found in the database, and will not be processed again.
+
+Let's now mimic the action of "finishing" a directory. In the example above, we would have created the `/data/test_notfinished.tmp1234` before adding dicoms, and then when we are finished we would want to rename it to it's final form, to be detected by the watcher as finished. Likely a script would be doing this for us as the dicoms come in. We can do that now manually:
+
+```
+mv /data/test_notfinished.tmp1234 /data/test_nowfinished
+```
+
+and then verify that the watcher detects the change, and marks the directory as finished:
+
+```
+LOG 1|CREATE EVENT: /data/test_finished
+LOG 2|FINISHED: /data/test_finished
+LOG 1|CREATE EVENT: /data/test_notfinished.tmp1234
+LOG 2|NOTFINISHED: /data/test_notfinished.tmp1234
+LOG 1|MOVEDTO EVENT: /data/test_nowfinished
+LOG 2|FINISHED: /data/test_nowfinished
+```
+
+and at this point, if we weren't testing, processing of the dicom directory would happen. For this example, we can now stop the watcher.
 
 ```
 root@0b0b9c4f2a6e:/code# python manage.py watcher_stop
@@ -185,4 +207,9 @@ DEBUG Dicom watching has been stopped.
 root@0b0b9c4f2a6e:/code# 
 ```
 
-More to come soon, and of course actually writing the function to process the dicoms :) Stay tuned!
+Note that the sendit/watcher.pid file will be removed after you stop it. If you were to try and stop it again (when it's already stopped) it would tell you that it isn't started:
+
+```
+root@0b0b9c4f2a6e:/code# python manage.py watcher_stop
+CommandError: No pid file exists at /code/sendit/watcher.pid.
+```
