@@ -66,7 +66,7 @@ SEND_TO_GOOGLE=False
 GOOGLE_CLOUD_STORAGE='som-pacs'
 ```
 
-Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely)
+Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
 
 ## Authentication
 If you look in [sendit/settings/auth.py](sendit/settings/auth.py) you will see something called `lockdown` and that it is turned on:
@@ -157,14 +157,3 @@ IMAGE_STATUS = (('NEW', 'The image was just added to the application.'),
 ```
 
 These can be tweaked as needed, and likely I will do this as I develop the application. I will want to add more / make things simpler. I'm not entirely sure where I want these to come in, but they will.
-
-
-# Questions
-
-1. Given that a study is a set of studies, and a study is a collection of images, what level of uniqueness is maintained? For example, can we assume that all study IDs are unique, but could we see duplicate series IDs across different studies? Image ids? I am currently assuming uniqueness of all different model types, however I can put different assertions to do checks for uniqueness in the database.
-
-2. What fields in the DICOM should be:
-  - replaced
-  - completely stripped
-
-3. And of those fields, which ones would be ok to put in Google Cloud as metadata for researchers to search?

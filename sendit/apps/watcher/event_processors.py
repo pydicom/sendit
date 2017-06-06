@@ -62,12 +62,13 @@ class DicomCelery(pyinotify.ProcessEvent):
         '''Create should be called when the path is created (or modified)
         NOTE: if this isn't the case, use modify instead.
         '''
-        return self.check_dicomdir(event)
+        self.check_dicomdir(event)
 
     def process_IN_MODIFY(self, event):
         '''Modify should do the equivalent of create
         '''
-        return self.check_dicomdir(event)
+        self.check_dicomdir(event)
+        
 
 
 class AllEventsPrinter(pyinotify.ProcessEvent):
