@@ -157,3 +157,24 @@ IMAGE_STATUS = (('NEW', 'The image was just added to the application.'),
 ```
 
 These can be tweaked as needed, and likely I will do this as I develop the application. I will want to add more / make things simpler. I'm not entirely sure where I want these to come in, but they will.
+
+
+# Questions
+For the folder that is placed in `/data`, I am making the assumption that it will have the traditional DICOM storage format, meaning it looks something like this:
+
+```
+("Patient -> Study -> Series -> Images hierarchy")
+```
+
+(The REDADME
+
+
+In a dicom directory...
+ - can we expect a dicom file to ever have an extension other than `.dcm`? Always lowercase? I am currently expecting lowercase `.dcm` as my criteria for including a file.
+ - will the files always be on one level (i.e., no subdirectories), eg series/dicom1...N. I am using os.listdir which will only look one level into the folder, but this could be changed.
+ - can there be more than one series in a folder ever? I am currently checking each file
+ - How should I expect the images to be moved into the final folder? The standard dicom structure is like:
+
+
+```
+So I think in the above, the top level folder would be the patient, the IMAGES would be the study, and REF would be the series?

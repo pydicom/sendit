@@ -49,7 +49,14 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import datetime
+from sendit.apps.main.utils import (
+    ls_fullpath
+)
 import os
+
+from pydicom.filereader import read_dicomdir
+from pydicom.dataset import Dataset
+from pydicom import read_file
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sendit.settings')
 app = Celery('sendit')
@@ -59,28 +66,62 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 @shared_task
 def import_dicomdir(dicom_dir):
-    bot.debug("Importing %s" %(dicom_dir))
-    bot.warning('Vanessa write me!!')
+    if os.path.exists(dicom_dir):
+        dicom_files = ls_fullpath(dicom_dir)
+        bot.debug("Importing %s, found %s .dcm files" %(dicom_dir,len(dicom_files)))        
+        
+        # We will generate a list of dicom ids to add to queue for processing
+        dicom_ids = []
 
-# A directory that is `FINISHED` and changed will have the series already found in the database, and will not be processed again.
+        # Add in each dicom file to the series
+        for dcm_file in dicom_files:
+            dcm = read_file(dcm_file)
+            study,created = Study.objects.get_or_create(uid=dcm.StudyID)
+            series,created = Series.objects.get_or_create(uid=dcm.SeriesInstanceUID,
+                                                          study=study)
+            # A dicom instance number must be unique for its series
+            # Since the field isn't consistent, we will use file name
+            dicom_uid = os.path.basename(os.path.splitext(dcm_file)[0])
+            dicom = Image.objects.create(series=series,
+                                         uid=dicom_uid)
+            dicom.image = dcm_file
+            dicom.save()
+            dicom_ids.append(dicom.id)
+        
+        # At the end, submit the dicoms to be deidentified as a batch 
+        get_identifiers.apply_async(kwargs={"dicom_ids":dicom_ids})
+
+    else:
+        bot.warning('Cannot find %s' %dicom_dir)
+
 
 @shared_task
-def get_identifiers(sid):
+def get_identifiers(dicom_ids):
     '''get identifiers is the celery task to get identifiers for 
-    all images in a series, done by way of sending one restful call
+    all images in a batch. A batch is a set of dicom files that may include
+    more than one series/study. This is done by way of sending one restful call
     to the DASHER endpoint. If DEIDENTIFY_RESTFUL is False
     under settings, this function doesn't run
     '''
     if DEIDENTIFY_RESTFUL is True:    
-        try:         
-            series = Series.objects.get(id=sid)
-        except Series.DoesNotExist:
-            bot.error("In get_identifiers: Series %s does not exist." %(sid))
-            return None
- 
-        bot.debug("Getting identifiers for %s" %(series))
-        bot.warning('Vanessa write me!!')
-        # Send off task here to replace identifiers, which will send to storage
+
+        for dcm_id in dicom_ids:
+
+            try:
+                dcm = Image.objects.get(id=dcm_id)
+            except Image.DoesNotExist:
+                bot.warning("Cannot find image with id %s" %dcm_id)
+
+
+            study,created = Study.objects.get_or_create(uid=dcm.StudyID)
+            series,created = Series.objects.get_or_create(uid=dcm.SeriesInstanceUID,
+                                                          study=study) 
+
+            #TODO here: put into data structures to send of to deidentify endpoint
+
+            bot.debug("Getting identifiers for %s" %(series)) 
+            bot.warning('Vanessa write me!!')
+            # Send off task here to replace identifiers, which will send to storage
     else:
         bot.debug("Vanessa write me!")
         # Otherwise, just fire off function to send to storage as is.

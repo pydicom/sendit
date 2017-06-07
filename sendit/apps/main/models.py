@@ -88,10 +88,10 @@ class Study(models.Model):
         return reverse('study_details', args=[str(self.id)])
 
     def __str__(self):
-        return "<study-%s-%s>" %(self.id,self.uid)
+        return "%s-%s" %(self.id,self.uid)
 
     def __unicode__(self):
-        return "<study-%s-%s>" %(self.id,self.uid)
+        return "%s-%s" %(self.id,self.uid)
 
     def get_label(self):
         return "study"
@@ -111,10 +111,10 @@ class Series(models.Model):
     tags = TaggableManager()
     
     def __str__(self):
-        return "<series-%s-%s>" %(self.id,self.uid)
+        return "%s-%s" %(self.id,self.uid)
 
     def __unicode__(self):
-        return "<series-%s-%s>" %(self.id,self.uid)
+        return "%s-%s" %(self.id,self.uid)
  
     def get_label(self):
         return "series"
@@ -130,23 +130,24 @@ class Series(models.Model):
 class Image(models.Model):
     '''An image maps to one dicom file, usually in a series
     '''
-    uid = models.CharField(max_length=250, null=False, blank=False, unique=True)
+    uid = models.CharField(max_length=250, null=False, blank=False)
     image = models.FileField(upload_to=get_upload_folder,null=True,blank=False)
     add_date = models.DateTimeField('date added', auto_now_add=True)
     modify_date = models.DateTimeField('date modified', auto_now=True)
     series = models.ForeignKey(Series,null=False,blank=False)
 
     def __str__(self):
-        return "<image-%s-%s>" %(self.id,self.uid)
+        return "%s-%s" %(self.id,self.uid)
 
     def __unicode__(self):
-        return "<image-%s-%s>" %(self.id,self.uid)
+        return "%s-%s" %(self.id,self.uid)
 
     def get_label(self):
         return "image"
 
     class Meta:
         app_label = 'main'
+        unique_together = ('uid','series',)
  
     # Get the url for a report collection
     def get_absolute_url(self):
@@ -167,13 +168,13 @@ class SeriesIdentifiers(models.Model):
     response = JSONField(default=dict())
 
     def __str__(self):
-        return "<series-identifier-%s>" %self.id
+        return "%s" %self.id
 
     def __unicode__(self):
-        return "<series-identifier-%s>" %self.id
+        return "%s" %self.id
  
     def get_label(self):
-        return "series"
+        return "series-identifier"
 
     class Meta:
         app_label = 'main'

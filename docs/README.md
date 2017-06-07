@@ -17,4 +17,8 @@ Reasonable updates would be:
  - [Management](manager.md): an overview of controlling the application with [manage.py](../manage.py)
  - [Logging](logging.md): overview of the logger provided in the application
  - [Watcher](watcher.md): configuration and use of the watcher daemon to detect new DICOM datasets
- - [Deidentify](deidentify.md): the defaults (and configuration) for the de-identification step of the pipeline (under development)
+
+
+## Steps in Pipeline
+ 1. [Dicom Import](dicom_import.md): The logic for when a session directory is detected as finished by the Watcher.
+ 2. [Deidentify](): the defaults (and configuration) for the de-identification step of the pipeline (under development)
