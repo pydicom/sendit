@@ -151,8 +151,8 @@ CACHES = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
-MEDIA_ROOT = '/var/www/data'
-MEDIA_URL = '/data/'
+MEDIA_ROOT = '/var/www/images'
+MEDIA_URL = '/images/'
 STATIC_ROOT = '/var/www/static'
 STATIC_URL = '/static/'
 

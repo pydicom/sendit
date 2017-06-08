@@ -36,6 +36,8 @@ from sendit.apps.main.models import (
     Image
 )
 
+from sendit.apps.main.utils import save_image_dicom
+
 from sendit.settings import (
     DEIDENTIFY_RESTFUL,
     SEND_TO_ORTHANC,
@@ -57,6 +59,7 @@ import os
 from pydicom.filereader import read_dicomdir
 from pydicom.dataset import Dataset
 from pydicom import read_file
+from pydicom.errors import InvalidDicomError
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sendit.settings')
 app = Celery('sendit')
@@ -75,21 +78,51 @@ def import_dicomdir(dicom_dir):
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
-            dcm = read_file(dcm_file)
-            study,created = Study.objects.get_or_create(uid=dcm.StudyID)
-            series,created = Series.objects.get_or_create(uid=dcm.SeriesInstanceUID,
-                                                          study=study)
-            # A dicom instance number must be unique for its series
-            # Since the field isn't consistent, we will use file name
-            dicom_uid = os.path.basename(os.path.splitext(dcm_file)[0])
-            dicom = Image.objects.create(series=series,
-                                         uid=dicom_uid)
-            dicom.image = dcm_file
-            dicom.save()
-            dicom_ids.append(dicom.id)
-        
+
+            try:
+                dcm = read_file(dcm_file,force=True)
+                dcm_folder = os.path.basename( os.path.dirname(dcm_file) )
+
+                # If a series or studyID is missing, use folder name
+                # which should be the accession number
+                uids = {"study":dcm.StudyID,
+                        "series":dcm.SeriesInstanceUID}
+                for uid_key,uid in uids.items():
+                    if uid in [None,'']
+                        uids[uid_key] = "%s_%s" %(uid_key,
+                                                  dcm_folder)
+            
+                study,created = Study.objects.get_or_create(uid=uids['study'])
+                series,created = Series.objects.get_or_create(uid=uids['series'],
+                                                              study=study)
+
+                # A dicom instance number must be unique for its series
+                dicom_uid = os.path.basename(os.path.splitext(dcm_file)[0])
+
+                # Create the Image object in the database
+                dicom = Image.objects.create(series=series,
+                                             uid=dicom_uid)
+
+                # Save the dicom file to storage
+                dicom = save_image_dicom(dicom=dicom,
+                                         dicom_file=dcm_file) # Also saves
+                os.remove(dcm_file)
+                dicom_ids.append(dicom.id)
+
+
+            # Note that on error we don't remove files
+            except InvalidDicomError:
+                bot.error("%s is an invalid dicom file, skipping." %(dcm_file))
+
+            except KeyError:
+                bot.error("%s is possibly an invalid dicom file, skipping." %(dcm_file))
+
+
         # At the end, submit the dicoms to be deidentified as a batch 
-        get_identifiers.apply_async(kwargs={"dicom_ids":dicom_ids})
+        if len(dicom_ids) > 0:
+            bot.debug("Submitting task to get_identifiers for series %s with %s dicoms." %(series.uid,
+                                                                                          len(dicom_ids)))
+            get_identifiers.apply_async(kwargs={"dicom_ids":dicom_ids})
 
     else:
         bot.warning('Cannot find %s' %dicom_dir)
@@ -105,13 +138,18 @@ def get_identifiers(dicom_ids):
     '''
     if DEIDENTIFY_RESTFUL is True:    
 
+        identifiers = dict()
         for dcm_id in dicom_ids:
 
             try:
                 dcm = Image.objects.get(id=dcm_id)
             except Image.DoesNotExist:
                 bot.warning("Cannot find image with id %s" %dcm_id)
+            dicom = read_file(dcm.image.path,force=True)
 
+            entity_id = dicom.get("PatientID", None)
+            id_source = dicom.get("")
+            ##CURRENTLY WTITING THIS
 
             study,created = Study.objects.get_or_create(uid=dcm.StudyID)
             series,created = Series.objects.get_or_create(uid=dcm.SeriesInstanceUID,

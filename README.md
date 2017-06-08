@@ -160,21 +160,9 @@ These can be tweaked as needed, and likely I will do this as I develop the appli
 
 
 # Questions
-For the folder that is placed in `/data`, I am making the assumption that it will have the traditional DICOM storage format, meaning it looks something like this:
 
-```
-("Patient -> Study -> Series -> Images hierarchy")
-```
-
-(The REDADME
+- When there is error reading a dicom file (I am using "force" so this will read most dicom files, but will have a KeyError for a non dicom file) I am logging the error and moving on, without deleting the file. Is this the approach we want to take?
+- I am assuming that the fields that are in the list given by Susan to de-identify, those are ones we want to save to DASHER as custom metadata (that aren't the obvious entity id, etc)? 
+- Should the id_source be the "human friendly" name, or the entire SOPInstanceUID?
 
 
-In a dicom directory...
- - can we expect a dicom file to ever have an extension other than `.dcm`? Always lowercase? I am currently expecting lowercase `.dcm` as my criteria for including a file.
- - will the files always be on one level (i.e., no subdirectories), eg series/dicom1...N. I am using os.listdir which will only look one level into the folder, but this could be changed.
- - can there be more than one series in a folder ever? I am currently checking each file
- - How should I expect the images to be moved into the final folder? The standard dicom structure is like:
-
-
-```
-So I think in the above, the top level folder would be the patient, the IMAGES would be the study, and REF would be the series?

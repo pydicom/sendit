@@ -20,8 +20,21 @@ In the above, we see that `dcmqr` is used to call `C-MOVE` to dump a bunch of di
 # Dicom Import
 When the [watcher](watcher.md) detects a `FINISHED` session directory in the folder being watched (`/data` in the container, mapping to `data` in the application base folder on the host), the process of importing the images into the database is started. This means the following steps:
 
- - although the name of the folder for the series must by default be unique compared to others around it, the series id itself is extracted from the dicom files. Thus, for the actual metadata, the folder name is irrelevant
- - all files in the folder are assumed to be dicom, as it is the case the extensions may vary. If a file is attempted to be read as dicom fails, a warning is issued and the file skipped, but the process continued.
- - each dicom file is read, and during reading, added as an `Image` object to the database. The study and session are also extracted from the header, and these are added as `Study` and `Session` objects, respectively.
- - adding a file to the database means replicating it in the database (media) storage. This isn't completely necessary, but it allows for deletion of the folder in `/data` so a human observer can more easily see processing occurring on the filesystem.
- - all the images found in a folder are considered to be a "batch," and when all files for a batch have been added, the function fires off the list to be deidentified.
+## 1. Adding Models to Database
+Each dicom file is read, and during reading, added as an `Image` object to the database. The study and session are also extracted from the header, and these are added as `Study` and `Session` objects, respectively. The Series and Study Ids are extracted from these fields in the dicom header, for each file separately:
+
+```
+StudyID
+SeriesInstanceUID
+```
+
+If we run into some case where the fields are not defined, I have put a check that will use the folder name instead, prefixed with `series_` or `study_`. For example, a folder `ST-1234` with a dicom missing header information would have study and session `series_ST-1234` and study `study_ST-1234`. 
+
+
+## 2. Saving Dicoms
+All files in the folder are assumed to be dicom, as it is the case the extensions may vary. If a file is attempted to be read as dicom fails, a warning is issued and the file skipped, but the process continued. The file is not removed, in case inspection is warranted later (is this how we want it?) (some notification?)
+
+The dicom file itself, when saved to the model, is saved with the application's media at `/images`. Once the file is saved here, it is deleted from it's temporary folder in `/data`. This is to maximize space on the server, in case that is needed.
+
+## 3. Finishing Batch
+All the images found in a folder are considered to be a "batch," and when all files for a batch have been added, the function fires off the list to be deidentified. If there were no files in the batch, the function is not fired.
