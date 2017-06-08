@@ -21,4 +21,4 @@ Reasonable updates would be:
 
 ## Steps in Pipeline
  1. [Dicom Import](dicom_import.md): The logic for when a session directory is detected as finished by the Watcher.
- 2. [Deidentify](): the defaults (and configuration) for the de-identification step of the pipeline (under development)
+ 2. [Deidentify](deidentify.md): the defaults (and configuration) for the de-identification step of the pipeline (under development)

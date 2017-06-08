@@ -37,6 +37,7 @@ from sendit.apps.main.models import (
 )
 
 from sendit.apps.main.utils import save_image_dicom
+from som.api.identifiers.dicom import get_identifiers
 
 from sendit.settings import (
     DEIDENTIFY_RESTFUL,
@@ -56,8 +57,6 @@ from sendit.apps.main.utils import (
 )
 import os
 
-from pydicom.filereader import read_dicomdir
-from pydicom.dataset import Dataset
 from pydicom import read_file
 from pydicom.errors import InvalidDicomError
 
@@ -145,28 +144,32 @@ def get_identifiers(dicom_ids):
                 dcm = Image.objects.get(id=dcm_id)
             except Image.DoesNotExist:
                 bot.warning("Cannot find image with id %s" %dcm_id)
-            dicom = read_file(dcm.image.path,force=True)
+ 
+            # Returns dictionary with {"id": {"identifiers"...}}
+            ids = get_identifiers(dicom_file=dcm.image.path)
 
-            entity_id = dicom.get("PatientID", None)
-            id_source = dicom.get("")
-            ##CURRENTLY WTITING THIS
+            for uid,identifiers in ids.items():
 
-            study,created = Study.objects.get_or_create(uid=dcm.StudyID)
-            series,created = Series.objects.get_or_create(uid=dcm.SeriesInstanceUID,
-                                                          study=study) 
+                # STOPPED HERE - I'm not sure why we need to keep
+                # study given that we represent things as batches of dicom
+                # It might be more suitable to model as a Batch,
+                # where a batch is a grouping of dicoms (that might actually
+                # be more than one series. Then we would store as Batch,
+                # and use the batch ID to pass around and get the images.
+                # Stopping here for tonight.
+                # Will need to test this out:
+                replacements = SeriesIdentifiers.objects.create(series=)
 
-            #TODO here: put into data structures to send of to deidentify endpoint
+            
+            replace_identifiers.apply_async(kwargs={"dicom_ids":dicom_ids})
 
-            bot.debug("Getting identifiers for %s" %(series)) 
-            bot.warning('Vanessa write me!!')
-            # Send off task here to replace identifiers, which will send to storage
     else:
-        bot.debug("Vanessa write me!")
-        # Otherwise, just fire off function to send to storage as is.
+        bot.debug("Restful de-identification skipped [DEIDENTIFY_RESTFUL is False]")
+        upload_storage.apply_async(kwargs={"dicom_ids":dicom_ids})
 
 
 @shared_task
-def replace_identifiers(sid):
+def replace_identifiers(dicom_ids):
     '''replace identifiers is called from get_identifiers, given that the user
     has asked to deidentify_restful. This function will do the replacement,
     and then trigger the function to send to storage
