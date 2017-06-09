@@ -42,7 +42,9 @@ from sendit.apps.main.utils import (
     save_image_dicom,
 )
 
-from som.api.identifiers.dicom import get_identifiers
+from som.api.identifiers.dicom import (
+    get_identifiers as get_ids
+)
 
 from sendit.settings import (
     DEIDENTIFY_RESTFUL,
@@ -80,6 +82,7 @@ def import_dicomdir(dicom_dir):
         # The batch --> the folder with a set of dicoms tied to one request
         dcm_folder = os.path.basename(dicom_dir)   
         batch,created = Batch.objects.get_or_create(uid=dcm_folder)
+        patient_id = None
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
@@ -87,17 +90,27 @@ def import_dicomdir(dicom_dir):
             try:
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
-                dicom_uid = os.path.basename(dcm_file)
+                if patient_id is None:
+                    patient_id = dcm.PatientID
 
-                # Create the Image object in the database
-                # A dicom instance number must be unique for its batch
-                dicom = Image.objects.create(batch=batch,
+                # if different patient flag as erroneous
+                if patient_id == dcm.PatientID:
+
+                    dicom_uid = os.path.basename(dcm_file)
+
+                    # Create the Image object in the database
+                    # A dicom instance number must be unique for its batch
+                    dicom = Image.objects.create(batch=batch,
                                              uid=dicom_uid)
 
-                # Save the dicom file to storage
-                dicom = save_image_dicom(dicom=dicom,
-                                         dicom_file=dcm_file) # Also saves
-                os.remove(dcm_file)
+                    # Save the dicom file to storage
+                    dicom = save_image_dicom(dicom=dicom,
+                                             dicom_file=dcm_file) # Also saves
+                    os.remove(dcm_file)
+                else:
+                    message = "Mismatch PatientID for file %s" %(dcm_file)
+                    batch = add_batch_error(message,batch)
+
 
             # Note that on error we don't remove files
             except InvalidDicomError:
@@ -144,7 +157,7 @@ def get_identifiers(bid):
  
             # Returns dictionary with {"id": {"identifiers"...}}
             dcm = change_status(dcm,"PROCESSING")
-            ids = get_identifiers(dicom_file=dcm.image.path)
+            ids = get_ids(dicom_file=dcm.image.path)
 
             for uid,identifiers in ids.items():
 
@@ -156,7 +169,7 @@ def get_identifiers(bid):
                 # and use the batch ID to pass around and get the images.
                 # Stopping here for tonight.
                 # Will need to test this out:
-                replacements = SeriesIdentifiers.objects.create(series=)
+                replacements = BatchIdentifiers.objects.create(series=)
 
             
             replace_identifiers.apply_async(kwargs={"bid":bid})
