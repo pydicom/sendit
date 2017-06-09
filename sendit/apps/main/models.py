@@ -1,10 +1,9 @@
 '''
 Images models. 
 
-  Study: one or more series belonging to a patient (not modeled)
-  Series: a collection of images, one acquisition
-  Image: one dicom image associated with a series
-  SeriesIdentifiers: identifiers to be used to de-identify images
+  Batch: a folder with a set of images associated with a C-MOVE query
+  Image: one dicom image associated with a batch
+  BatchIdentifiers: identifiers to be used to de-identify images
 
 Copyright (c) 2017 Vanessa Sochat
 
@@ -53,13 +52,12 @@ def get_upload_folder(instance,filename):
     instance: the Image instance to upload to the ImageCollection
     filename: the filename of the image
     '''
-    series_id = instance.series.id
-    study_id = instance.series.study.id
+    batch_id = instance.batch.id
 
     # This is relative to MEDIA_ROOT
-    # /[ MEDIAROOT ] / [ STUDY ] / [ SERIES ] / [ FILENAME ]
+    # /[ MEDIAROOT ] / [ BATCH ] / [ FILENAME ]
 
-    return os.path.join(str(study_id),str(series_id),filename)
+    return os.path.join(str(batch_id),filename)
 
 
 
@@ -69,72 +67,71 @@ IMAGE_STATUS = (('NEW', 'The image was just added to the application.'),
                ('SENT','The image has been sent, and verified received.'),
                ('DONE','The image has been received, and is ready for cleanup.'))
 
+BATCH_STATUS = (('NEW', 'The batch was just added to the application.'),
+               ('PROCESSING', 'The batch currently being processed.'),
+               ('DONE','The batch is done, and images are ready for cleanup.'))
+
+
+ERROR_STATUS = ((True,'The batch had an error at some point, and errors should be checked'),
+                (False, 'No error occurred during processing.'))
 
 
 #################################################################################################
-# Study #########################################################################################
+# Batch #########################################################################################
 #################################################################################################
 
 
-class Study(models.Model):
-    '''A study has one or more series for some patient
+class Batch(models.Model):
+    '''A batch has one or more images for some number of patients, each of which
+    is associated with a Study or Session. A batch maps cleanly to a folder that is
+    dropped into data for processing, and the application moves through tasks based
+    on batches.
     '''
-    # Report Collection Descriptors
-    uid = models.CharField(max_length=200, null=False, unique=True)
+    uid = models.CharField(max_length=200, null=False, unique=True,
+                           description="one or more images beloning to the same input folder")
+
+    status = models.CharField(choices=BATCH_STATUS,
+                              default="NEW",
+                              max_length=250)
+
     add_date = models.DateTimeField('date added', auto_now_add=True)
-    modify_date = models.DateTimeField('date modified', auto_now=True)
-    
-    def get_absolute_url(self):
-        return reverse('study_details', args=[str(self.id)])
+    has_error = models.BooleanField(choices=ERROR_STATUS, 
+                                    default=False,
+                                    verbose_name="HasError")
 
-    def __str__(self):
-        return "%s-%s" %(self.id,self.uid)
-
-    def __unicode__(self):
-        return "%s-%s" %(self.id,self.uid)
-
-    def get_label(self):
-        return "study"
-
-    class Meta:
-        app_label = 'main'
-
-
-
-class Series(models.Model):
-    '''A series is a grouping or collection of images in a study
-    '''
-    uid = models.CharField(max_length=250, null=False, blank=False, unique=True)
-    study = models.ForeignKey(Study,null=False,blank=False)
-    add_date = models.DateTimeField('date added', auto_now_add=True)
+    errors = JSONField(default=dict())
     modify_date = models.DateTimeField('date modified', auto_now=True)
     tags = TaggableManager()
     
+    def get_absolute_url(self):
+        return reverse('batch_details', args=[str(self.id)])
+
     def __str__(self):
         return "%s-%s" %(self.id,self.uid)
 
     def __unicode__(self):
         return "%s-%s" %(self.id,self.uid)
- 
+
     def get_label(self):
-        return "series"
+        return "batch"
 
     class Meta:
         app_label = 'main'
- 
-
-    def get_absolute_url(self):
-        return reverse('series_details', args=[str(self.id)])
 
 
 class Image(models.Model):
     '''An image maps to one dicom file, usually in a series
     '''
     uid = models.CharField(max_length=250, null=False, blank=False)
+
+    status = models.CharField(choices=IMAGE_STATUS,
+                              default="NEW",
+                              max_length=250)
+
     image = models.FileField(upload_to=get_upload_folder,null=True,blank=False)
     add_date = models.DateTimeField('date added', auto_now_add=True)
     modify_date = models.DateTimeField('date modified', auto_now=True)
-    series = models.ForeignKey(Series,null=False,blank=False)
+    batch = models.ForeignKey(Batch,null=False,blank=False)
 
     def __str__(self):
         return "%s-%s" %(self.id,self.uid)
@@ -147,7 +144,7 @@ class Image(models.Model):
 
     class Meta:
         app_label = 'main'
-        unique_together = ('uid','series',)
+        unique_together = ('uid','batch',)
  
     # Get the url for a report collection
     def get_absolute_url(self):
@@ -159,10 +156,10 @@ class Image(models.Model):
 #################################################################################################
 
 
-class SeriesIdentifiers(models.Model):
-    '''A series identifiers group is used to store a DASHER response
+class BatchIdentifiers(models.Model):
+    '''A batch identifiers group is used to store a DASHER response
     '''
-    series = models.ForeignKey(Series,null=False,blank=False)
+    batch = models.ForeignKey(Batch,null=False,blank=False)
     add_date = models.DateTimeField('date added', auto_now_add=True)
     modify_date = models.DateTimeField('date modified', auto_now=True)
     response = JSONField(default=dict())
@@ -174,7 +171,7 @@ class SeriesIdentifiers(models.Model):
         return "%s" %self.id
  
     def get_label(self):
-        return "series-identifier"
+        return "batch-identifier"
 
     class Meta:
         app_label = 'main'

@@ -20,6 +20,7 @@ THIRD_PARTY_APPS = [
     'crispy_forms',
     'opbeat.contrib.django',
     'djcelery',
+    'django_cleanup',
     'rest_framework',
     'rest_framework.authtoken',
     'guardian',
