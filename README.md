@@ -56,14 +56,17 @@ Once you have your `secrets.py`, it needs the following added:
  - `DEBUG`: Make sure to set this to `False` for production.
 
 
-For [config.py](sendit/settings/config.py) you should configure the following:
+For [config.py](sendit/settings/config.py) you should first configure settings for the restful API:
 
 ```
 # If True, we will have the images first go to a task to retrieve fields to deidentify
 DEIDENTIFY_RESTFUL=True
+
+# The default study to use
+SOM_STUDY="test"
 ```
 
-If this variable is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. If True, the batch is first put in the queue to be de-identified, and then upon receival of the identifiers, the batch is put into the same queues to be sent to storage. These functions can be modified to use different endpoints, or do different replacements in the data. For more details about the deidentify functions, see [docs/deidentify.md](docs/deidentify.md)
+If `DEIDENTIFY_RESTFUL` is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. If True, the batch is first put in the queue to be de-identified, and then upon receival of the identifiers, the batch is put into the same queues to be sent to storage. The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. These functions can be modified to use different endpoints, or do different replacements in the data. For more details about the deidentify functions, see [docs/deidentify.md](docs/deidentify.md)
 
 The next set of variables are specific to [storage](docs/storage.md), which is the final step in the pipeline.
 

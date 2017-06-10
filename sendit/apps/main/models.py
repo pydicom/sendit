@@ -102,7 +102,22 @@ class Batch(models.Model):
     errors = JSONField(default=dict())
     modify_date = models.DateTimeField('date modified', auto_now=True)
     tags = TaggableManager()
+
+    def change_images_status(self,status):
+        '''change all images to have the same status'''
+        for dcm in self.image_set.all():
+            dcm.status = status
+            dcm.save()
     
+
+    def get_image_paths(self):
+        '''return file paths for all images associated
+        with a batch'''
+        image_files = []
+        for dcm in self.image_set.all():
+            image_files.append(dcm.image.path)
+        return image_files
+
     def get_absolute_url(self):
         return reverse('batch_details', args=[str(self.id)])
 

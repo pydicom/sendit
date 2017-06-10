@@ -1,6 +1,14 @@
+
+#####################################################
+# RESTFUL API
+#####################################################
+
 # De-identify
 # If True, we will have the images first go to a task to retrieve fields to deidentify
 DEIDENTIFY_RESTFUL=True
+
+# The default study to use
+SOM_STUDY="test"
 
 #####################################################
 # STORAGE

@@ -43,12 +43,16 @@ from sendit.apps.main.utils import (
 )
 
 from som.api.identifiers.dicom import (
-    get_identifiers as get_ids
+    get_identifiers as get_ids,
+    replace_identifiers as replace_ids
 )
+
+from som.api.identifiers import Client
 
 from sendit.settings import (
     DEIDENTIFY_RESTFUL,
     SEND_TO_ORTHANC,
+    SOM_STUDY,
     ORTHANC_IPADDRESS,
     ORTHANC_PORT,
     SEND_TO_GOOGLE,
@@ -140,7 +144,7 @@ def import_dicomdir(dicom_dir):
 
 
 @shared_task
-def get_identifiers(bid):
+def get_identifiers(bid,study=None):
     '''get identifiers is the celery task to get identifiers for 
     all images in a batch. A batch is a set of dicom files that may include
     more than one series/study. This is done by way of sending one restful call
@@ -149,30 +153,36 @@ def get_identifiers(bid):
     '''
     batch = Batch.objects.get(id=bid)
 
+    if study is None:
+        study = SOM_STUDY
+
     if DEIDENTIFY_RESTFUL is True:    
 
-        identifiers = dict()
         images = batch.image_set.all()
-        for dcm in images:
+
+        # Create an som client
+        cli = Client()
+
+        # Process all dicoms at once, one call to the API
+        dicom_files = batch.get_image_paths()
+        batch.change_images_status('PROCESSING')
  
-            # Returns dictionary with {"id": {"identifiers"...}}
-            dcm = change_status(dcm,"PROCESSING")
-            ids = get_ids(dicom_file=dcm.image.path)
+        # Returns dictionary with {"id": {"identifiers"...}}
+        ids = get_ids(dicom_files=dicom_files)
+ 
+        # This should only be for one loop, given a folder with one patient
+        deids = dict()
+        for uid,identifiers in ids.items():
+            bot.debug("som.client making request to deidentify %s" %(uid))
+            deids[uid] = cli.deidentify(ids=identifiers,
+                                        study=study)
+          
+        batch_ids = BatchIdentifiers.objects.create(batch=batch,
+                                                    response=deids)
+        batch_ids.save()
+        
+        replace_identifiers.apply_async(kwargs={"bid":bid})
 
-            for uid,identifiers in ids.items():
-
-                # STOPPED HERE - I'm not sure why we need to keep
-                # study given that we represent things as batches of dicom
-                # It might be more suitable to model as a Batch,
-                # where a batch is a grouping of dicoms (that might actually
-                # be more than one series. Then we would store as Batch,
-                # and use the batch ID to pass around and get the images.
-                # Stopping here for tonight.
-                # Will need to test this out:
-                replacements = BatchIdentifiers.objects.create(series=)
-
-            
-            replace_identifiers.apply_async(kwargs={"bid":bid})
 
     else:
         bot.debug("Restful de-identification skipped [DEIDENTIFY_RESTFUL is False]")
@@ -189,21 +199,20 @@ def replace_identifiers(bid):
     '''
     try:         
         batch = Batch.objects.get(id=bid)
-        batch_identifiers = BatchIdentifiers.get(batch=batch)
+        batch_ids = BatchIdentifiers.get(batch=batch)        
+
+        # replace ids to update the dicom_files (same paths)
+        dicom_files = batch.get_image_paths()
+        updated_files = replace_ids(dicom_files=dicom_files,
+                                    response=batch_ids.response)        
+        change_status(batch,"DONEPROCESSING")
+        batch.change_images_status('DONEPROCESSING')
+        
     except:
         bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
         return None
 
-
-        for image in batch.image_set.all():
-
-            # Do deidentify replcement here
-            change_status(image,"DONEPROCESSING")
-
-
-    # trigger storage function
-    change_status(batch,"DONEPROCESSING")
-    change_status(batch.image_set.all(),"DONEPROCESSING")
+    # We don't get here if the call above failed
     upload_storage.apply_async(kwargs={"bid":bid})
 
 
@@ -226,7 +235,7 @@ def upload_storage(bid):
         bot.log("Uploading to Google Storage %s" %(GOOGLE_CLOUD_STORAGE))
         # GOOGLE_CLOUD_STORAGE
 
-        change_status(dcm,"SENT")
+        batch.change_images_status('SENT')
 
 
     change_status(batch,"DONE")
