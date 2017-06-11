@@ -172,10 +172,12 @@ def get_identifiers(bid,study=None):
  
         # This should only be for one loop, given a folder with one patient
         deids = dict()
+
+        # NOTE: if the API is allowed to take a list, we don't need to do this.
         for uid,identifiers in ids.items():
             bot.debug("som.client making request to deidentify %s" %(uid))
-            deids[uid] = cli.deidentify(ids=identifiers,
-                                        study=study)
+            deids.append(cli.deidentify(ids=identifiers,
+                                        study=study))
           
         batch_ids = BatchIdentifiers.objects.create(batch=batch,
                                                     response=deids)
