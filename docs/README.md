@@ -21,4 +21,5 @@ Reasonable updates would be:
 
 ## Steps in Pipeline
  1. [Dicom Import](dicom_import.md): The logic for when a session directory is detected as finished by the Watcher.
- 2. [Deidentify](deidentify.md): the defaults (and configuration) for the de-identification step of the pipeline (under development)
+ 2. [Deidentify](deidentify.md): the defaults (and configuration) for the de-identification step of the pipeline. This currently includes just header fields, and we expect to add pixel anonymization.
+ 3. [Storage](storage.md): Is the final step to move the de-identified dicom files to OrthanCP and/or Google Cloud Storage.

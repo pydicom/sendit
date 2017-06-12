@@ -58,7 +58,7 @@ A list of identifiers is given, and we can think of each thing in the list being
 
 **Important** A dicom file that doesn't have an Entity (`PatientID`) OR `SOPInstanceUID` (Item id) will be skipped, as these fields are required.
 
-While it is assumed that one folder of files, corresponding to one accession number, will truly have that be the case, given that the headers present different information (eg, different series/study) we will post a call to the API for each separate Entity represented in the dataset.
+While the API has support to handle a list of identifiers (meaning more than patient) we are taking a conservative approach that each folder is associated with one patient, and a different patient ID is likely an image that should not be included. 
 
 
 ### Identifiers
@@ -125,80 +125,16 @@ We will be removing all PHI from the datasets before moving into the cloud, as s
 - Any other unique identifying number, characteristic, or code
 
 
-To be explicitly clear, here are a set of tables to describe **1** the dicom identifier, **2** if relevent, how it is mapped to a field for the DASHER API, **3**, if the data is removed (meaning left as an empty string) before going into the cloud, meaning that it is considered in the HIPAA list above. Not all dicoms have all of these fields, and if the field is not found, no action is taken. This is a broad overview - to get exact actions you should look at the [config.json](https://github.com/vsoch/som/blob/master/som/api/identifiers/dicom/config.json).
-
-### PHI Identifiers
-For each of the below, a field under `DASHER` is assumed to be given with an Entity, one of which makes up a list of identifiers, for a `POST`.  Removed does not mean that the field is deleted, but that it is made empty. If replacement is defined, the field from the `DASHER` response is subbed instead of a ''. For most of the below, we give the PHI data as a `custom_field` (to be stored with `DASHER`) and put an empty string in its spot for the data uploaded to Storage.
-
-
-| Dicom Header Field     | DASHER        |  Removed?   | Replacement            |
-| -----------------------|:-------------:| ------------:| ----------------------:
-| AccessionNumber        |`custom_fields`| Yes          | ``                    |
-| ContentDate            |`custom_fields`| Yes          | ``                    |
-| ImageComments          |`custom_fields`| Yes          | ``                    |
-| InstanceCreationDate   |`custom_fields`| Yes          | `jittered_timestamp`  |
-| InstanceCreationTime   |`custom_fields`| Yes          | ``                    |
-| InstanceCreatorUID     |`custom_fields`| Yes          | ``                    |
-| MedicalRecordLocator   |`custom_fields`| Yes          | ``                    |
-| OtherPatientIDs        |`custom_fields`| Yes          | ``                    |
-| OtherPatientNames      |`custom_fields`| Yes          | ``                    |
-| OtherPatientIDsSequence|`custom_fields`| Yes          | ``                    |
-| PatientAddress         |`custom_fields`| Yes          | ``                    |
-| PatientBirthDate       |`custom_fields`| Yes          | ``                    |
-| PatientBirthName       |`custom_fields`| Yes          | ``                    |
-| PatientID              | `id` (Entity) | Yes          | `suid`                |
-| PatientMotherBirthName |`custom_fields`| Yes          | ``                    |
-| PatientName            |`custom_fields`| Yes          | ``                    |
-| PatientTelephoneNumbers|`custom_fields`| Yes          | ``                    |
-| ReferringPhysicianName |`custom_fields`| Yes          | ``                    |
-| SeriesDate             |`custom_fields`| Yes          | ``                    |
-| SeriesInstanceUID      |`custom_fields`| Yes          | ``                    |
-| SeriesNumber           |`custom_fields`| Yes          | ``                    |
-| SOPClassUID            |`custom_fields`| Yes          | ``                    |
-| SOPInstanceUID         |`custom_fields`| Yes          | ``                    |
-| SpecimenAccessionNumber|`custom_fields`| Yes          | ``                    |
-| StudyDate              |`custom_fields`| Yes          | ``                    |
-| StudyID                |`custom_fields`| Yes          | ``                    |
-| StudyInstanceUID       |`custom_fields`| Yes          | ``                    |
-| StudyTime              |`custom_fields`| Yes          | ``                    |
-
-
-The following fields are not considered PHI. For example, the InstanceNumber is not enough to uniquely identify an image - it could be the number '1', and this information is essential for researchers to have to reconstruct sequences. Thus, we don't need to remove / replace it, and we don't need to provide it in `custom_fields` for `DASHER`. We will, however, send it as metadata about the images to be searchable in Google Datastore.
-
-
-| Dicom Header Field                  |
-| ------------------------------------|
-| BitsAllocated                       |
-| BitsStored                          |
-| Columns                             |
-| ConversionType                      |
-| DataSetTrailingPadding              |
-| DateOfSecondaryCapture              |
-| HighBit                             |      
-| InstanceNumber                      |
-| Manufacturer                        |  
-| Modality                            |      
-| NumberOfFrames                      |
-| PatientOrientation                  |
-| PatientSex                          |      
-| PhotometricInterpretation           |
-| PixelData                           |      
-| PixelRepresentation                 |
-| Rows                                |    
-| SamplesPerPixel                     |  
-| SecondaryCaptureDeviceManufacturer  | 
-| TimezoneOffsetFromUTC               |      
-
+To be explicitly clear, we model **1** the dicom identifiers, **2** if relevent, how it is mapped to a field for the DASHER API, and **3**, if the data is removed/blanked/coded before going into the cloud. Not all dicoms have all of these fields, and if the field is not found, then we logically can't send any data to the DASHER endpoint. If there are fields in the data not represented in our list, we take a conservative approach and blank them by default. This is a broad overview - to get exact actions you should look at the [config.json](https://github.com/vsoch/som/blob/master/som/api/identifiers/dicom/config.json).
 
 
 # De-id Response
-The response might look like the following:
+The response from the API itself might look like the following:
 
 ```
 
 {
   "results": [
-    [
       {
         "id": 12345678,
         "id_source": "PatientID",
@@ -226,6 +162,73 @@ The response might look like the following:
         ]
       }
     ]
-  ]
 }
 ```
+
+However the client that we use returns the list under `results`, so it looks like this:
+
+```
+
+[
+    {
+      "id": 12345678,
+      "id_source": "PatientID",
+      "suid": "103e",
+      "jittered_timestamp": {},
+      "custom_fields": [
+        {
+          "key": "studySiteID",
+          "value": 78329
+        }
+      ],
+      "items": [
+        {
+          "id": "A654321",
+          "id_source": "GE PACS",
+          "suid": "103e",
+          "jittered_timestamp": {},
+          "custom_fields": [
+            {
+              "key": "studySiteID",
+              "value": 78329
+            }
+          ]
+        }
+      ]
+    }
+]
+```
+
+We save this response to the database with an object associated with the batch, and hand off the task of replacing the identifiers in the data to another worker:
+
+
+```
+result = cli.deidentify(ids=ids,study=study)     # should return a list
+batch_ids = BatchIdentifiers.objects.create(batch=batch,
+                                            response=result)
+batch_ids.save()        
+replace_identifiers.apply_async(kwargs={"bid":bid})
+```
+
+ so another worker can then use it to replace identifiers (in the actual data) with the function `replace_identifiers`, which is provided in the [dicom module](https://github.com/vsoch/som/tree/master/som/api/identifiers/dicom) of the API client. You should read that README if you want more detail on how this is done.
+
+
+## Replacing Identifiers in Data
+To quickly review, we now have generated data structures to describe entities in dicom files, handed those data structures to an API client, and received a response. The next worker (fired with the last line of the code above) would now find the batch, look up the associated files, and read in the response from the API.  Note that while the API has support to return a response with a list of entity, since we do a check to make sure a batch is specific to one patient, we expect to only get one response. After this, the application needs to handle the response to de-identify the images, which would be another call to a function provided by the `identifiers.dicom` module. The call would look like this:
+
+```
+from som.api.identifiers.dicom import replace_identifiers
+
+updated_files = replace_identifiers(dicom_files=dicom_files,
+                                    response=batch_ids.response)        
+```
+
+By default, the function overwrites the current files (since they are deleted later). But if you want to change this default behavior, you can ask it to write them instead to a temporary directory:
+
+```
+updated_files = replace_identifiers(dicom_files=dicom_files,
+                                    response=batch_ids.response)        
+                                    overwrite=False)
+```
+
+Note that these functions also add in a field to indicate the data has been de-identified. At this point, we have finished the de-identification process (for header data, pixel anonymization is a separate thing still need to be developed) and can move on to [storage.md](storage.md)

@@ -167,21 +167,14 @@ def get_identifiers(bid,study=None):
         dicom_files = batch.get_image_paths()
         batch.change_images_status('PROCESSING')
  
-        # Returns dictionary with {"id": {"identifiers"...}}
+        # Returns dictionary with {"identifiers": [ E1,E2 ]}
         ids = get_ids(dicom_files=dicom_files)
  
-        # This should only be for one loop, given a folder with one patient
-        deids = []
-
-        # NOTE: if the API is allowed to take a list, we don't need to do this.
-        for uid,identifiers in ids.items():
-            bot.debug("som.client making request to deidentify %s" %(uid))
-            result = cli.deidentify(ids=identifiers,
-                                    study=study)     # should be a list
-            deids = deids + result
+        bot.debug("som.client making request to deidentify batch %s" %(bid))
+        result = cli.deidentify(ids=ids,study=study)     # should return a list
           
         batch_ids = BatchIdentifiers.objects.create(batch=batch,
-                                                    response=deids)
+                                                    response=result)
         batch_ids.save()
         
         replace_identifiers.apply_async(kwargs={"bid":bid})
