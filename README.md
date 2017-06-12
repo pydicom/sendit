@@ -228,3 +228,5 @@ Generally, the query of interest will retrieve a set of images with an associate
 
 # Questions
  - Given no errors for a batch, we will be cleaning up the database and the media files, which means complete deletion. Is there any desire for a log to be maintained somewhere, and if so, where? Right now, the logs that we have are for the watcher, that logs the name of the folders and when they are complete. If we want more logging, for what actions, under what circumstances?
+ - For de-identification, we have the option to remove private tags (`dicom.remove_private_tags()`), which are those that have been added to the dataset (but don't conform to the standard). If we don't remove them, they will be blanked. Should we remove? Is there reason they would have private tags?
+ - Can the API take / respond with lists of {'identifiers'} objects, each with an id, id_source, associated items? If not, I can handle the need internally with the client (eg, we are passing around generally groups of these things, but (I think) the API is set up to handle single objects. I don't want to place the burden of unwrapping a list (and then rewrapping) on the client.
