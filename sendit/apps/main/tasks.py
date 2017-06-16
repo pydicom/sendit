@@ -169,8 +169,11 @@ def get_identifiers(bid,study=None):
  
         # Returns dictionary with {"identifiers": [ E1,E2 ]}
         ids = get_ids(dicom_files=dicom_files)
- 
+
         bot.debug("som.client making request to deidentify batch %s" %(bid))
+        #:param save_records: if True, will use mrn endpoint and and save data.
+        #                     if False, will use uid endpoint and not save data.
+        # Right now save_records is set to False, not sure if it should be
         result = cli.deidentify(ids=ids,study=study)     # should return a list
           
         batch_ids = BatchIdentifiers.objects.create(batch=batch,
@@ -199,11 +202,19 @@ def replace_identifiers(bid):
 
         # replace ids to update the dicom_files (same paths)
         dicom_files = batch.get_image_paths()
+
+        # We are going to overwrite, they have same base
+        output_folder = os.path.dirname(dicom_files[0])
+
         updated_files = replace_ids(dicom_files=dicom_files,
-                                    response=batch_ids.response)        
+                                    response=batch_ids.response,
+                                    overwrite=True,
+                                    output_folder=output_folder)  
+
         change_status(batch,"DONEPROCESSING")
         batch.change_images_status('DONEPROCESSING')
         
+
     except:
         bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
         return None

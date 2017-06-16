@@ -64,9 +64,14 @@ DEIDENTIFY_RESTFUL=True
 
 # The default study to use
 SOM_STUDY="test"
+
+# PatientID and SOPInstanceUID:
+# These are default for deid, but we can change that here
+ENTITY_ID="PatientID"
+ITEM_ID="SOPInstanceUID"
 ```
 
-If `DEIDENTIFY_RESTFUL` is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. If True, the batch is first put in the queue to be de-identified, and then upon receival of the identifiers, the batch is put into the same queues to be sent to storage. The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. These functions can be modified to use different endpoints, or do different replacements in the data. For more details about the deidentify functions, see [docs/deidentify.md](docs/deidentify.md)
+Note that the fields for `ENTITY_ID` and `ITEM_ID` are set to the default of [deid](https://pydicom.github.io/deid), but I've added them here in case it ever needs to be changed. If `DEIDENTIFY_RESTFUL` is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. If True, the batch is first put in the queue to be de-identified, and then upon receival of the identifiers, the batch is put into the same queues to be sent to storage. The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. These functions can be modified to use different endpoints, or do different replacements in the data. For more details about the deidentify functions, see [docs/deidentify.md](docs/deidentify.md)
 
 The next set of variables are specific to [storage](docs/storage.md), which is the final step in the pipeline.
 
