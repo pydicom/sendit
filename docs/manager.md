@@ -60,8 +60,8 @@ Django is primarily controlled via `manage.py`, the file sitting in the base of 
     runserver
 
 [watcher]
-    watcher_start
-    watcher_stop
+    start_watcher
+    stop_watcher
 ```
 
 For example, the last set of commands for the `watcher` we defined by adding a `management/commands` to our watcher application.

@@ -16,14 +16,14 @@ The basic workflow of the watcher is the following:
 Specifically, this means that you can start and stop the daemon with the following commands (from inside the Docker image):
 
 ```
-python manage.py watcher_start
-python manage.py watcher_stop
+python manage.py start_watcher
+python manage.py stop_watcher
 ```
 
 When you start, you will see something like the following:
 
 ```
-python manage.py watcher_start
+python manage.py start_watcher
 DEBUG Adding watch on /data, processed by sendit.apps.watcher.event_processors.DicomCelery
 ```
 
@@ -44,7 +44,7 @@ watcher.err  watcher.out
 Then when you stop it, the pid file will go away (but the error and output logs remain)
 
 ```
-python manage.py watcher_stop
+python manage.py stop_watcher
 DEBUG Dicom watching has been stopped.
 ```
 
@@ -144,7 +144,7 @@ in_access = django.dispatch.Signal(providing_args=["event"])
 
 For our purposes, since we already have an asyncronous celery queue, what we really want is to write to the log of the watcher, and fire off a celery job to add the dicom folder to the database, but only if it's finished. As a reminder, "finished" means it is a directly that does NOT have an extension starting with `.tmp`. For this, we use the `DicomCelery` class under `event_processors` that fires off the `import_dicomdir` async celery task under [main/tasks.py](../sendit/apps/main/tasks.py) instead.
 
-For better understanding, you can look at the code itself, for each of [watcher_start.py](../sendit/apps/watcher/management/commands/watcher_start.py) and [watcher_stop.py](../sendit/apps/watcher/management/commands/watcher_stop.py).
+For better understanding, you can look at the code itself, for each of [start_watcher.py](../sendit/apps/watcher/management/commands/start_watcher.py) and [stop_watcher.py](../sendit/apps/watcher/management/commands/stop_watcher.py).
 
 
 ## Testing
@@ -202,7 +202,7 @@ LOG 2|FINISHED: /data/test_nowfinished
 and at this point, if we weren't testing, processing of the dicom directory would happen. For this example, we can now stop the watcher.
 
 ```
-root@0b0b9c4f2a6e:/code# python manage.py watcher_stop
+root@0b0b9c4f2a6e:/code# python manage.py stop_watcher
 DEBUG Dicom watching has been stopped.
 root@0b0b9c4f2a6e:/code# 
 ```
@@ -210,6 +210,6 @@ root@0b0b9c4f2a6e:/code#
 Note that the sendit/watcher.pid file will be removed after you stop it. If you were to try and stop it again (when it's already stopped) it would tell you that it isn't started:
 
 ```
-root@0b0b9c4f2a6e:/code# python manage.py watcher_stop
+root@0b0b9c4f2a6e:/code# python manage.py stop_watcher
 CommandError: No pid file exists at /code/sendit/watcher.pid.
 ```

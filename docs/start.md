@@ -5,8 +5,8 @@ After configuration is done and you have a good understanding of how things work
 This initial setup is stupid in that it's going to be checking an input folder to find new images. We do this using the [watcher](../sendit/apps/watcher) application, which is started and stopped with a manage.py command:
 
 ```
-python manage.py watcher_start
-python manage.py watcher_stop
+python manage.py start_watcher
+python manage.py stop_watcher
 ```
 
 And the default is to watch for files added to [data](../data), which is mapped to '/data' in the container. Remember that you can change this mapping in the [docker-compose.yml](../docker-compose.yml). In terms of the strategy for receiving the folders, this is currently up to you, but the high level idea is that the application should receive DICOM from somewhere. It should use an atomic download strategy, but with folders, into the application data input folder. This will mean that when it starts, the folder (inside the container) might look like:

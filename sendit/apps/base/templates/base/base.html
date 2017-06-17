@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang='en'>
+{% include "base/head.html" %}
+{% block body %}
+<body>
+
+{% include "base/sidebar.html" %}
+
+    <div class="main-panel">
+        {% include "base/navigation.html" %}
+
+        <div class="content">
+            <div class="container-fluid">
+            {% block content %}{% endblock %}
+            </div>
+        </div>
+        {% include "base/footer.html" %}
+
+    </div>
+
+    <script type="text/javascript" src="{% static "js/jquery-1.10.2.js"%}"></script>
+    <script type="text/javascript" src="{% static "js/bootstrap.min.js"%}"></script>
+    <script type="text/javascript" src="{% static "js/bootstrap-checkbox-radio.js"%}"></script>
+    <script type="text/javascript" src="{% static "js/bootstrap-notify.js"%}"></script>
+    <script type="text/javascript" src="{% static "js/chartist.min.js"%}"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js"></script>
+    <script type="text/javascript" src="{% static "js/paper-dashboard.js"%}"></script>
+    <script type="text/javascript" src="{% static "js/demo.js"%}"></script>
+    {% block scripts %}{% endblock %}
+
+</body>
+{% endblock %}
+</html>
