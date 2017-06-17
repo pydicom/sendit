@@ -87,8 +87,7 @@ class Batch(models.Model):
     dropped into data for processing, and the application moves through tasks based
     on batches.
     '''
-    uid = models.CharField(max_length=200, null=False, unique=True,
-                           description="one or more images beloning to the same input folder")
+    uid = models.CharField(max_length=200, null=False, unique=True)
 
     status = models.CharField(choices=BATCH_STATUS,
                               default="NEW",

@@ -1,0 +1,37 @@
+{% extends "base/base.html" %}
+{% load staticfiles %}
+{% load static %}
+{% block head %}
+{% endblock %}
+
+{% block body %}
+<div class="container">
+<div class="row">
+    <div class="col-md-2" style="padding-top:50px">
+        <h2>Sendit?</h2>
+    </div>
+    <div class="col-md-10">
+        <p style="padding-top:50px;line-height:1.5em">Hi there! This is the SendIt application for receiving, de-identifying, and sending DICOM images to storage. You must authenticate to get access to this application.</p>
+    </div>
+</div>
+<hr>
+<div class="row">
+<div class="col-md-2" style="margin-top:20px"></div>
+<div class="col-md-3" style="margin-top:20px">
+   <img src="{% static 'img/logo/logo.png' %}" width="200px"/>
+</div>
+<div class="col-md-7">
+    <div id="lockdown" style='margin-top:100px'>
+	{% if form %}
+        <form action="" method="post">{% csrf_token %}
+	    {{ form.as_p }}
+            <button class="btn btn-default btn-lg" 
+                    type="submit" 
+                    style="margin-top:30px;"
+                    value="Preview">Enter</button>
+        </form>
+	{% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}
