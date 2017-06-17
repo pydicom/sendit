@@ -103,7 +103,7 @@ A list of items is associated with each Entity (the example above). The id for t
 ```
 
 ## 2. Mapping of Identifiers
-We will be removing all PHI from the datasets before moving into the cloud, as specified per HIPAA. This means we will remove the following HIPAA identifiers:
+We will be removing all PHI from the datasets before moving into the cloud, and coding the dataset by replacing the entity and item identifiers with an alias. This means we will remove the following identifiers:
 
 - Name
 - Geographic information smaller than state
