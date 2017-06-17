@@ -11,6 +11,12 @@ Reasonable updates would be:
 
  - to add a DICOM receiver directly to the application using `pynetdicom3`, so instead of listening for datasets on the filesystem, we can receive them directly.
 
+## Deployment
+
+ - [Setup](setup.md): Basic setup (download and install) of a new application for a server.
+ - [Configuration](config.md): How to configure the application before starting it up.
+ - [Application](application.md): Details about the application infrastructure.
+ - [Start](start.md): Start it up!
 
 ## Module-specific Documentation
 
