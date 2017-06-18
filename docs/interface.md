@@ -56,7 +56,6 @@ This means that, to query a specific page you would do:
 
 and again, this entire interface is behind the lockdown password, and can have additional authentication or changes if needed.
 
-![img/api_detail.png](img/api_detail.png)
 
 ## Swagger
 If the user (the administrators of the endpoint) want to interact or query dynamically, a swagger endpoint is provided:
