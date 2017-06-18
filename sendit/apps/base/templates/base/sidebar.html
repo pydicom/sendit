@@ -1,0 +1,52 @@
+<div class="wrapper">
+    <div class="sidebar" data-background-color="white" data-active-color="danger">
+
+    	<div class="sidebar-wrapper">
+            <div class="logo">
+                <a href="/" class="simple-text">
+                    SendIt
+                </a>
+            </div>
+
+            <ul class="nav">
+
+                <!-- Dashboard -->
+                {% if active == "dashboard" %}
+                <li class="active">
+                {% else %}
+                <li>
+                {% endif %}
+                    <a href="/">
+                        <i class="ti-view-list-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <!-- Dashboard -->
+                {% if active == "api" %}
+                <li class="active">
+                {% else %}
+                <li>
+                {% endif %}
+                    <p style='padding-left:25px'>
+                    <a href="{% url 'api' %}">
+                        <i class="ti-shortcode"></i>
+                        API
+                    </a> /
+                    <a href="/api">
+                        Docs
+                    </a></p>
+
+                </li>
+
+                <!-- Docs External Link -->
+                <li>
+                    <a target="_blank" href="https://pydicom.github.io/sendit">
+                        <i class="ti-text"></i>
+                        <p>Documentation</p>
+                    </a>
+                </li>
+            </ul>
+    	</div>
+    </div>
+

@@ -1,0 +1,9 @@
+{% if batch.status == "NEW" %}
+<span class="alert alert-info">{{ batch.status }}</span>
+{% endif %}
+{% if batch.status == "DONE" %}
+<span class="alert alert-success">{{ batch.status }}</span>
+{% endif %}
+{% if batch.status == "ERROR" %}
+<span class="alert alert-danger">{{ batch.status }}</span>
+{% endif %}

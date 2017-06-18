@@ -41,12 +41,21 @@ ls sendit/logs
 watcher.err  watcher.out
 ```
 
+and if you are looking at the web portal, it will indicate that the watcher is active:
+
+![img/watcher_active.png](img/watcher_active.png)
+
 Then when you stop it, the pid file will go away (but the error and output logs remain)
 
 ```
 python manage.py stop_watcher
 DEBUG Dicom watching has been stopped.
 ```
+
+and the watcher is inactive:
+
+![img/watcher_inactive.png](img/watcher_inactive.png)
+
 
 ## Configuration
 Configuration for the watcher is stored in [settings/watcher.py](../sendit/settings/watcher.py).

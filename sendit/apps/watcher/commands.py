@@ -112,7 +112,8 @@ def stop_watcher(request=None,as_command=False):
             os.kill(pid, signal.SIGHUP)
         except OSError:
             os.remove(pid_file)
-            return watcher_error(message="No process with id %d. Cleaned up pid file." % (pid),
+            # This needs testing - shouldn't normally trigger when stopped
+            return watcher_error(message="Cleaned up pid file %s" %(pid),
                                  as_command=as_command,
                                  request=request)
         time.sleep(2)

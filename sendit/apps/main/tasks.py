@@ -90,7 +90,6 @@ def import_dicomdir(dicom_dir):
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
-
             try:
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)

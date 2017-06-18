@@ -4,7 +4,7 @@ This document will review basic setup of the sendit application. You will need r
 
 
 ## Download
-Before you start, you should make sure that you have Docker and docker-compose installed, and a complete script for setting up the dependencies for any instance [is provided](scripts/setup_instance.sh). You should then clone the repo, and we recommend a location like `/opt`.
+Before you start, you should make sure that you have Docker and docker-compose installed, and a complete script for setting up the dependencies for any instance [is provided](scripts/prepare_instance.sh). You should walk through this carefully to make sure everything completes, and importantly, to install docker you will need to log in and out. You should then clone the repo, and we recommend a location like `/opt`.
 
 ```
 cd /opt

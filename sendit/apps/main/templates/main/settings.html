@@ -1,0 +1,22 @@
+{% extends "base/base.html" %}
+{% block content %}
+{% include "messages/messages.html" %}
+
+                <div class="row card" style="padding:30px; margin-left: 0px;margin-right: 0px;margin-top: 20px;">
+                    <div class="col-md-2">
+                        <h4 class="title">Watcher</h4>
+                    </div>
+                    <div class="col-md-10">
+                        {% if is_watching %}
+                        <button class="btn btn-success btn-fill">Watcher is active</button>
+                        {% else %}
+                        <button class="btn btn-danger btn-fill">Watcher is not active</button>
+                        {% endif %}
+                    </div>
+                </div>
+{% endblock %}
+
+
+
+
+

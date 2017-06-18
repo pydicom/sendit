@@ -1,0 +1,37 @@
+{% extends "main/base.html" %}
+{% load staticfiles %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static "css/social-auth.css"%}">
+{% endblock %}
+
+{% block content %}
+<div id="fh5co-portfolio">
+
+    {% if user and not user.is_anonymous %}
+    <h3> Hello, {{ user.get_full_name }}!</h3>
+    <br>
+    <div>
+       {% if team %}
+       <a href="{% url 'teams' %}"><button class="btn btn-primary">Team Rankings</button></a>
+       {% else %}
+       <a href="{% url 'teams' %}"><button class="btn btn-primary">Join A Team</button></a>
+       {% endif %}
+       <a href="{% url 'my_report_collections' %}"><button class="btn btn-primary">My Report Collections</button></a>
+       <a href="{% url 'logout' %}"><button class="btn btn-primary">Logout</button></a>
+    </div>
+    {% else %}
+
+<div class="login-box">
+        <a class="social-button" id="twitter-connect" href="{% url 'social:begin' 'twitter' %}?next={{ request.path }}">Login with Twitter</a>
+        <a class="social-button" id="google-connect" href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}">Login with Google</a>
+        <!--<a class="social-button" id="github-connect" href="{% url 'social:begin' 'github' %}?next={{ request.path }}">Login with Github</a>-->
+    {% endif %}
+</div>
+
+
+</div>
+{% endblock %}
+{% block footer %}
+{% include 'main/footer.html' %}
+{% endblock %}

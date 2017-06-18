@@ -17,6 +17,7 @@ Reasonable updates would be:
  - [Configuration](config.md): How to configure the application before starting it up.
  - [Application](application.md): Details about the application infrastructure.
  - [Start](start.md): Start it up!
+ - [Interface](interface.md): A simple web interface for monitoring batches.
 
 ## Module-specific Documentation
 

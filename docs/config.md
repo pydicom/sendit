@@ -70,7 +70,12 @@ If you look in [sendit/settings/auth.py](../sendit/settings/auth.py) you will se
 LOCKDOWN_ENABLED=True
 ```
 
-This basically means that the entire site is locked down, or protected for use (from a web browser) with a password. It's just a little extra layer of security. You can set the password by defining it in your [sendit/settings/secrets.py](../sendit/settings/secrets.py):
+This basically means that the entire site is locked down, or protected for use (from a web browser) with a password. It's just a little extra layer of security. 
+
+![img/lockdown.png](img/lockdown.png)
+
+
+You can set the password by defining it in your [sendit/settings/secrets.py](../sendit/settings/secrets.py):
 
 ```
 LOCKDOWN_PASSWORDS = ('mysecretpassword',)

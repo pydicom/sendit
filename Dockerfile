@@ -21,6 +21,7 @@ RUN pip install Django==1.11.2
 RUN pip install social-auth-app-django
 RUN pip install social-auth-core[saml]
 RUN pip install djangorestframework
+RUN pip install django-rest-swagger
 RUN pip install django-filter
 RUN pip install django-taggit
 RUN pip install django-form-utils

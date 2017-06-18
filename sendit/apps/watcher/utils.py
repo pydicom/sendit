@@ -69,13 +69,19 @@ def get_daemon_kwargs():
  
 
 def is_watching():
-    '''get_status turns the status of the watched based on the existence
-    of the pid file.
+    '''get_status turns the status of the watcher based on
+    the active process read in from the pid file.
     '''
     pid_file = get_pid_file(quiet=True)
     if os.path.exists(pid_file):
+        pid = int(open(pid_file).read())
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return False
         return True
-    return False    
+    else:
+        return False    
 
 
 def get_pid_file(quiet=False):

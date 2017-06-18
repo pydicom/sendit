@@ -1,0 +1,30 @@
+{% extends "base/base.html" %}
+{% load staticfiles %}
+{% block head %}
+{% endblock %}
+{% block content %}
+
+               <div class="row">
+                    <div class="col-md-10 col-md-offset-1">
+                        <div class="row">
+                            <h2 class="section-lead text-center">API</h2>
+                            <p class="text-center">Application Programming Interface</p>
+
+                            <em>The REST API</em> provides programmatic access to batch and image progress. This isn't currently used for anything, but might be useful at some point.</p>
+                            <div class="panes">
+                                <div class="pane">
+                                    <div>
+                                        <strong>Batches</strong> 
+                                        <a href="/api/batches">{{ domain }}/api/batches</a><br>
+                                        <strong>Images</strong> 
+                                        <a href="/api/images">{{ domain }}/api/images</a><br>
+                                    </div>
+                                </div> 
+                            </div>
+                        </div>     
+                    </div>
+                </div>
+            </div>
+        </div>
+
+{% endblock %}

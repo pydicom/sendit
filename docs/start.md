@@ -45,8 +45,7 @@ The Dockerized application is constantly monitoring the folder to look for folde
 
 Generally, the query of interest will retrieve a set of images with an associated accession number, and the input folder will be named by the accession number. Since there is variance in the data with regard to `AccessionNumber` and different series identifiers, for our batches we give them ids based on the folder name.
 
-
-Now that the application is started, you can learn about usage, starting with the [manager](manager.md).
+Now that the application is started, you can learn about usage, starting with the [manager](manager.md), or check out details about the simple [interface](interface.md).
 
 # Questions
  - Given no errors for a batch, we will be cleaning up the database and the media files, which means complete deletion. Is there any desire for a log to be maintained somewhere, and if so, where? Right now, the logs that we have are for the watcher, that logs the name of the folders and when they are complete. If we want more logging, for what actions, under what circumstances?
