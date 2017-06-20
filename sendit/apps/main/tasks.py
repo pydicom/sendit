@@ -264,6 +264,10 @@ def replace_identifiers(bid):
         ids = prepare_identifiers(response=batch_ids.response,
                                   dicom_files=dicom_files)
 
+        # Save the identifers for adding as metadata to image files later
+        batch_ids.ids = ids
+        batch_ids.save()
+
         # Now we have a lookup with ids[entity_id][field]
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()

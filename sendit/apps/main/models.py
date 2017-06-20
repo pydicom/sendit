@@ -195,6 +195,8 @@ class BatchIdentifiers(models.Model):
     add_date = models.DateTimeField('date added', auto_now_add=True)
     modify_date = models.DateTimeField('date modified', auto_now=True)
     response = JSONField(default=dict())
+    ids = JSONField(default=dict())
+
 
     def __str__(self):
         return "%s" %self.id
