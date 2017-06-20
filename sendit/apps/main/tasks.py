@@ -57,6 +57,8 @@ from sendit.settings import (
     SOM_STUDY,
     ORTHANC_IPADDRESS,
     ORTHANC_PORT,
+    ENTITY_ID,
+    ITEM_ID,
     SEND_TO_GOOGLE,
     GOOGLE_CLOUD_STORAGE,
     GOOGLE_STORAGE_COLLECTION
@@ -93,7 +95,7 @@ def import_dicomdir(dicom_dir):
         # The batch --> the folder with a set of dicoms tied to one request
         dcm_folder = os.path.basename(dicom_dir)   
         batch,created = Batch.objects.get_or_create(uid=dcm_folder)
-        patient_id = None
+        patient_ids = []
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
@@ -101,32 +103,30 @@ def import_dicomdir(dicom_dir):
 
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
-                if patient_id is None:
-                    patient_id = dcm.PatientID
+                dicom_uid = os.path.basename(dcm_file)
 
-                # if different patient flag as erroneous
-                if patient_id == dcm.PatientID:
-                    dicom_uid = os.path.basename(dcm_file)
+                # If the image has pixel identifiers, we don't include 
+                if dcm.get("BurnedInAnnotation") is not None:
+                    message = "%s has burned pixel annotation, skipping" %dicom_uid
+                    batch = add_batch_error(message,batch)
 
-                    # If the image has pixel identifiers, we don't include 
-                    if dcm.get("BurnedInAnnotation") is not None:
-                        message = "%s has burned pixel annotation, skipping" %dicom_uid
-                        batch = add_batch_error(message,batch)
-
-                    else:
-                        # Create the Image object in the database
-                        # A dicom instance number must be unique for its batch
-                        dicom = Image.objects.create(batch=batch,
-                                                     uid=dicom_uid)
-
-                        # Save the dicom file to storage
-                        dicom = save_image_dicom(dicom=dicom,
-                                                 dicom_file=dcm_file) # Also saves
-
-                        # Only remove files successfully imported
-                        os.remove(dcm_file)
                 else:
-                    message = "Mismatch PatientID for file %s" %(dcm_file)
+                    # Create the Image object in the database
+                    # A dicom instance number must be unique for its batch
+                    dicom = Image.objects.create(batch=batch,
+                                                 uid=dicom_uid)
+
+                    # Save the dicom file to storage
+                    dicom = save_image_dicom(dicom=dicom,
+                                             dicom_file=dcm_file) # Also saves
+
+                    # Only remove files successfully imported
+                    patient_ids.append(dcm.PatientID)
+                    os.remove(dcm_file)
+
+                # Do check for different patient ids
+                if len(set(patient_ids)) > 1:                
+                    message = "Batch %s has > 1 PatientID" %(batch)
                     batch = add_batch_error(message,batch)
 
 
@@ -171,14 +171,15 @@ def scrub_pixels(bid):
     '''
     batch = Batch.objects.get(id=bid)
     images = batch.image_set.all()
-    dicom_files = batch.get_image_paths()
     batch.change_images_status('PROCESSING')
 
     # from deid.dicom import scrub_pixels
 
-    for dcm_file in dicom_files:
+    for dcm in images:
 
+        dcm_file = dcm.image.path
         dicom_uid = os.path.basename(dcm_file)
+        dicom = dcm.load_dicom()
 
         if dicom.get("BurnedInAnnotation") is not None:
 
@@ -186,8 +187,8 @@ def scrub_pixels(bid):
             if DEIDENTIFY_PIXELS is True:
                 print("De-identification will be done here.")
             else:
-                #TODO: remove image from batch here, not okay to upload
-                message = "%s has pixel identifiers, deidentify pixels is off, but added to batch. Removing!" %dicom_uid
+                message = "%s has pixel identifiers, deidentify pixels is off, but added to batch. Removing!" %dcm_file
+                dicom.delete() # if django-cleanup not in apps, will not delete image file
                 batch = add_batch_error(message,batch)
 
     # At the end, move on to processing headers    
@@ -266,8 +267,17 @@ def replace_identifiers(bid):
         # Now we have a lookup with ids[entity_id][field]
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
-            # STOPPED HERE - need to rename dicom with suid
 
+            eid = dicom.get(ENTITY_ID)
+            iid = dicom.get(ITEM_ID)
+
+            # Rename the dicon based on suid
+            if eid is not None and iid is not None:
+                item_suid = ids[eid][iid]['item_id']
+                dicom = dicom.rename("%s.dcm" %item_suid)
+
+        # Get renamed files
+        dicom_files = batch.get_image_paths()
         updated_files = replace_ids(dicom_files=dicom_files,
                                     response=batch_ids.response,
                                     overwrite=True,
@@ -350,7 +360,8 @@ def clean_up(bid):
 
     if not batch.has_error:
         images = batch.image_set.all()
-        [x.delete() for x in images]
+        [x.image.delete() for x in images] # deletes image files
+        [x.delete() for x in images] # deletes objects
         batch.delete() #django-cleanup will delete files on delete
     else:
         bot.warning("Batch %s has error, will not be cleaned up.")
