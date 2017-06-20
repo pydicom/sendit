@@ -1,3 +1,4 @@
+import os
 
 #####################################################
 # RESTFUL API
@@ -7,6 +8,13 @@
 # If True, we will have the images first go to a task to retrieve fields to deidentify
 DEIDENTIFY_RESTFUL=True
 
+# These credentials are required for the DASHER endpoint
+STANFORD_APPLICATION_CREDENTIALS='/code/.stanford'
+os.environ['STANFORD_APPLICATION_CREDENTIALS'] = STANFORD_APPLICATION_CREDENTIALS
+
+# If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
+DEIDENTIFY_PIXELS=False # currently not supported 
+
 # The default study to use
 SOM_STUDY="test"
 
@@ -14,6 +22,7 @@ SOM_STUDY="test"
 # These are default for deid, but we can change that here
 ENTITY_ID="PatientID"
 ITEM_ID="SOPInstanceUID"
+
 
 #####################################################
 # STORAGE
@@ -28,5 +37,10 @@ ORTHANC_PORT=4747
 # Should we send to Google at all?
 SEND_TO_GOOGLE=False
 
-# Google Cloud Storage and Datastore
-GOOGLE_CLOUD_STORAGE='som-pacs'
+# These credentials are required for Google
+GOOGLE_APPLICATION_CREDENTIALS='/code/.google'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
+
+# Google Cloud Storage Bucket (must be created)
+GOOGLE_CLOUD_STORAGE='radiology'
+GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets

@@ -36,6 +36,7 @@ from django.core.urlresolvers import reverse
 from django.db.models.signals import m2m_changed
 from django.db.models import Q, DO_NOTHING
 from django.db import models
+from django.conf import settings
 
 import collections
 import operator
@@ -152,6 +153,23 @@ class Image(models.Model):
 
     def __unicode__(self):
         return "%s-%s" %(self.id,self.uid)
+
+    def load_dicom(self):
+        '''easily load an Image if dicom file'''
+        from pydicom import read_file
+        return(read_file(self.image.path,
+                         force=True))
+
+    def rename(self,new_basename):
+        ''' rename will name the image path of an already uploaded
+        file to some new_basename.'''
+        initial_path = self.image.path
+        self.image.name = new_basename
+        new_path = settings.MEDIA_ROOT + self.image.name
+        os.rename(initial_path, new_path)
+        self.save()
+        return self
+
 
     def get_label(self):
         return "image"

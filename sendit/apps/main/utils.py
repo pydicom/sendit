@@ -64,16 +64,20 @@ def ls_fullpath(dirname,ext=None):
 
 ### FILES ##############################################################
 
-def save_image_dicom(dicom,dicom_file):
+def save_image_dicom(dicom,dicom_file,basename=None):
     '''save image dicom will save a dicom file to django's media
     storage, for this application defined under /images.
     :param dicom: the main.Image instance 
     :param dicom_file: the dicom file (usually in /data) to save
     '''
+    if basename is None:
+        basename = os.path.basename(dicom_file)
+
     with open(dicom_file,'rb') as filey:
               django_file = File(filey)
-              dicom.image.save(os.path.basename(dicom_file),
-                               django_file,save=True)  
+              dicom.image.save(basename,
+                               django_file,
+                               save=True)  
     dicom.save()
     return dicom
 
