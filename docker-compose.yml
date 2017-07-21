@@ -3,7 +3,7 @@ db:
 
 uwsgi:
   restart: always
-  image: vanessa/sendit
+  image: pydicom/sendit
   volumes:
     - ./data:/data
     - .:/code
@@ -35,7 +35,7 @@ redis:
     - "6379:6379"
 
 worker:
-  image: vanessa/sendit
+  image: pydicom/sendit
   command: celery worker -A sendit.celery -Q default -l debug -n default@%h
   volumes:
     - .:/code
