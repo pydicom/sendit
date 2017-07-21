@@ -23,6 +23,26 @@ bot.debug("This is a debug message")
 
 All logger commands will print the level by default, except for info, which looks like a message to the console (usually for the user), and except for quiet, which isn't a level that is used in code, but a level the user can specify to not print anything, ever.
 
+## Errors
+You can inspect errors via the batch view [interface](interface.md) or from the command line. To look for errors across all batches:
+
+```
+python manage.py batch_logs
+There are no batches with error.
+```
+
+and to select one or more specific batches based on their id (the number associated with the url in the browser, or the `batch.id` as a variable):
+
+```
+python manage.py batch_logs 1
+DEBUG Inspecting for errors for 1 batch ids
+There are no batches with error.
+
+python manage.py batch_logs 1 2
+DEBUG Inspecting for errors for 2 batch ids
+There are no batches with error.
+```
+
 
 ## Settings
 By default, the logger will have `debug` mode, which coincides with a level of `5`. You can customize this level at any point by setting the environment variable `SENDIT_MESSAGELEVEL`. In your `secrets.py` this might look like this:
