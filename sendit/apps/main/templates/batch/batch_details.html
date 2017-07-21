@@ -1,0 +1,75 @@
+{% extends "base/base.html" %}
+{% block content %}
+                <div class="row card" style="padding:30px; margin-left: 0px;margin-right: 0px;margin-top: 20px;">
+                    <div class="col-md-3">
+                        <h4 class="title">
+                        {% include "batch/status.html" %}
+                        </h4>
+                    </div>
+                    <div class="col-md-9">
+                        {% if batch.has_error %}
+                        <button style="float:right" class="btn btn-danger btn-fill">Batch has errors</button>
+                        {% else %}
+                        <button style="float:right" class="btn btn-success btn-fill">No errors</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+
+                            {% if batch.has_error %}
+                            <!-- Batch Errors -->
+                            <div class="header">
+                                <h4 class="title">Alerts</h4>
+                           </div>
+                            <div class="content table-responsive table-full-width">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <th>Message</th>
+                                    </thead>
+                                    <tbody>
+                                        {% for error in batch.logs.errors %}
+                                        <tr>
+                                            <td>{{ error }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
+
+                            {% if batch.image_set.count > 0 %}
+                            <div class="content table-responsive table-full-width">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <th></th>
+                                    	<th>UID</th>
+                                    	<th>Added</th>
+                                    	<th>Modified</th>
+                                    	<th>Status</th>
+                                    </thead>
+                                    <tbody>
+                                        {% for image in batch.image_set.all %}
+                                        <tr>
+                                                <td><a href="{% url 'image_details' image.id %}"><button class="btn btn-info btn-fill">View</button></a></td>
+                                                <td><a href="{% url 'image_details' image.id %}">{{ image.uid }}</a></td>
+                                        	<td>{{ image.add_date }}</td>
+                                        	<td>{{ image.modify_date }}</td>
+                                        	<td>{% include "batch/image_status.html" %}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div style="padding-top:30px">
+                                <p class="alert alert-info">There are no images in this batch.</p>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+
+{% endblock %}

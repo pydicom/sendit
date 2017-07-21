@@ -1,0 +1,9 @@
+{% if image.status == "NEW" %}
+<span class="alert alert-info">{{ image.status }}</span>
+{% endif %}
+{% if image.status == "DONE" %}
+<span class="alert alert-success">{{ image.status }}</span>
+{% endif %}
+{% if image.status == "ERROR" %}
+<span class="alert alert-danger">{{ image.status }}</span>
+{% endif %}

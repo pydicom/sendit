@@ -36,6 +36,7 @@ from django.shortcuts import (
 )
 from django.contrib.auth.models import User
 from sendit.apps.main.models import (
+    Image,
     Batch
 )
 from sendit.settings import MEDIA_ROOT
@@ -53,6 +54,17 @@ def get_batch(sid):
         raise Http404
     else:
         return batch
+
+
+def get_image(sid):
+    '''get a single report, or return 404'''
+    keyargs = {'id':sid}
+    try:
+        image = Image.objects.get(**keyargs)
+    except Image.DoesNotExist:
+        raise Http404
+    else:
+        return image
 
 
 def ls_fullpath(dirname,ext=None):
@@ -89,7 +101,9 @@ def add_batch_error(message,batch):
     '''
     bot.error(message)
     batch.has_error = True
-    batch.errors.append(message)
+    if "errors" not in batch.logs:
+        batch.logs['errors'] = []
+    batch.logs['errors'].append(message)
     batch.save()
     return batch  
 

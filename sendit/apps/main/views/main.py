@@ -24,10 +24,10 @@ SOFTWARE.
 
 from sendit.apps.main.models import (
     Batch,
-    Image,
-    BatchIdentifiers
+    Image
 )
 
+from sendit.apps.main.utils import get_batch
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -88,4 +88,18 @@ def settings_view(request):
     context['is_watching'] = is_watching()
  
     return render(request, 'main/settings.html', context)
+
+
+def batch_details(request,bid):
+    '''view details for a batch 
+    '''
+    batch = get_batch(bid)    
+    context = {"active":"dashboard",
+               "batch" : batch,
+               "title": batch.uid }
+
+    # Is the watcher running?
+    context['is_watching'] = is_watching()
+ 
+    return render(request, 'batch/batch_details.html', context)
 

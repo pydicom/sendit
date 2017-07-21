@@ -1,4 +1,5 @@
 '''
+
 Copyright (c) 2017 Vanessa Sochat
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,24 +22,44 @@ SOFTWARE.
 
 '''
 
-from django.views.generic.base import TemplateView
-from django.conf.urls import url, include
+from sendit.apps.main.models import (
+    Batch,
+    Image
+)
 
-from rest_framework import routers
-from rest_framework.authtoken import views as rest_views
-from rest_framework_swagger.views import get_swagger_view
+from sendit.apps.main.utils import get_image
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib import messages
 
-import sendit.apps.api.views as api_views
-from sendit.settings import API_VERSION
+from django.http import (
+    HttpResponse, 
+    JsonResponse
+)
 
-swagger_view = get_swagger_view(title='sendit API', url='')
-router = routers.DefaultRouter()
-router.register(r'^images', api_views.ImageViewSet)
-router.register(r'^batches', api_views.BatchViewSet)
+from django.http.response import (
+    HttpResponseRedirect, 
+    HttpResponseForbidden, 
+    Http404
+)
+
+from django.shortcuts import (
+    get_object_or_404, 
+    render_to_response, 
+    render, 
+    redirect
+)
+
+import os
 
 
-urlpatterns = [
+def image_details(request,iid):
+    '''view details for an image 
+    '''
+    image = get_image(iid)
+    context = {"active":"dashboard",
+               "image" : image,
+               "title": image.uid }
+ 
+    return render(request, 'images/image_details.html', context)
 
-    url(r'^$', swagger_view),
-    url(r'^docs$', api_views.api_view, name="api"),
-]

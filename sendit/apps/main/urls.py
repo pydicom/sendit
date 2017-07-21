@@ -30,6 +30,8 @@ import sendit.apps.main.views as views
 urlpatterns = [
     url(r'^$', views.index_view, name="home"),
     url(r'^settings$', views.settings_view, name="settings"),
+    url(r'^batch/(?P<bid>\d+)/$', views.batch_details, name="batch_details"),
+    url(r'^image/(?P<iid>\d+)/$', views.image_details, name="image_details"),
 ]
 
 

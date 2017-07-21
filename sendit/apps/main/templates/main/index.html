@@ -22,7 +22,7 @@
                             <div class="content table-responsive table-full-width">
                                 <table class="table table-striped">
                                     <thead>
-                                        <th>Batch ID</th>
+                                        <th>Name</th>
                                     	<th>Images</th>
                                     	<th>Created</th>
                                     	<th>Modified</th>
@@ -31,7 +31,7 @@
                                     <tbody>
                                         {% for batch in batches %}
                                         <tr>
-                                        	<td>{{ batch.id }}</td>
+                                        	<td><a href="{% url 'batch_details' batch.id %}">{{ batch.uid }}</a></td>
                                                 <td>{{ batch.image_set.count }}
                                         	<td>{{ batch.add_date }}</td>
                                         	<td>{{ batch.modify_date }}</td>

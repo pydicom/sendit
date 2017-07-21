@@ -17,7 +17,7 @@ The watcher status is determined by the presence of absence of the pid file, and
 
 or inactive:
 
-![img/watcher_inactive.png](img/watcher_inactive.png)
+![img/watched_inactive.png](img/watched_inactive.png)
 
 
 ## Batches
@@ -28,6 +28,19 @@ The dashboard also shows basic info about the batches. In the above pictures, th
 Given that a batch has errors, there will be a link to inspect the specific error message (the error tracking is implemented, but not yet the view).
 
 Next, learn about usage by reading about the [manager](manager.md).
+
+
+## Batch Details
+You can click on a batch name to see details for the batch. Importantly, if the batch has any errors during processing, a separate table (not shown in the image below) will appear for you to inspect.
+
+![img/batch_details.png](img/batch_details.png)
+
+
+## Image Details
+For quick visual inspection of an image, you can click on "View" under the batch view to access the image details view:
+
+
+![img/image_details.png](img/image_details.png)
 
 
 # API

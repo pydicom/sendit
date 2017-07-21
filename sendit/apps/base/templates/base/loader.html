@@ -1,0 +1,42 @@
+{% load staticfiles %}
+<style>
+#fade {
+    display: none;
+    position:absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+    z-index: 1001;
+    -moz-opacity: 0.9;
+    opacity: 0.8;
+    filter: alpha(opacity=90);
+}
+/*
+.loader {
+    border: 16px solid #f3f3f3; 
+    border-top: 16px solid #3498db; 
+    border-radius: 50%;
+    width: 160px;
+    height: 160px;
+    animation: spin 2s linear infinite;
+    position:absolute;
+    z-index:1002;
+    top: 25%;
+    left: 42%;
+}*/
+#loadfish {
+    position:absolute;
+    z-index:1002;
+    top: 25%;
+    left: 42%;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+<div id="fade"></div>
+<!--<div class="loader"></div>-->
+<img src="{% static 'img/logo/loading.gif'%}" style="display: none;" id="loadfish">

@@ -1,4 +1,5 @@
 '''
+
 Copyright (c) 2017 Vanessa Sochat
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,24 +22,48 @@ SOFTWARE.
 
 '''
 
-from django.views.generic.base import TemplateView
-from django.conf.urls import url, include
+from sendit.apps.main.models import (
+    Batch,
+    Image
+)
 
-from rest_framework import routers
-from rest_framework.authtoken import views as rest_views
-from rest_framework_swagger.views import get_swagger_view
+from sendit.apps.main.utils import get_batch
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib import messages
 
-import sendit.apps.api.views as api_views
-from sendit.settings import API_VERSION
+from django.http import (
+    HttpResponse, 
+    JsonResponse
+)
 
-swagger_view = get_swagger_view(title='sendit API', url='')
-router = routers.DefaultRouter()
-router.register(r'^images', api_views.ImageViewSet)
-router.register(r'^batches', api_views.BatchViewSet)
+from django.http.response import (
+    HttpResponseRedirect, 
+    HttpResponseForbidden, 
+    Http404
+)
 
+from django.shortcuts import (
+    get_object_or_404, 
+    render_to_response, 
+    render, 
+    redirect
+)
 
-urlpatterns = [
+import os
 
-    url(r'^$', swagger_view),
-    url(r'^docs$', api_views.api_view, name="api"),
-]
+def get_batch_context(bid):
+    '''a repeated sequence of calls to get the context
+    for a batch based on id'''
+    batch = get_batch(bid)    
+    context = {"active":"dashboard",
+               "batch" : batch,
+               "title": batch.uid }
+    return context
+
+def batch_details(request,bid):
+    '''view details for a batch 
+    '''
+    context = get_batch_context(bid)
+    return render(request, 'batch/batch_details.html', context)
+

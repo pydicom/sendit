@@ -1,0 +1,71 @@
+{% extends "base/base.html" %}
+{% load crispy_forms_tags %}
+{% load dictionary_extras %}
+{% load staticfiles %}
+{% load humanize %}
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" type="text/css" href="{% static "css/papaya.css" %}" />
+
+<script type="text/javascript">
+var params = {
+                "images": ["{{ image.image.url }}"]
+             }
+</script>
+<script type="text/javascript" src="{% static "js/papaya.js" %}"></script>
+<style>
+.outside_wrapper{ 
+    width:900px; height:740px; 
+    margin:20px 0px; 
+    border:0px solid transparent;
+    box-sizing: none !important;
+}
+.inside_wrapper{ 
+    width:100%; height:100%; 
+    position:relative;
+    box-sizing: none !important;
+}
+.som_image{ 
+    width:100%; height:100%; 
+    position:absolute; top:0px; left:0px;
+    box-sizing: none !important;
+}
+.button {
+    cursor: pointer;
+}
+.button:hover{
+    color: purple;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% include 'messages/messages.html' %}
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="header">
+                <h4 class="title">{{ image.uid }}</h4>
+            </div>
+            <div class="content">
+                <div class="outside_wrapper">
+                    <div class="inside_wrapper">
+                        <div class="papaya som_image" data-params="params"></div>
+                    </div>
+                </div>
+                <div class="footer">
+                    <hr>
+                    <div class="stats">
+                        <i class="ti-reload"></i> Updated {{ image.modify_date }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
