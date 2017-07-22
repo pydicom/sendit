@@ -10,7 +10,7 @@ DEIDENTIFY_RESTFUL=True
 
 # These credentials are required for the DASHER endpoint
 STANFORD_APPLICATION_CREDENTIALS='/code/.stanford'
-os.environ['STANFORD_APPLICATION_CREDENTIALS'] = STANFORD_APPLICATION_CREDENTIALS
+os.environ['STANFORD_CLIENT_SECRETS'] = STANFORD_APPLICATION_CREDENTIALS
 
 # If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
 DEIDENTIFY_PIXELS=False # currently not supported 
