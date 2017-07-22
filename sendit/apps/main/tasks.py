@@ -22,6 +22,7 @@ SOFTWARE.
 
 '''
 
+from sendit.logger import bot
 from celery.decorators import periodic_task
 from celery import (
     shared_task, 
@@ -99,8 +100,8 @@ def import_dicomdir(dicom_dir):
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
-            try:
 
+            try:
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
                 dicom_uid = os.path.basename(dcm_file)
@@ -109,37 +110,38 @@ def import_dicomdir(dicom_dir):
                 if dcm.get("BurnedInAnnotation") is not None:
                     message = "%s has burned pixel annotation, skipping" %dicom_uid
                     batch = add_batch_error(message,batch)
-
                 else:
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
-
                     # Save the dicom file to storage
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
 
                     # Only remove files successfully imported
                     patient_ids.append(dcm.PatientID)
-                    os.remove(dcm_file)
+                    #os.remove(dcm_file)
 
                 # Do check for different patient ids
                 if len(set(patient_ids)) > 1:                
                     message = "Batch %s has > 1 PatientID" %(batch)
                     batch = add_batch_error(message,batch)
 
-
             # Note that on error we don't remove files
             except InvalidDicomError:
                 message = "InvalidDicomError: %s skipping." %(dcm_file)
                 batch = add_batch_error(message,batch)
-               
             except KeyError:
                 message = "KeyError: %s is possibly invalid, skipping." %(dcm_file)
                 batch = add_batch_error(message,batch)
+            except Exception as e:
+                message = "Exception: %s, for %s, skipping." %(e, dcm_file)
 
 
+        # Save batch thus far
+        batch.save()
+         
         # If there were no errors on import, we should remove the directory
         if not batch.has_error:
 

@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     vim
 
+RUN pip install --upgrade pip
 RUN pip install cython
 RUN pip install numpy
 RUN pip install scikit-learn pandas h5py matplotlib
@@ -63,7 +64,7 @@ RUN pip install pyinotify
 
 # Install pydicom
 WORKDIR /tmp
-RUN git clone https://github.com/pydicom/pydicom
+RUN git clone https://github.com/vsoch/pydicom
 WORKDIR pydicom
 RUN python setup.py install
 

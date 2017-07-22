@@ -39,6 +39,8 @@ from sendit.apps.main.models import (
     Image,
     Batch
 )
+
+from sendit.logger import bot
 from sendit.settings import MEDIA_ROOT
 import os
 
