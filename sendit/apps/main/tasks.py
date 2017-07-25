@@ -100,7 +100,6 @@ def import_dicomdir(dicom_dir):
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
-
             try:
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
@@ -115,12 +114,14 @@ def import_dicomdir(dicom_dir):
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
+
                     # Save the dicom file to storage
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
 
                     # Only remove files successfully imported
-                    patient_ids.append(dcm.PatientID)
+                    if dcm.PatientID not in patient_ids:
+                        patient_ids.append(dcm.PatientID)
                     #os.remove(dcm_file)
 
                 # Do check for different patient ids
@@ -132,9 +133,11 @@ def import_dicomdir(dicom_dir):
             except InvalidDicomError:
                 message = "InvalidDicomError: %s skipping." %(dcm_file)
                 batch = add_batch_error(message,batch)
+
             except KeyError:
                 message = "KeyError: %s is possibly invalid, skipping." %(dcm_file)
                 batch = add_batch_error(message,batch)
+
             except Exception as e:
                 message = "Exception: %s, for %s, skipping." %(e, dcm_file)
 
@@ -146,7 +149,7 @@ def import_dicomdir(dicom_dir):
         if not batch.has_error:
 
             # Should only be called given no error, and should trigger error if not empty
-            os.rmdir(dicom_dir)
+            #os.rmdir(dicom_dir)
 
         # At the end, submit the dicoms to be deidentified as a batch 
         count = batch.image_set.count()

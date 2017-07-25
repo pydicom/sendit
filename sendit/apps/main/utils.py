@@ -105,7 +105,10 @@ def add_batch_error(message,batch):
     batch.has_error = True
     if "errors" not in batch.logs:
         batch.logs['errors'] = []
-    batch.logs['errors'].append(message)
+    # Only add the unique error once
+    if message not in batch.logs['errors']:
+        batch.logs['errors'].append(message)
+    batch.status = 'ERROR'
     batch.save()
     return batch  
 
