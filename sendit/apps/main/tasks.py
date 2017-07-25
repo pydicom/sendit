@@ -146,8 +146,8 @@ def import_dicomdir(dicom_dir):
         batch.save()
          
         # If there were no errors on import, we should remove the directory
-        if not batch.has_error:
-
+        #if not batch.has_error:
+            
             # Should only be called given no error, and should trigger error if not empty
             #os.rmdir(dicom_dir)
 
