@@ -76,6 +76,12 @@ def ls_fullpath(dirname,ext=None):
     return [os.path.join(dirname, f) for f in os.listdir(dirname)]
 
 
+def chunks(l, n):
+    '''Yield successive n-sized chunks from l.'''
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
 ### FILES ##############################################################
 
 def save_image_dicom(dicom,dicom_file,basename=None):

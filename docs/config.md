@@ -80,7 +80,16 @@ GOOGLE_CLOUD_STORAGE='radiology'
 GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
 ```
 
-Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). If this is set to None, it will not upload. Also note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
+Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). If this is set to None, it will not upload. Finally, to add a special header to signify a Google Storage project, you should add the name of the intended project to your header:
+
+```
+GOOGLE_PROJECT_ID_HEADER="12345"
+
+# Will produce this key/value header
+x-goog-project-id: 12345
+```
+
+Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
 
 
 ## Authentication

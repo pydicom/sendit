@@ -40,6 +40,7 @@ from django.conf import settings
 
 import collections
 import operator
+import shutil
 import os
 
 
@@ -165,8 +166,8 @@ class Image(models.Model):
         file to some new_basename.'''
         initial_path = self.image.path
         self.image.name = new_basename
-        new_path = settings.MEDIA_ROOT + self.image.name
-        os.rename(initial_path, new_path)
+        new_path = os.path.join(os.path.dirname(initial_path),self.image.name)
+        shutil.move(initial_path, new_path)
         self.save()
         return self
 

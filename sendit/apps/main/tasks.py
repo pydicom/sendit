@@ -40,6 +40,7 @@ from sendit.apps.main.models import (
 from sendit.apps.main.utils import (
     add_batch_error,
     change_status,
+    chunks,
     save_image_dicom,
 )
 
@@ -52,6 +53,7 @@ from som.api.identifiers.dicom import (
 from som.api.identifiers import Client
 
 from sendit.settings import (
+    GOOGLE_PROJECT_ID_HEADER,
     DEIDENTIFY_RESTFUL,
     DEIDENTIFY_PIXELS,
     SEND_TO_ORTHANC,
@@ -229,17 +231,26 @@ def get_identifiers(bid,study=None):
         ids = get_ids(dicom_files=dicom_files)
 
         bot.debug("som.client making request to deidentify batch %s" %(bid))
-        result = cli.deidentify(ids=ids,study=study)  # should return dict with "results"
 
-        if "results" in result:                  
-            batch_ids = BatchIdentifiers.objects.create(batch=batch,
-                                                        response=result['results'])
-            batch_ids.save()        
-            replace_identifiers.apply_async(kwargs={"bid":bid})
-        else:
-            message = "Error calling som uid endpoint: %s" %result
-            batch = add_batch_error(message,batch)
-        
+        # API can't handle a post of size ~few thosand, break into pieces
+        results = []
+        for entity in ids['identifiers']:
+            items = entity['items']
+            for itemset in chunks(items,500):
+                entity['items'] = itemset
+                request = {'identifiers': [entity] }
+                result = cli.deidentify(ids=request, study=study)  # should return dict with "results"
+                if "results" in result:    
+                    [results.append(x) for x in result['results']]
+                else:
+                    message = "Error calling som uid endpoint: %s" %result
+                    batch = add_batch_error(message,batch)
+            
+        # Create a batch for all results
+        batch_ids = BatchIdentifiers.objects.create(batch=batch,response=results)
+        batch_ids.save()        
+        replace_identifiers.apply_async(kwargs={"bid":bid})
+
 
     else:
         bot.debug("Restful de-identification skipped [DEIDENTIFY_RESTFUL is False]")
@@ -261,9 +272,6 @@ def replace_identifiers(bid):
         # replace ids to update the dicom_files (same paths)
         dicom_files = batch.get_image_paths()
 
-        # We are going to overwrite, they have same base
-        output_folder = os.path.dirname(dicom_files[0])
-
         # Prepare the identifiers - not this isn't necessary, but we do it
         # so we can rename the images before upload
         ids = prepare_identifiers(response=batch_ids.response,
@@ -276,14 +284,13 @@ def replace_identifiers(bid):
         # Now we have a lookup with ids[entity_id][field]
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
-
+            output_folder = os.path.dirname(dcm.image.file.name)
             eid = dicom.get(ENTITY_ID)
             iid = dicom.get(ITEM_ID)
-
-            # Rename the dicon based on suid
+            # Rename the dicom based on suid
             if eid is not None and iid is not None:
                 item_suid = ids[eid][iid]['item_id']
-                dicom = dicom.rename("%s.dcm" %item_suid)
+                dicom = dcm.rename("%s.dcm" %item_suid)
 
         # Get renamed files
         dicom_files = batch.get_image_paths()
@@ -330,19 +337,22 @@ def upload_storage(bid):
             # Question: what fields to include as metadata?
             # all in header (this includes image dimensions)
             # study
+          
+            if GOOGLE_PROJECT_ID_HEADER is not None:
+                client.add_headers({"x-goog-project-id": GOOGLE_PROJECT_ID_HEADER})
 
             # PREPARE FILES HERE
             # updated files...
+
+            client = Client(bucket_name=GOOGLE_CLOUD_STORAGE)
+            collection = client.create_collection(uid=SOM_STUDY)
 
             # Upload the dataset
             client.upload_dataset(images=updated_files,
                                   collection=collection,
                                   uid=metadata['id'],
                                   entity_metadata=metadata)
-  
-            client = Client(bucket_name=GOOGLE_CLOUD_STORAGE)
-            collection = client.create_collection(uid=SOM_STUDY)
-
+ 
         else:
             message = "batch %s send to Google skipped, no storage collection defined." %batch
             batch = add_batch_error(message,batch)
