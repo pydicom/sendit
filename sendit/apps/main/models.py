@@ -161,15 +161,18 @@ class Image(models.Model):
         return(read_file(self.image.path,
                          force=True))
 
-    def rename(self,new_basename):
+    def rename(self,new_basename,uid=None):
         ''' rename will name the image path of an already uploaded
         file to some new_basename.'''
+        if uid is not None:
+            self.uid = uid
         new_dir = os.path.dirname(self.image.name)
         initial_path = self.image.path
         new_name = "%s/%s" %(new_dir,new_basename)
         self.image.name = new_name
         new_path = os.path.join(settings.MEDIA_ROOT, new_name)
         shutil.move(initial_path, new_path)
+        self.image.file.name = self.image.path
         self.save()
         return self
 

@@ -29,13 +29,13 @@ ITEM_ID="SOPInstanceUID"
 #####################################################
 
 # Orthanc Storage
-SEND_TO_ORTHANC=True
+SEND_TO_ORTHANC=False
 ORTHANC_IPADDRESS="127.0.0.1"
 ORTHANC_PORT=4747
 
 # Google Storage
 # Should we send to Google at all?
-SEND_TO_GOOGLE=False
+SEND_TO_GOOGLE=True
 
 # These credentials are required for Google
 GOOGLE_APPLICATION_CREDENTIALS='/code/.google'

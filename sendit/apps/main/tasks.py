@@ -45,6 +45,7 @@ from sendit.apps.main.utils import (
 )
 
 from som.api.identifiers.dicom import (
+    get_deid,
     get_identifiers as get_ids,
     replace_identifiers as replace_ids,
     prepare_identifiers
@@ -53,6 +54,7 @@ from som.api.identifiers.dicom import (
 from som.api.identifiers import Client
 
 from sendit.settings import (
+    GOOGLE_APPLICATION_CREDENTIALS,
     GOOGLE_PROJECT_ID_HEADER,
     DEIDENTIFY_RESTFUL,
     DEIDENTIFY_PIXELS,
@@ -116,7 +118,6 @@ def import_dicomdir(dicom_dir):
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
-
                     # Save the dicom file to storage
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
@@ -128,21 +129,17 @@ def import_dicomdir(dicom_dir):
 
                 # Do check for different patient ids
                 if len(set(patient_ids)) > 1:                
-                    message = "Batch %s has > 1 PatientID" %(batch)
                     batch = add_batch_error(message,batch)
 
             # Note that on error we don't remove files
             except InvalidDicomError:
                 message = "InvalidDicomError: %s skipping." %(dcm_file)
                 batch = add_batch_error(message,batch)
-
             except KeyError:
                 message = "KeyError: %s is possibly invalid, skipping." %(dcm_file)
                 batch = add_batch_error(message,batch)
-
             except Exception as e:
                 message = "Exception: %s, for %s, skipping." %(e, dcm_file)
-
 
         # Save batch thus far
         batch.save()
@@ -221,7 +218,7 @@ def get_identifiers(bid,study=None):
         images = batch.image_set.all()
 
         # Create an som client
-        cli = Client()
+        cli = Client(study=study)
 
         # Process all dicoms at once, one call to the API
         dicom_files = batch.get_image_paths()
@@ -281,7 +278,7 @@ def replace_identifiers(bid):
     '''
     try:         
         batch = Batch.objects.get(id=bid)
-        batch_ids = BatchIdentifiers.get(batch=batch)        
+        batch_ids = BatchIdentifiers.objects.get(batch=batch)        
 
         # replace ids to update the dicom_files (same paths)
         dicom_files = batch.get_image_paths()
@@ -301,20 +298,22 @@ def replace_identifiers(bid):
             output_folder = os.path.dirname(dcm.image.file.name)
             eid = dicom.get(ENTITY_ID)
             iid = dicom.get(ITEM_ID)
+
             # Rename the dicom based on suid
             if eid is not None and iid is not None:
                 item_suid = ids[eid][iid]['item_id']
                 dicom = dcm.rename("%s.dcm" %item_suid)
 
         # Get renamed files
+        deid = get_deid('som')
         dicom_files = batch.get_image_paths()
         updated_files = replace_ids(dicom_files=dicom_files,
                                     response=batch_ids.response,
                                     overwrite=True,
+                                    deid=deid,
                                     output_folder=output_folder)  
 
         DEIDENTIFY_PIXELS=False
-
         change_status(batch,"DONEPROCESSING")
         batch.change_images_status('DONEPROCESSING')
         
@@ -340,6 +339,7 @@ def upload_storage(bid):
 
     if SEND_TO_ORTHANC is True:
         bot.log("Sending %s to %s:%s" %(batch,ORTHANC_IPADDRESS,ORTHANC_PORT))
+        bot.log("Beep boop, not configured yet!")
         # do the send here!
 
     if SEND_TO_GOOGLE is True and GOOGLE_CLOUD_STORAGE not in [None,""]:
@@ -347,13 +347,15 @@ def upload_storage(bid):
         if GOOGLE_STORAGE_COLLECTION is not None:
             from som.api.google.storage import Client
             bot.log("Uploading to Google Storage %s" %(GOOGLE_CLOUD_STORAGE))
+            client = Client(bucket_name=GOOGLE_CLOUD_STORAGE)
+
+            if GOOGLE_PROJECT_ID_HEADER is not None:
+                client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
 
             # Question: what fields to include as metadata?
             # all in header (this includes image dimensions)
             # study
           
-            if GOOGLE_PROJECT_ID_HEADER is not None:
-                client.add_headers({"x-goog-project-id": GOOGLE_PROJECT_ID_HEADER})
 
             # PREPARE FILES HERE
             # updated files...
