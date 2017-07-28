@@ -234,18 +234,32 @@ def get_identifiers(bid,study=None):
 
         # API can't handle a post of size ~few thosand, break into pieces
         results = []
+
         for entity in ids['identifiers']:
-            items = entity['items']
-            for itemset in chunks(items,500):
-                entity['items'] = itemset
-                request = {'identifiers': [entity] }
+            entity_parsed = None
+            template = entity.copy()
+            items_response = []
+
+            for itemset in chunks(entity['items'],1000):
+                template['items'] = itemset
+                request = {'identifiers': [template] }             
                 result = cli.deidentify(ids=request, study=study)  # should return dict with "results"
-                if "results" in result:    
-                    [results.append(x) for x in result['results']]
+
+                if "results" in result:
+                    for entity_parsed in result['results']:                        
+                        if 'items' in entity_parsed:
+                            items_response += entity_parsed['items']
+                    if 'items' in result['results']:
+                        print("Adding %s items" %len(result['results']['items']))
+                        items_response += result['results']['items']
                 else:
                     message = "Error calling som uid endpoint: %s" %result
                     batch = add_batch_error(message,batch)
-            
+
+            # For last entity, compile items with entity response
+            entity_parsed['items'] = items_response
+            results.append(entity_parsed)
+
         # Create a batch for all results
         batch_ids = BatchIdentifiers.objects.create(batch=batch,response=results)
         batch_ids.save()        

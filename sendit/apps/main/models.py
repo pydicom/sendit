@@ -164,9 +164,11 @@ class Image(models.Model):
     def rename(self,new_basename):
         ''' rename will name the image path of an already uploaded
         file to some new_basename.'''
+        new_dir = os.path.dirname(self.image.name)
         initial_path = self.image.path
-        self.image.name = new_basename
-        new_path = os.path.join(os.path.dirname(initial_path),self.image.name)
+        new_name = "%s/%s" %(new_dir,new_basename)
+        self.image.name = new_name
+        new_path = os.path.join(settings.MEDIA_ROOT, new_name)
         shutil.move(initial_path, new_path)
         self.save()
         return self
