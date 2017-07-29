@@ -68,6 +68,41 @@ RUN git clone https://github.com/vsoch/pydicom
 WORKDIR pydicom
 RUN python setup.py install
 
+# This is needed for certificate on server, interactive run for now
+# http://www.zoharbabin.com/install-ssl-on-ubuntu-and-enable-https/
+WORKDIR /tmp
+RUN openssl genrsa -out server.key 4096 && mv server.key /etc/ssl/certs
+RUN openssl dhparam -out dhparam.pem 4096 && mv dhparam.pem /etc/ssl/certs
+RUN cat > csr_details.txt <<-EOF
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+distinguished_name = dn
+ 
+[ dn ]
+C=US
+ST=California
+L=San Mateo County
+O=End Point
+OU=Sendit
+emailAddress=vsochat@stanford.edu
+CN = cci-docker-webapp-p03 
+EOF
+
+# call openssl now by piping the newly created file in
+RUN openssl req -new -sha256 -nodes -out server.csr -newkey rsa:2048 -keyout server.key -config <( cat csr_details.txt )
+RUN openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+
+RUN cp server.key /etc/ssl/private
+RUN cp server.crt /etc/ssl/certs
+
+# Reinstall root certificates
+RUN apt-get install --reinstall ca-certificates
+RUN mkdir /usr/local/share/ca-certificates/cacert.org
+RUN wget -P /usr/local/share/ca-certificates/cacert.org http://www.cacert.org/certs/root.crt http://www.cacert.org/certs/class3.crt
+RUN update-ca-certificates
+
 RUN mkdir /code
 RUN mkdir -p /var/www/images
 RUN mkdir /data
