@@ -72,6 +72,7 @@ RUN mkdir /code
 RUN mkdir -p /var/www/images
 RUN mkdir /data
 WORKDIR /code
+ADD . /code/
 RUN /usr/bin/yes | pip uninstall cython
 RUN apt-get remove -y gfortran
 
@@ -102,7 +103,6 @@ RUN apt-get autoremove -y
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-ADD . /code/
 CMD /code/run_uwsgi.sh
 
 EXPOSE 3031
