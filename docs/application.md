@@ -63,4 +63,4 @@ Upon completion, we will want some level of cleanup of both the database, and th
 If any further logging is needed (beyond the watcher) we should discuss (see questions below)
 
 
-Now let's [start the application](deploy.md)!
+Now let's [start the application](start.md)!

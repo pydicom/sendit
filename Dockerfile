@@ -79,7 +79,7 @@ RUN apt-get remove -y gfortran
 # http://www.zoharbabin.com/install-ssl-on-ubuntu-and-enable-https/
 WORKDIR /tmp
 RUN openssl genrsa -out server.key 4096 && mv server.key /etc/ssl/certs
-RUN openssl dhparam -out dhparam.pem 4096 && mv dhparam.pem /etc/ssl/certs
+#RUN openssl dhparam -out dhparam.pem 4096 && mv dhparam.pem /etc/ssl/certs
 
 RUN cp /code/csr_details.txt /tmp
 WORKDIR /tmp
