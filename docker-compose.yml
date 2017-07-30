@@ -21,7 +21,6 @@ nginx:
   volumes:
     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     - ./uwsgi_params.par:/etc/nginx/uwsgi_params.par:ro
-    - /etc/ssl/certs:/etc/ssl/certs:ro
   volumes_from:
     - uwsgi
   links:
