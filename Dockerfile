@@ -56,7 +56,7 @@ RUN pip install pygments
 RUN pip install django-lockdown
 RUN pip install xmltodict
 RUN pip install grpcio
-RUN pip install som
+#RUN pip install som
 RUN pip install django-cors-headers
 RUN pip install django-user-agents
 RUN pip install django-guardian
@@ -69,6 +69,17 @@ RUN git clone https://github.com/vsoch/pydicom
 WORKDIR pydicom
 RUN python setup.py install
 
+# deid
+WORKDIR /tmp
+RUN git clone https://github.com/pydicom/deid
+WORKDIR /tmp/deid
+RUN python setup.py install
+
+# som
+WORKDIR /tmp
+RUN git clone https://github.com/vsoch/som
+WORKDIR /tmp/som
+RUN python setup.py install
 
 
 RUN mkdir /code
