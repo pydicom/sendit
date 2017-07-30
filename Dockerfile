@@ -69,6 +69,8 @@ RUN git clone https://github.com/vsoch/pydicom
 WORKDIR pydicom
 RUN python setup.py install
 
+
+
 RUN mkdir /code
 RUN mkdir -p /var/www/images
 RUN mkdir /data
