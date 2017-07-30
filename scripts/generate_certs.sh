@@ -3,7 +3,6 @@ cd /tmp
 openssl genrsa -out server.key 4096 && mv server.key /etc/ssl/certs
 
 cp /code/csr_details.txt /tmp
-WORKDIR /tmp
 echo CN = \"cci-docker-webapp-p03.stanford.edu\" >> csr_details.txt
 
 # call openssl now by piping the newly created file in
