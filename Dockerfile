@@ -77,45 +77,6 @@ ADD . /code/
 RUN /usr/bin/yes | pip uninstall cython
 RUN apt-get remove -y gfortran
 
-# This is needed for certificate on server, interactive run for now
-WORKDIR /tmp
-RUN openssl genrsa -out server.key 4096 && mv server.key /etc/ssl/certs
-#RUN openssl dhparam -out dhparam.pem 4096 && mv dhparam.pem /etc/ssl/certs
-
-RUN cp /code/csr_details.txt /tmp
-WORKDIR /tmp
-RUN echo CN = \"`hostname`\" >> csr_details.txt
-
-# call openssl now by piping the newly created file in
-RUN openssl req -new -sha256 -nodes -out server.csr -newkey rsa:2048 -keyout server.key -subj="/C=US/ST=California/L=San Mateo County/O=End Point/OU=Sendit"
-#config <`cat csr_details.txt`
-RUN openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
-
-RUN cp server.key /etc/ssl/private
-RUN cp server.crt /etc/ssl/certs
-
-# Create the challenge folder in the webroot
-RUN mkdir -p /var/www/html/.well-known/acme-challenge/
-RUN chown $USER -R /var/www/html/
-
-# Get a signed certificate with acme-tiny
-RUN mkdir /opt/acme_tiny
-RUN git clone https://github.com/diafygi/acme-tiny
-RUN mv acme-tiny /opt/acme-tiny/
-RUN chown $USER -R /opt/acme-tiny
-
-RUN python /opt/acme-tiny/acme_tiny.py --account-key /etc/ssl/certs/server.key --csr /etc/ssl/certs/server.csr --acme-dir /var/www/html/.well-known/acme-challenge/ > ./signed.crt
-
-RUN wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
-RUN cat signed.crt intermediate.pem > chained.pem
-RUN mv chained.pem /etc/ssl/certs/
-
-# Reinstall root certificates
-RUN apt-get install -y ca-certificates
-RUN mkdir /usr/local/share/ca-certificates/cacert.org
-RUN wget -P /usr/local/share/ca-certificates/cacert.org http://www.cacert.org/certs/root.crt http://www.cacert.org/certs/class3.crt
-RUN update-ca-certificates
-
 RUN apt-get autoremove -y
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
