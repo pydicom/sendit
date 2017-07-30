@@ -237,7 +237,7 @@ def get_identifiers(bid,study=None):
             template = entity.copy()
             items_response = []
 
-            for itemset in chunks(entity['items'],1000):
+            for itemset in chunks(entity['items'],10):
                 template['items'] = itemset
                 request = {'identifiers': [template] }             
                 result = cli.deidentify(ids=request, study=study)  # should return dict with "results"
@@ -246,6 +246,7 @@ def get_identifiers(bid,study=None):
                     for entity_parsed in result['results']:                        
                         if 'items' in entity_parsed:
                             items_response += entity_parsed['items']
+
                     if 'items' in result['results']:
                         print("Adding %s items" %len(result['results']['items']))
                         items_response += result['results']['items']
