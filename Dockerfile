@@ -87,7 +87,7 @@ WORKDIR /tmp
 RUN echo CN = \"`hostname`\" >> csr_details.txt
 
 # call openssl now by piping the newly created file in
-RUN openssl req -new -sha256 -nodes -out server.csr -newkey rsa:2048 -keyout server.key -config <( cat csr_details.txt )
+RUN openssl req -new -sha256 -nodes -out server.csr -newkey rsa:2048 -keyout server.key -config <`cat csr_details.txt`
 RUN openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
 
 RUN cp server.key /etc/ssl/private
