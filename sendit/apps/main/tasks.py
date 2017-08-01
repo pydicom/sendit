@@ -44,11 +44,11 @@ from sendit.apps.main.utils import (
     save_image_dicom,
 )
 
+from deid.dicom import get_identifiers as get_ids
 from som.api.identifiers.dicom import (
     get_deid,
-    get_identifiers as get_ids,
     replace_identifiers as replace_ids,
-    prepare_identifiers
+    prepare_identifiers_request
 )
 
 from som.api.identifiers import Client
@@ -224,20 +224,26 @@ def get_identifiers(bid,study=None):
         dicom_files = batch.get_image_paths()
         batch.change_images_status('PROCESSING')
  
-        # Returns dictionary with {"identifiers": [ E1,E2 ]}
-        ids = get_ids(dicom_files=dicom_files)
+        # deid get_identifiers: returns ids[entity][item] = {"field":"value"}
+        ids = get_ids(dicom_files=dicom_files,
+                      expand_sequences=True)  # expand sequences to flat structure
+
+        # Prepare identifiers with only minimal required
+        request = prepare_identifiers_request(ids) # entity_custom_fields: True
+                                                   # item_custom_fields: False 
 
         bot.debug("som.client making request to deidentify batch %s" %(bid))
 
         # API can't handle a post of size ~few thosand, break into pieces
         results = []
 
+        # TODO: should be able to do this with one call!
         for entity in ids['identifiers']:
             entity_parsed = None
             template = entity.copy()
             items_response = []
 
-            for itemset in chunks(entity['items'],10):
+            for itemset in chunks(entity['items'],100):
                 template['items'] = itemset
                 request = {'identifiers': [template] }             
                 result = cli.deidentify(ids=request, study=study)  # should return dict with "results"
@@ -246,10 +252,10 @@ def get_identifiers(bid,study=None):
                     for entity_parsed in result['results']:                        
                         if 'items' in entity_parsed:
                             items_response += entity_parsed['items']
-
                     if 'items' in result['results']:
                         print("Adding %s items" %len(result['results']['items']))
                         items_response += result['results']['items']
+
                 else:
                     message = "Error calling som uid endpoint: %s" %result
                     batch = add_batch_error(message,batch)
@@ -259,7 +265,9 @@ def get_identifiers(bid,study=None):
             results.append(entity_parsed)
 
         # Create a batch for all results
-        batch_ids = BatchIdentifiers.objects.create(batch=batch,response=results)
+        batch_ids = BatchIdentifiers.objects.create(batch=batch,
+                                                    response=results,
+                                                    ids=ids)
         batch_ids.save()        
         replace_identifiers.apply_async(kwargs={"bid":bid})
 
@@ -284,6 +292,11 @@ def replace_identifiers(bid):
         # replace ids to update the dicom_files (same paths)
         dicom_files = batch.get_image_paths()
 
+        # STOPPED HERE - we need to do the following:
+        # 1) use response from API to deidentify all fields in batch.ids
+        # 2) replace data in dicoms with MINIMUM required
+        # 3) save newly de-identified ids for storage upload
+
         # Prepare the identifiers - not this isn't necessary, but we do it
         # so we can rename the images before upload
         ids = prepare_identifiers(response=batch_ids.response,
@@ -291,6 +304,9 @@ def replace_identifiers(bid):
 
         # Save the identifers for adding as metadata to image files later
         batch_ids.ids = ids
+
+        #TODO: these ids data should be sent to storage, after de-identified
+
         batch_ids.save()
 
         # Now we have a lookup with ids[entity_id][field]

@@ -1,7 +1,66 @@
 # De-id Request
 De-identification happens by way of a series of celery tasks defined in [main/tasks.py](../sendit/apps/main/tasks.py) that are triggered by the first task that adds a complete set of dicom files (beloning to a dataset with one accession number) to the database. The tasks include the following:
 
- - The first task `get_identifiers` under [main/tasks.py](sendit/apps/main/tasks.py) takes in a batch ID, and uses that batch to look up images, and send a RESTful call to some API point to return fields to replace in the data. The JSON response should be saved to an `BatchIdentifiers` object along with a pointer to the `Batch`.
+## Get Identifiers
+The first task `get_identifiers` under [main/tasks.py](sendit/apps/main/tasks.py) takes in a batch ID, and uses that batch to look up images, and send a RESTful call to some API point to return fields to replace in the data. A few notes:
+
+ - we use the defaults for entity id and item id header fields (`PatientID` and `SOPInstanceUID`, respectively) and these are defined in the deid `dicom/config.json` file. If you want to change this in the sendit application, the `get_identifiers` (imported as `get_ids`) can take an optional `entity_id="CustomHeaderID"` and `item_id="CustomItemID"` fields.
+ - This function only skips over returning pixel data. This means that all header fields with value not None or blank are returned. (Items in sequences are unwrapped ??) Private values are not returned.
+
+The result of a call to `get_identifiers` is a dictionary data structure, with keys as entity ids, and items as another dictionary of key value pairs (header fields and values) for the item. This is nice for organization, but isn't what DASHER is expecting, and isn't the minimum set. Thus, we then use the function `prepare_request_identifiers` in `from som.api.identifiers.dicom`, which extracts the minimal fields needed from the `settings` module in the same folder. We use the defaults of the function with `entity_custom_fields` to true (meaning we send custom entity fields to DASHER and `item_custom_fields` to false (meaning we don't send item custom fields). An example extracted identifier might look like this:
+
+```
+{
+   "items":[
+      {
+         "id":"x.x.x.x.x.x",
+         "id_source":"SOPInstanceUID",
+         "custom_fields":[
+
+         ],
+         "id_timestamp":"2000-01-11T00:00:00Z"
+      }, ...
+
+   ],
+   "id":"1234567",
+   "id_source":"PatientID",
+   "custom_fields":[
+      {
+         "value":"MICKEY^MOUSE^M",
+         "key":"PatientName"
+      },
+      {
+         "value":"MICKEY^MOUSE^M",
+         "key":"OtherPatientNames"
+      },
+      {
+         "value":"MMMMMM",
+         "key":"AccessionNumber"
+      },
+      {
+         "value":"19860512",
+         "key":"PatientBirthDate"
+      },
+      {
+         "value":"Lucas^George^W MD",
+         "key":"ReferringPhysicianName"
+      },
+      {
+         "value":"11587441",
+         "key":"PatientID"
+      },
+   ],
+   "id_timestamp":"2000-01-11T00:00:00Z"
+}
+```
+
+These fields are fields that absolutely must be stored within DASHER, and thus are extracted into a formatted response for the DASHER API. 
+
+We originally were sending all of this data to the som DASHER endpoint, primarily with an entity id and timestamp, and then a huge list of `custom_fields` for each item and entity. This was a very slow process, and for purposes of searching, it puts a huge burden on DASHER for doing tasks outside of simple identity management. We have decided to try a different strategy. We send the minimum amount of data to DASHER to get back date jitters and item ids, and then the rest of the data gets put (de-identified) into Google Datastore.
+
+
+
+The JSON response should be saved to an `BatchIdentifiers` object along with a pointer to the `Batch`.
  - The second task `replace_identifers` also under [main/tasks.py](sendit/apps/main/tasks.py) then loads this object, does whatever work is necessary for the data, and then puts the data in the queue for storage.
 
 The entire process of starting with an image, generating a request with some specific set of variables and actions to take, and then after the response is received, using it to deidentify the data, lives outside of this application with the [stanford open modules](https://github.com/vsoch/som/tree/master/som/api/identifiers/dicom) for python with the identifiers api client. SOM is a set of open source python modules that (yes, it is purposefully done so that som also implies "School of Medicine" `:L)`) serve the client, and plugins for working with different data types. If you are interested in how this process is done, we recommend reading the [README](https://github.com/vsoch/som/blob/master/som/api/identifiers/dicom/README.md).
