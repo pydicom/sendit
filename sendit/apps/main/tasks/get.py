@@ -55,7 +55,7 @@ from som.api.identifiers import Client
 
 from sendit.settings import (
     DEIDENTIFY_RESTFUL,
-    DEIDENTIFY_PIXELS
+    DEIDENTIFY_PIXELS,
     SOM_STUDY
 )
 
