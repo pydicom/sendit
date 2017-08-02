@@ -29,13 +29,6 @@ from sendit.apps.main.models import (
     Image
 )
 
-from sendit.apps.main.utils import (
-    add_batch_error,
-    change_status,
-    chunks,
-    save_image_dicom,
-)
-
 from deid.dicom import get_identifiers as get_ids
 from som.api.identifiers import (
     get_deid,
