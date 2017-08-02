@@ -29,13 +29,6 @@ from sendit.apps.main.models import (
     Image
 )
 
-from deid.dicom import get_identifiers as get_ids
-from som.api.identifiers import (
-    get_deid,
-    clean_identifiers,
-    update_identifiers
-)
-
 from django.conf import settings
 import os
 
