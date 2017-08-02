@@ -42,11 +42,8 @@ from sendit.apps.main.tasks.utils import (
 
 from deid.data import get_deid
 from deid.identifiers import clean_identifiers
-
 from som.api.identifiers import update_identifiers
-
 from som.api.identifiers.dicom import prepare_identifiers
-
 from sendit.apps.main.tasks.finish import upload_storage
 
 from sendit.settings import (
@@ -120,7 +117,7 @@ def replace_identifiers(bid):
         # 3) use response from API to deidentify all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
         #                        uses deid.dicom, default Blank
-        cleaned = clean_identifiers(ids=batch_ids.ids, default="REMOVE")
+        cleaned = clean_identifiers(ids=batch_ids.ids, default="KEEP")
 
         # cleaned is a lookup with ids[entity_id][field]
         batch_ids.cleaned = cleaned 
@@ -141,7 +138,7 @@ def replace_identifiers(bid):
                 dicom = dcm.rename("%s.dcm" %item_suid)
 
         # Get renamed files
-        deid = get_deid('dicom')
+        deid = get_deid('dicom.blacklist')
         dicom_files = batch.get_image_paths()
         updated_files = replace_ids(dicom_files=dicom_files,
                                     response=batch_ids.response,
