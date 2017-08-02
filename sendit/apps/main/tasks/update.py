@@ -35,7 +35,7 @@ from sendit.apps.main.models import (
     Image
 )
 
-from .utils import (
+from sendit.apps.main.tasks.utils import (
     add_batch_error,
     change_status
 )
@@ -47,7 +47,7 @@ from som.api.identifiers import update_identifiers
 
 from som.api.identifiers.dicom import prepare_identifiers
 
-from .finish import upload_storage
+from sendit.apps.main.tasks.finish import upload_storage
 
 from sendit.settings import (
     DEIDENTIFY_PIXELS,
@@ -118,8 +118,9 @@ def replace_identifiers(bid):
         batch_ids.save()
         
         # 3) use response from API to deidentify all fields in batch.ids
-        cleaned = clean_identifiers(ids=batch_ids.ids,
-                                    lookup=batch_ids.response)
+        # clean_identifiers(ids, deid=None, image_type=None, default=None)
+        #                        uses deid.dicom, default Blank
+        cleaned = clean_identifiers(ids=batch_ids.ids, default="REMOVE")
 
         # cleaned is a lookup with ids[entity_id][field]
         batch_ids.cleaned = cleaned 

@@ -140,15 +140,18 @@ Essentially the `ids` datastructure is returned and updated with our response fr
 
 
 ### 2. Clean Identifiers
-Let's review where we are at. The header metadata was originally extracted into the variable `ids` (saved under `batch_ids.ids`) and then updated with the content from a call to the DASHER API (again updated to `batch_ids.ids`) and now we want to give this data structure to a function in deid called `clean_identifiers`. This function is going to do the majority of work to do replacements, and apply a set of rules we have specified in our [som.deid](). The clean function will also take into account the default set of values to keep, which are specified in the deid module's [config.json]().
+Let's review where we are at. The header metadata was originally extracted into the variable `ids` (saved under `batch_ids.ids`) and then updated with the content from a call to the DASHER API (again updated to `batch_ids.ids`) and now we want to give this data structure to a function in deid called `clean_identifiers`. This function is going to do the majority of work to do replacements, and apply a set of rules we have specified in our [som.deid](https://github.com/pydicom/deid/blob/master/deid/data/deid.dicom). The clean function will also take into account the default set of values to keep, which are specified in the deid module's [config.json](https://github.com/vsoch/som/blob/master/som/api/identifiers/dicom/settings.py#L28). For the data sent to Google Cloud, since it doesn't make sense to send an empty field, the default action is `REMOVE`.
 
+```
+WARNING Field PresentationLUTShape is not present.
+WARNING Field ContentLabel is not present.
+WARNING Field ImageRotation is not present.
+WARNING Field TimezoneOffsetFromUTC is not present.
+WARNING 38 fields set for default action REMOVE
+DEBUG StudyDate,SeriesInstanceUID,PatientName,PerformedProcedureStepStartDate,AcquisitionDate,AccessionNumber,RequestingService,ContentDate,RequestAttributesSequence,StationName,jitter,SeriesTime,ReferringPhysicianName,PatientAddress,item_timestamp,DistanceSourceToDetector,StudyTime,SeriesDate,Exposure,StudyInstanceUID,PatientAge,NameOfPhysiciansReadingStudy,AdditionalPatientHistory,DistanceSourceToPatient,PerformingPhysicianName,entity_id,InstitutionName,InstanceCreationTime,PerformedProcedureStepDescription,FillerOrderNumberImagingServiceRequest,item_id,PerformedProcedureStepStartTime,ContentTime,AcquisitionTime,entity_timestamp,SeriesNumber,StudyID,OperatorsName
+```
 
-### 3. Clean Images
-Once the identifiers are cleaned, this means that we can iterate through the images, and update the header fields with our cleaned data structure. In addition, the images are renamed according to their assigned suid.
-
-**Vanessa still checking this over for re-write**
-
-
+This same set of operations and standard is done for the imaging data, but the default action is `BLANK` so all original headers are preserved. Sequences are removed by default. In addition, the images are renamed according to their assigned suid.
 
 ## Customizing De-identification
 If you have a different use case, you have several options for customizing this step.
