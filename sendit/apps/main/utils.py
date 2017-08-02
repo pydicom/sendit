@@ -23,25 +23,13 @@ SOFTWARE.
 '''
 
 from django.core.files import File
-from django.http.response import (
-    HttpResponseRedirect, 
-    HttpResponseForbidden, 
-    Http404
-)
-from django.shortcuts import (
-    get_object_or_404, 
-    render_to_response, 
-    render, 
-    redirect
-)
-from django.contrib.auth.models import User
+from django.http.response import Http404
 from sendit.apps.main.models import (
     Image,
     Batch
 )
 
 from sendit.logger import bot
-from sendit.settings import MEDIA_ROOT
 import os
 
 
@@ -74,63 +62,3 @@ def ls_fullpath(dirname,ext=None):
     if ext is not None:
         return [os.path.join(dirname, f) for f in os.listdir(dirname) if f.endswith(ext)]
     return [os.path.join(dirname, f) for f in os.listdir(dirname)]
-
-
-def chunks(l, n):
-    '''Yield successive n-sized chunks from l.'''
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-
-### FILES ##############################################################
-
-def save_image_dicom(dicom,dicom_file,basename=None):
-    '''save image dicom will save a dicom file to django's media
-    storage, for this application defined under /images.
-    :param dicom: the main.Image instance 
-    :param dicom_file: the dicom file (usually in /data) to save
-    '''
-    if basename is None:
-        basename = os.path.basename(dicom_file)
-
-    with open(dicom_file,'rb') as filey:
-              django_file = File(filey)
-              dicom.image.save(basename,
-                               django_file,
-                               save=True)  
-    dicom.save()
-    return dicom
-
-
-## MODELS ##############################################################
-
-def add_batch_error(message,batch):
-    '''add batch error will log an error, and flag the batch to have it.
-    '''
-    bot.error(message)
-    batch.has_error = True
-    if "errors" not in batch.logs:
-        batch.logs['errors'] = []
-    # Only add the unique error once
-    if message not in batch.logs['errors']:
-        batch.logs['errors'].append(message)
-    batch.status = 'ERROR'
-    batch.save()
-    return batch  
-
-
-def change_status(images,status):
-    '''change status will update an instance status
-     to the status choice provided. This works for batch
-    and images
-    '''
-    updated = []
-    if not isinstance(images,list):
-        images = [images]
-    for image in images:
-        image.status=status
-        image.save()
-        updated.append(image)
-    if len(updated) == 1:
-        updated = updated[0]
-    return updated
