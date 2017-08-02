@@ -40,15 +40,12 @@ from .utils import (
     change_status
 )
 
-from deid import clean_identifiers
-from deid.identifiers import get_deid
+from deid.data import get_deid
+from deid.identifiers import clean_identifiers
 
 from som.api.identifiers import update_identifiers
 
-from som.api.identifiers.dicom import (
-    replace_identifiers as replace_ids
-    prepare_identifiers
-)
+from som.api.identifiers.dicom import prepare_identifiers
 
 from .finish import upload_storage
 
