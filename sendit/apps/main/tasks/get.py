@@ -88,7 +88,6 @@ def import_dicomdir(dicom_dir):
         # The batch --> the folder with a set of dicoms tied to one request
         dcm_folder = os.path.basename(dicom_dir)   
         batch,created = Batch.objects.get_or_create(uid=dcm_folder)
-        patient_ids = []
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
@@ -111,13 +110,7 @@ def import_dicomdir(dicom_dir):
                                              dicom_file=dcm_file) # Also saves
 
                     # Only remove files successfully imported
-                    if dcm.PatientID not in patient_ids:
-                        patient_ids.append(dcm.PatientID)
                     #os.remove(dcm_file)
-
-                # Do check for different patient ids
-                if len(set(patient_ids)) > 1:                
-                    batch = add_batch_error(message,batch)
 
             # Note that on error we don't remove files
             except InvalidDicomError:
@@ -186,7 +179,7 @@ def get_identifiers(bid,study=None):
                       expand_sequences=True)  # expand sequences to flat structure
 
         # Prepare identifiers with only minimal required
-        request = prepare_identifiers_request(ids) 
+        request = prepare_identifiers_request(ids)
                                               # entity_custom_fields: True
                                               # item_custom_fields: False 
 
