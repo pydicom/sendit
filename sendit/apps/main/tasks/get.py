@@ -92,6 +92,7 @@ def import_dicomdir(dicom_dir):
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
             try:
+
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
                 dicom_uid = os.path.basename(dcm_file)
@@ -222,7 +223,6 @@ def batch_deidentify(ids,bid,study=None):
         entity_parsed = None
         template = entity.copy()
         items_response = []
-
         for itemset in chunks(entity['items'], 950):
             template['items'] = itemset
             request = {'identifiers': [template] }             
