@@ -44,13 +44,16 @@ SOM_STUDY="test"
 The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. 
 
 ```
-# PatientID and SOPInstanceUID:
+# AccessionNumber and SOPInstanceUID:
 # These are default for deid, but we can change that here
-ENTITY_ID="PatientID"
+ENTITY_ID="AccessionNumber"
 ITEM_ID="SOPInstanceUID"
+CUSTOM_ENTITY_ID="DCM Accession #"  # if the string index of the
+                                    # entity id is not appropriate,
+                                    # set a custom one here
 ```
 
-Note that the fields for `ENTITY_ID` and `ITEM_ID` are set to the default of [deid](https://pydicom.github.io/deid), but I've added them here in case it ever needs to be changed.  For all functions provided by `deid`, remember that they can be modified to use different endpoints, or do different replacements in the data. For more details about the deidentify functions, see [docs/deidentify.md](deidentify.md)
+Note that the fields for `ENTITY_ID` and `ITEM_ID` are set to the default of [deid](https://pydicom.github.io/deid), but I've added them here in case it ever needs to be changed.  Additionally, note that if you want the string that designates the "source_id" for the entity to be something other than it's index (eg AccessionNumber) you can set that here. If not, define as `None`. For all functions provided by `deid`, remember that they can be modified to use different endpoints, or do different replacements in the data. For more details about the deidentify functions, see [docs/deidentify.md](deidentify.md)
 
 
 ## Storage

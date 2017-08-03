@@ -117,7 +117,10 @@ def replace_identifiers(bid):
         # 3) use response from API to deidentify all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
         #                        uses deid.dicom, default Blank
-        cleaned = clean_identifiers(ids=batch_ids.ids, default="KEEP")
+        deid = get_deid('dicom.blacklist')
+        cleaned = clean_identifiers(ids=batch_ids.ids,
+                                    default="KEEP",
+                                    deid=deid)
 
         # cleaned is a lookup with ids[entity_id][field]
         batch_ids.cleaned = cleaned 

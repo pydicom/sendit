@@ -176,9 +176,6 @@ def get_identifiers(bid,study=None):
 
         images = batch.image_set.all()
 
-        # Create an som client
-        cli = Client(study=study)
-
         # Process all dicoms at once, one call to the API
         dicom_files = batch.get_image_paths()
         batch.change_images_status('PROCESSING')
@@ -189,8 +186,9 @@ def get_identifiers(bid,study=None):
                       expand_sequences=True)  # expand sequences to flat structure
 
         # Prepare identifiers with only minimal required
-        request = prepare_identifiers_request(ids) # entity_custom_fields: True
-                                                   # item_custom_fields: False 
+        request = prepare_identifiers_request(ids) 
+                                              # entity_custom_fields: True
+                                              # item_custom_fields: False 
 
         bot.debug("som.client making request to deidentify batch %s" %(bid))
 
@@ -221,9 +219,11 @@ def batch_deidentify(ids,bid,study=None):
     '''
     batch = Batch.objects.get(id=bid)
     results = []
-
     if study is None:
         study = SOM_STUDY
+
+    # Create an som client
+    cli = Client(study=study)
 
     for entity in ids['identifiers']:
         entity_parsed = None

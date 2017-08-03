@@ -20,7 +20,7 @@ SOM_STUDY="test"
 
 # PatientID and SOPInstanceUID:
 # These are default for deid, but we can change that here
-ENTITY_ID="PatientID"
+ENTITY_ID="AccessionNumber"
 ITEM_ID="SOPInstanceUID"
 
 

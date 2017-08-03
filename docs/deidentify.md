@@ -28,7 +28,7 @@ ids[entity][item] = {"field1": "value1", ... , "fieldN": "valueN"}
 
 ```
 
-In order to give each entity and item the unique IDs shown above (`entity` and `item`), we use default header fields `PatientID` and `SOPInstanceUID`. These defaults are defined in the deid `dicom/config.json` file. If you want to change this in the sendit application, the `get_identifiers` (imported as `get_ids`) can take an optional `entity_id="CustomHeaderID"` and `item_id="CustomItemID"` fields. And also notice by default we expand sequences, meaning each item in any list (recursively to the deepest level) of items shoved into a single dicom field will be flattened into the structure above. 
+In order to give each entity and item the unique IDs shown above (`entity` and `item`), we use default header fields `AccessionNumber` and `SOPInstanceUID`. These defaults are defined in the deid `dicom/config.json` file. If you want to change this in the sendit application, the `get_identifiers` (imported as `get_ids`) can take an optional `entity_id="CustomHeaderID"` and `item_id="CustomItemID"` fields. And also notice by default we expand sequences, meaning each item in any list (recursively to the deepest level) of items shoved into a single dicom field will be flattened into the structure above. 
 
 ### 2. Prepare Request
 Once we have this flat list, we then need to prepare a very minimal request to send to the DASHER API, which expects a particular format, and specific fields related to the ids and timestamps of each item and entity. For DASHER, the preparation of that request looks like this:
@@ -148,7 +148,13 @@ WARNING Field ContentLabel is not present.
 WARNING Field ImageRotation is not present.
 WARNING Field TimezoneOffsetFromUTC is not present.
 WARNING 38 fields set for default action REMOVE
-DEBUG StudyDate,SeriesInstanceUID,PatientName,PerformedProcedureStepStartDate,AcquisitionDate,AccessionNumber,RequestingService,ContentDate,RequestAttributesSequence,StationName,jitter,SeriesTime,ReferringPhysicianName,PatientAddress,item_timestamp,DistanceSourceToDetector,StudyTime,SeriesDate,Exposure,StudyInstanceUID,PatientAge,NameOfPhysiciansReadingStudy,AdditionalPatientHistory,DistanceSourceToPatient,PerformingPhysicianName,entity_id,InstitutionName,InstanceCreationTime,PerformedProcedureStepDescription,FillerOrderNumberImagingServiceRequest,item_id,PerformedProcedureStepStartTime,ContentTime,AcquisitionTime,entity_timestamp,SeriesNumber,StudyID,OperatorsName
+DEBUG StudyDate,SeriesInstanceUID,PatientName,PerformedProcedureStepStartDate,AcquisitionDate,AccessionNumber,RequestingService,
+ContentDate,RequestAttributesSequence,StationName,jitter,SeriesTime,ReferringPhysicianName,PatientAddress,
+item_timestamp,DistanceSourceToDetector,StudyTime,SeriesDate,Exposure,StudyInstanceUID,PatientAge,
+NameOfPhysiciansReadingStudy,AdditionalPatientHistory,DistanceSourceToPatient,PerformingPhysicianName,
+entity_id,InstitutionName,InstanceCreationTime,PerformedProcedureStepDescription,
+FillerOrderNumberImagingServiceRequest,item_id,PerformedProcedureStepStartTime,
+ContentTime,AcquisitionTime,entity_timestamp,SeriesNumber,StudyID,OperatorsName
 ```
 
 This same set of operations and standard is done for the imaging data, but the default action is `BLANK` so all original headers are preserved. Sequences are removed by default. In addition, the images are renamed according to their assigned suid.

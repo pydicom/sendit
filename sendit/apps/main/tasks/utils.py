@@ -22,6 +22,7 @@ SOFTWARE.
 
 '''
 
+from django.core.files import File
 from sendit.logger import bot
 from sendit.apps.main.models import (
     Batch,
