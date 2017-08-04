@@ -112,14 +112,23 @@ def import_dicomdir(dicom_dir):
                     batch = add_batch_error(message,batch)
 
                 else:
+
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
+
                     # Save the dicom file to storage
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
 
+                    # Generate image name based on [SUID] added later
+                    # accessionnumberSUID.seriesnumber.imagenumber,  
+                    name = "%s_%s.dcm" %(dcm.get('SeriesNumber'),
+                                         dcm.get('InstanceNumber'))
+
+                    dicom.name = name
+                    dicom.save()
                     # Only remove files successfully imported
                     #os.remove(dcm_file)
 

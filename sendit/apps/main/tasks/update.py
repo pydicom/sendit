@@ -139,7 +139,9 @@ def replace_identifiers(bid):
             # Rename the dicom based on suid
             if eid is not None and iid is not None:
                 item_suid = updated[eid][iid]['item_id']
-                dicom = dcm.rename("%s.dcm" %item_suid)
+                dicom = dcm.rename(item_suid) # added to [prefix][dcm.name] 
+                # accessionnumberSUID.seriesnumber.imagenumber,  
+
             dcm.save()
 
         # Get renamed files

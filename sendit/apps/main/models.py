@@ -140,6 +140,7 @@ class Image(models.Model):
     '''An image maps to one dicom file, usually in a series
     '''
     uid = models.CharField(max_length=250, null=False, blank=False)
+    name = models.CharField(max_length=250, null=False, blank=False)
 
     status = models.CharField(choices=IMAGE_STATUS,
                               default="NEW",
@@ -169,6 +170,8 @@ class Image(models.Model):
             self.uid = uid
         new_dir = os.path.dirname(self.image.name)
         initial_path = self.image.path
+        if self.name is not None:
+            new_basename = "%s_%s" %(new_basename,self.name)
         new_name = "%s/%s" %(new_dir,new_basename)
         self.image.name = new_name
         new_path = os.path.join(settings.MEDIA_ROOT, new_name)
