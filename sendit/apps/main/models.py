@@ -100,6 +100,7 @@ class Batch(models.Model):
                                     default=False,
                                     verbose_name="HasError")
 
+    qa = JSONField(default=dict())
     logs = JSONField(default=dict())
     modify_date = models.DateTimeField('date modified', auto_now=True)
     tags = TaggableManager()

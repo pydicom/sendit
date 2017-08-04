@@ -89,18 +89,28 @@ def import_dicomdir(dicom_dir):
         dcm_folder = os.path.basename(dicom_dir)   
         batch,created = Batch.objects.get_or_create(uid=dcm_folder)
 
+        # Data quality check: keep a record of study dates
+        study_dates = dict()
+
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
-            try:
 
+            try:
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
                 dicom_uid = os.path.basename(dcm_file)
+
+                # Keep track of studyDate
+                study_date = dcm.get('StudyDate')
+                if study_date not in study_dates:
+                    study_dates[study_date] = 0
+                study_dates[study_date] += 1
 
                 # If the image has pixel identifiers, we don't include 
                 if dcm.get("BurnedInAnnotation") is not None:
                     message = "%s has burned pixel annotation, skipping" %dicom_uid
                     batch = add_batch_error(message,batch)
+
                 else:
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
@@ -123,7 +133,13 @@ def import_dicomdir(dicom_dir):
             except Exception as e:
                 message = "Exception: %s, for %s, skipping." %(e, dcm_file)
 
+        if len(study_dates) > 1:
+            message = "% study dates found for %s" %(len(study_dates),
+                                                     dcm_file)
+            batch = add_batch_error(message,batch)
+
         # Save batch thus far
+        batch.qa['StudyDate'] = study_dates
         batch.save()
          
         # If there were no errors on import, we should remove the directory
