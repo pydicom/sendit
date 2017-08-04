@@ -41,6 +41,7 @@ from sendit.apps.main.tasks.utils import (
 )
 
 from deid.data import get_deid
+from deid.dicom import replace_identifiers as replace_ids
 from deid.identifiers import clean_identifiers
 from som.api.identifiers import update_identifiers
 from som.api.identifiers.dicom import prepare_identifiers
@@ -55,6 +56,7 @@ from sendit.settings import (
 
 from django.conf import settings
 import os
+from copy import deepcopy
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sendit.settings')
 app = Celery('sendit')
@@ -111,19 +113,18 @@ def replace_identifiers(bid):
         # 2) update the fields with data from SOM API
         updated = update_identifiers(ids=batch_ids.ids,
                                      updates=prepared)
-        batch_ids.ids = updated
-        batch_ids.save()
-        
+        ids = deepcopy(updated)
+
         # 3) use response from API to deidentify all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
-        #                        uses deid.dicom, default Blank
         deid = get_deid('dicom.blacklist')
-        cleaned = clean_identifiers(ids=batch_ids.ids,
+        cleaned = clean_identifiers(ids=ids,
                                     default="KEEP",
                                     deid=deid)
 
         # cleaned is a lookup with ids[entity_id][field]
         batch_ids.cleaned = cleaned 
+        batch_ids.ids = updated
         batch_ids.save()
 
         dicom_files = batch.get_image_paths()
@@ -139,19 +140,25 @@ def replace_identifiers(bid):
             if eid is not None and iid is not None:
                 item_suid = updated[eid][iid]['item_id']
                 dicom = dcm.rename("%s.dcm" %item_suid)
+            dcm.save()
 
         # Get renamed files
-        deid = get_deid('dicom.blacklist')
         dicom_files = batch.get_image_paths()
         updated_files = replace_ids(dicom_files=dicom_files,
-                                    response=batch_ids.response,
-                                    overwrite=True,
+                                    ids=batch_ids.ids,    # ids[entity][item] lookup
+                                    overwrite=True,           # overwrites suid files
+                                    default_action="KEEP",
+                                    remove_sequences=True,
+                                    remove_private=True,
                                     deid=deid,
-
-                                    output_folder=output_folder)  
+                                    entity_id=ENTITY_ID,
+                                    item_id=ITEM_ID,              # defaults: 
+                                    output_folder=output_folder)  # force = True
+                                                                  # save = True,
+                                                                  # config=None, use deid
+                                                                  # remove_private = True          
 
         # 3) save newly de-identified ids for storage upload
-
         DEIDENTIFY_PIXELS=False
         change_status(batch,"DONEPROCESSING")
         batch.change_images_status('DONEPROCESSING')
