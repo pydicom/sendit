@@ -1,5 +1,14 @@
 # De-id Request
-De-identification happens by way of a series of celery tasks defined in [main/tasks.py](../sendit/apps/main/tasks.py) that are triggered by the first task that adds a complete set of dicom files (beloning to a dataset with one accession number) to the database. The tasks include the following:
+De-identification happens by way of a series of celery tasks defined in [main/tasks.py](../sendit/apps/main/tasks.py) that are triggered by the first task that adds a complete set of dicom files (beloning to a dataset with one accession number) to the database as a batch. If you aren't familiar with the terms study, session, and how it relates to the radiologist workflow, the head of engineering at SOM IRT explained it well:
+
+ - when a patient is placed on the scanner bed and the technician starts taking pictures, that’s a `study`.  Studies are identified by accession numbers and have a single associated date, patient, and ordering provider.
+ - Each study may have more than one `Series` of images.  A series is what it sounds like: a set of closely associated images in a specified order.  A single image in a series is sometimes referred to as a `Slice`.  The PACS workstations allow you to rapidly scroll back and forth through all slices of a given study, just like a flip book, so you can "fly" through the scanned section of a patient’s body
+ - After the conclusion of a study, a radiologist reviews the series' images and produces a report, referenced by the study accession number.  This accession number is present in the report and is a frequently used lookup key to get back to both the images and the associated report.
+
+To be clear, for the purposes of this application a `batch` corresponds with one `study`, which is one or more series of images.  We will send one request to the DASHER API per batch (study), and then use the response to de-identify all associated images.
+
+
+The tasks include the following:
 
 ## Get Identifiers
 The first task `get_identifiers` under [main/tasks](sendit/apps/main/get.py) takes in a batch ID, and uses that batch to look up images, and flag them for the start of processing:
@@ -38,11 +47,33 @@ request = prepare_identifiers_request(ids) # entity_custom_fields: True
                                            # item_custom_fields: False 
 ```
 
-Note the defaults of the function are mentioned - by default we are including entity custom fields, but not item custom fields. We set these defaults by way of setting the variables `entity_custom_fields` to true (meaning we send custom entity fields to DASHER and `item_custom_fields` to false (meaning we don't send item custom fields). We originally were sending all of this data to the som DASHER endpoint, primarily with an entity id and timestamp, and then a huge list of `custom_fields` for each item and entity. This was a very slow process, and for purposes of searching, it puts a huge burden on DASHER for doing tasks outside of simple identity management. We have decided to try a different strategy. We send the minimum amount of data to DASHER to get back date jitters and item ids, and then the rest of the data gets put (de-identified) into Google Datastore.
+Note the defaults of the function are mentioned - by default we are including entity custom fields, but not item custom fields. We set these defaults by way of setting the variables `entity_custom_fields` to True (meaning we send custom entity fields to DASHER and `item_custom_fields` to False (meaning we don't send item custom fields). We originally were sending all of this data to the som DASHER endpoint, primarily with an entity id and timestamp, and then a huge list of `custom_fields` for each item and entity. This was a very slow process, and for purposes of searching, it puts a huge burden on DASHER for doing tasks outside of simple identity management. We have decided to try a different strategy. We send the minimum amount of data to DASHER to get back date jitters and item ids, and then the rest of the data gets put (de-identified) into Google Datastore.
 
 
 ### 3. Request
-We now want to give our request to the API and get back a lookup for what the "deidentified" ids are. (eg, an MRN mapping to a SUID). We could post the request to the DASHER API as follows:
+We now want to give our request to the API and get back a lookup for what the "deidentified" ids are. (eg, an MRN mapping to a SUID). We post one request to the DASHER API, with the unit of "study" as the item, meaning that the request looks like this:
+
+```
+{
+  "identifiers": [
+    {
+      "id": "1111111",
+      "id_source": "Stanford MRN",
+      "id_timestamp": "1999-01-01T00:00:00Z",
+      "items": [
+        {
+          "id": "2222222",
+          "id_source": "DCM Accession #",
+          "id_timestamp": "2000-01-01T12:12:00Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Note that the first section is pertaining to an entity, in this case a `PatientID` that corresponds to an MRN, and the "items" for that entity include the study, which corresponds to a particular Dicom accession Number. In this case, although the images carry unique identifiers, we don't send that level of granularity to the API.
+
 
 ```
 from som.api.identifiers import Client
