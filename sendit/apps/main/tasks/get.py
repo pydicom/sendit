@@ -205,24 +205,24 @@ def get_identifiers(bid,study=None):
                       expand_sequences=True)  # expand sequences to flat structure
 
         # Prepare identifiers with only minimal required
-        request = prepare_identifiers_request(ids)
-                                              # entity_custom_fields: True
-                                              # item_custom_fields: False 
+        request = prepare_identifiers_request(ids) # force: True
 
         bot.debug("som.client making request to deidentify batch %s" %(bid))
 
         # We need to break into items of size 1000 max, 900 to be safe
-        results = batch_deidentify(ids=request,
-                                   study=study,
-                                   bid=batch.id)
+        cli = Client(study=study)
+        result = cli.deidentify(ids=request, study=study)
 
         # Create a batch for all results
-        batch_ids,created = BatchIdentifiers.objects.get_or_create(batch=batch)
-        batch_ids.response = results
-        batch_ids.ids = ids
-        batch_ids.save()        
-        replace_identifiers.apply_async(kwargs={"bid":bid})
-
+        if "results" in result:
+            batch_ids,created = BatchIdentifiers.objects.get_or_create(batch=batch)
+            batch_ids.response = result['results']
+            batch_ids.ids = ids
+            batch_ids.save()        
+            replace_identifiers.apply_async(kwargs={"bid":bid})
+        else:
+            message = "'results' field not found in response: %s" %result
+            batch = add_batch_error(message,batch)
 
     else:
         bot.debug("Restful de-identification skipped [DEIDENTIFY_RESTFUL is False]")
