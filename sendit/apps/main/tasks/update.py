@@ -135,13 +135,11 @@ def replace_identifiers(bid):
             output_folder = os.path.dirname(dcm.image.file.name)
             eid = dicom.get(ENTITY_ID)
             iid = dicom.get(ITEM_ID)
-
             # Rename the dicom based on suid
             if eid is not None and iid is not None:
                 item_suid = updated[eid][iid]['item_id']
                 dicom = dcm.rename(item_suid) # added to [prefix][dcm.name] 
                 # accessionnumberSUID.seriesnumber.imagenumber,  
-
             dcm.save()
 
         # Get renamed files
@@ -150,7 +148,7 @@ def replace_identifiers(bid):
                                     ids=batch_ids.ids,    # ids[entity][item] lookup
                                     overwrite=True,           # overwrites suid files
                                     default_action="KEEP",
-                                    remove_sequences=True,
+                                    strip_sequences=True,
                                     remove_private=True,
                                     deid=deid,
                                     entity_id=ENTITY_ID,
@@ -171,4 +169,4 @@ def replace_identifiers(bid):
         return None
 
     # We don't get here if the call above failed
-    upload_storage.apply_async(kwargs={"bid":bid})
+    #upload_storage.apply_async(kwargs={"bid":bid})
