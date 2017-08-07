@@ -133,8 +133,11 @@ def replace_identifiers(bid):
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
             output_folder = os.path.dirname(dcm.image.file.name)
-            eid = dicom.get(ENTITY_ID)
+
+            # ** Dasher is stripping out the "-" so we will too here
+            eid = dicom.get(ENTITY_ID).replace('-','')
             iid = dicom.get(ITEM_ID)
+
             # Rename the dicom based on suid
             if eid is not None and iid is not None:
                 item_suid = updated[eid][iid]['item_id']
