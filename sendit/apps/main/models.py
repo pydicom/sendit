@@ -37,6 +37,7 @@ from django.db.models.signals import m2m_changed
 from django.db.models import Q, DO_NOTHING
 from django.db import models
 from django.conf import settings
+from sendit.settings import MEDIA_ROOT
 
 import collections
 import operator
@@ -119,6 +120,9 @@ class Batch(models.Model):
         for dcm in self.image_set.all():
             image_files.append(dcm.image.path)
         return image_files
+
+    def get_path(self):
+        return "%s/%s" %(MEDIA_ROOT,self.id)
 
     def get_absolute_url(self):
         return reverse('batch_details', args=[str(self.id)])

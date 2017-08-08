@@ -126,10 +126,12 @@ def replace_identifiers(bid, run_upload_storage=True):
                                   
         # Get updated files
         dicom_files = batch.get_image_paths()
+        output_folder = batch.get_path()
         updated_files = replace_ids(dicom_files=dicom_files,
                                     deid=deid,
                                     ids=updated,            # ids[item] lookup
                                     overwrite=True,         # overwrites copied files
+                                    output_folder=output_folder,
                                     strip_sequences=True,
                                     remove_private=True)  # force = True
                                                           # save = True,
@@ -138,7 +140,6 @@ def replace_identifiers(bid, run_upload_storage=True):
         # Rename
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
-            output_folder = os.path.dirname(dcm.image.file.name)
             item_id = os.path.basename(dcm.image.path)
             # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
