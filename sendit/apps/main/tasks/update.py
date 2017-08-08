@@ -132,10 +132,9 @@ def replace_identifiers(bid, run_upload_storage=True):
                                     overwrite=True,         # overwrites copied files
                                     default_action="KEEP",  # don't blank fields
                                     strip_sequences=True,
-                                    remove_private=True,
-                                    output_folder=output_folder)  # force = True
-                                                                  # save = True,
-                                                                  # config=None, use deid
+                                    remove_private=True)  # force = True
+                                                          # save = True,
+                                                          # config=None, use deid
 
         # Rename
         for dcm in batch.image_set.all():
