@@ -205,6 +205,8 @@ def get_identifiers(bid,study=None):
                       expand_sequences=True)  # expand sequences to flat structure
 
         # Prepare identifiers with only minimal required
+        # This function expects many items for one entity, returns 
+        # request['identifiers'] --> [ entity-with-study-item ]
         request = prepare_identifiers_request(ids) # force: True
 
         bot.debug("som.client making request to deidentify batch %s" %(bid))

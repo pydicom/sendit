@@ -43,7 +43,6 @@ from sendit.apps.main.tasks.utils import (
 from deid.data import get_deid
 from deid.dicom import replace_identifiers as replace_ids
 from deid.identifiers import clean_identifiers
-from som.api.identifiers import update_identifiers
 from som.api.identifiers.dicom import prepare_identifiers
 from sendit.apps.main.tasks.finish import upload_storage
 
@@ -109,57 +108,46 @@ def replace_identifiers(bid):
 
         # 1) use response from API to generate new fields
         prepared = prepare_identifiers(response=batch_ids.response)
-        
-        # 2) update the fields with data from SOM API
-        updated = update_identifiers(ids=batch_ids.ids,
-                                     updates=prepared)
-        ids = deepcopy(updated)
+        updated = deepcopy(prepared)
 
         # 3) use response from API to deidentify all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
         deid = get_deid('dicom.blacklist')
-        cleaned = clean_identifiers(ids=ids,
+        cleaned = clean_identifiers(ids=updated,
                                     default="KEEP",
                                     deid=deid)
 
-        # cleaned is a lookup with ids[entity_id][field]
+        # Save progress
         batch_ids.cleaned = cleaned 
-        batch_ids.ids = updated
+        batch_ids.updated = updated
         batch_ids.save()
-
-        dicom_files = batch.get_image_paths()
                                   
-        # 2) replace data in dicoms with MINIMUM required
+        # Get updated files
+        dicom_files = batch.get_image_paths()
+        updated_files = replace_ids(dicom_files=dicom_files,
+                                    deid=deid,
+                                    ids=updated,            # ids[item] lookup
+                                    overwrite=True)         # overwrites copied files
+                                    default_action="KEEP",  # don't blank fields
+                                    strip_sequences=True,
+                                    remove_private=True,
+                                    output_folder=output_folder)  # force = True
+                                                                  # save = True,
+                                                                  # config=None, use deid
+
+        # Rename
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
             output_folder = os.path.dirname(dcm.image.file.name)
-
-            # ** Dasher is stripping out the "-" so we will too here
-            eid = dicom.get(ENTITY_ID).replace('-','')
-            iid = dicom.get(ITEM_ID)
-
+            item_id = os.path.basename(dcm.image.path)
+            # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
-            if eid is not None and iid is not None:
-                item_suid = updated[eid][iid]['item_id']
+            if item_id in updated:
+                item_suid = updated[item_id]['item_id']
                 dicom = dcm.rename(item_suid) # added to [prefix][dcm.name] 
                 # accessionnumberSUID.seriesnumber.imagenumber,  
             dcm.save()
 
-        # Get renamed files
-        dicom_files = batch.get_image_paths()
-        updated_files = replace_ids(dicom_files=dicom_files,
-                                    ids=batch_ids.ids,    # ids[entity][item] lookup
-                                    overwrite=True,           # overwrites suid files
-                                    default_action="KEEP",
-                                    strip_sequences=True,
-                                    remove_private=True,
-                                    deid=deid,
-                                    entity_id=ENTITY_ID,
-                                    item_id=ITEM_ID,              # defaults: 
-                                    output_folder=output_folder)  # force = True
-                                                                  # save = True,
-                                                                  # config=None, use deid
-                                                                  # remove_private = True          
 
         # 3) save newly de-identified ids for storage upload
         DEIDENTIFY_PIXELS=False
