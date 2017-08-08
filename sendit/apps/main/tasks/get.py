@@ -76,7 +76,7 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
 @shared_task
-def import_dicomdir(dicom_dir):
+def import_dicomdir(dicom_dir, run_get_identifiers=True):
     '''import dicom directory manages importing a valid dicom set into the application,
     and is a celery job triggered by the watcher. Here we also flag (and disclude)
     images that have a header value that indicates pixel identifiers.
@@ -169,7 +169,8 @@ def import_dicomdir(dicom_dir):
                 # scrub pixels before header data is looked at.
                 # scrub_pixels.apply_async(kwargs={"bid":batch.id})
             #else:
-            get_identifiers.apply_async(kwargs={"bid":batch.id})
+            if run_get_identifiers is True:
+                get_identifiers.apply_async(kwargs={"bid":batch.id})
 
     else:
         bot.warning('Cannot find %s' %dicom_dir)
@@ -179,7 +180,7 @@ def import_dicomdir(dicom_dir):
 
 
 @shared_task
-def get_identifiers(bid,study=None):
+def get_identifiers(bid,study=None,run_replace_identifiers=True):
     '''get identifiers is the celery task to get identifiers for 
     all images in a batch. A batch is a set of dicom files that may include
     more than one series/study. This is done by way of sending one restful call
@@ -220,8 +221,9 @@ def get_identifiers(bid,study=None):
             batch_ids,created = BatchIdentifiers.objects.get_or_create(batch=batch)
             batch_ids.response = result['results']
             batch_ids.ids = ids
-            batch_ids.save()        
-            replace_identifiers.apply_async(kwargs={"bid":bid})
+            batch_ids.save()
+            if run_replace_identifiers is True:
+                replace_identifiers.apply_async(kwargs={"bid":bid})
         else:
             message = "'results' field not found in response: %s" %result
             batch = add_batch_error(message,batch)
