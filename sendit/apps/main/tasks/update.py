@@ -130,7 +130,6 @@ def replace_identifiers(bid, run_upload_storage=True):
                                     deid=deid,
                                     ids=updated,            # ids[item] lookup
                                     overwrite=True,         # overwrites copied files
-                                    default_action="KEEP",  # don't blank fields
                                     strip_sequences=True,
                                     remove_private=True)  # force = True
                                                           # save = True,
