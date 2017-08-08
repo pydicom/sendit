@@ -165,4 +165,6 @@ def replace_identifiers(bid, run_upload_storage=True):
             bot.warning('upload to storage is not yet implemented!')
             #upload_storage.apply_async(kwargs={"bid":bid})
         else:
+            updated_files = batch.get_image_paths()
             return updated_files
+
