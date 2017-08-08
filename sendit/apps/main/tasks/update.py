@@ -107,7 +107,9 @@ def replace_identifiers(bid, run_upload_storage=True):
         batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
 
         # 1) use response from API to generate new fields
-        prepared = prepare_identifiers(response=batch_ids.response)
+        working = deepcopy(batch_ids.ids)
+        prepared = prepare_identifiers(response=batch_ids.response,
+                                       ids=working)
         updated = deepcopy(prepared)
 
         # 3) use response from API to deidentify all fields in batch.ids
