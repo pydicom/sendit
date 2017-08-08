@@ -155,7 +155,7 @@ def replace_identifiers(bid, run_upload_storage=True):
             dcm.save()
 
         if quarantine_count > 0:
-            bot.debug('Found %s images to quarantine with "DERIVED" ImageType')
+            bot.debug('Found %s images to quarantine with "DERIVED" ImageType' %quarantine_count)
 
         # 3) save newly de-identified ids for storage upload
         DEIDENTIFY_PIXELS=False
