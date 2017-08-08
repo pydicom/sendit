@@ -171,6 +171,8 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             #else:
             if run_get_identifiers is True:
                 get_identifiers.apply_async(kwargs={"bid":batch.id})
+            else:
+                return batch
 
     else:
         bot.warning('Cannot find %s' %dicom_dir)
@@ -224,6 +226,8 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
             batch_ids.save()
             if run_replace_identifiers is True:
                 replace_identifiers.apply_async(kwargs={"bid":bid})
+            else:
+                return batch_ids
         else:
             message = "'results' field not found in response: %s" %result
             batch = add_batch_error(message,batch)

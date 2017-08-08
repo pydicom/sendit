@@ -97,7 +97,7 @@ def scrub_pixels(bid):
 
 
 @shared_task
-def replace_identifiers(bid):
+def replace_identifiers(bid, run_upload_storage=True):
         '''replace identifiers is called from get_identifiers, given that the user
         has asked to deidentify_restful. This function will do the replacement,
         and then trigger the function to send to storage
@@ -160,4 +160,8 @@ def replace_identifiers(bid):
     #    return None
 
     # We don't get here if the call above failed
-    #upload_storage.apply_async(kwargs={"bid":bid})
+    if run_upload_storage is True:
+        bot.warning('upload to storage is not yet implemented!')
+        #upload_storage.apply_async(kwargs={"bid":bid})
+    else:
+        return updated_files
