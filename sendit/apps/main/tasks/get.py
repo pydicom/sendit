@@ -250,17 +250,22 @@ def batch_deidentify(ids,bid,study=None):
         entity_parsed = None
         template = entity.copy()
         items_response = []
+
         for itemset in chunks(entity['items'], 950):
             template['items'] = itemset
             request = {'identifiers': [template] }             
             result = cli.deidentify(ids=request, study=study)  # should return dict with "results"
+
             if "results" in result:
+
                 for entity_parsed in result['results']:                        
                     if 'items' in entity_parsed:
                         items_response += entity_parsed['items']
+
                 if 'items' in result['results']:
                     print("Adding %s items" %len(result['results']['items']))
                     items_response += result['results']['items']
+
             else:
                 message = "Error calling som uid endpoint: %s" %result
                 batch = add_batch_error(message,batch)
