@@ -1,6 +1,8 @@
 FROM python:3.5.1
 ENV PYTHONUNBUFFERED 1
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y cmake \
+                                         libpng12-dev libtiff5-dev libxml2-dev libjpeg62-turbo-dev \
+                                         zlib1g-dev libwrap0-dev libssl-dev \
     libopenblas-dev \
     gfortran \
     pkg-config \
@@ -94,6 +96,21 @@ RUN apt-get autoremove -y
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Dcm4che
+ENV DCMTK_PREFIX=/opt/dcmtk361
+ENV PATH /opt/dcmtk361/bin:$PATH
+
+# Releases are here http://dicom.offis.de/download/dcmtk/
+RUN wget http://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.tar.gz
+
+# unpack the archive
+RUN tar -xzvf dcmtk-3.6.2.tar.gz 
+WORKDIR dcmtk-3.6.2
+RUN cmake -DCMAKE_INSTALL_PREFIX=$DCMTK_PREFIX
+RUN make all
+RUN make install
+
+WORKDIR /code
 CMD /code/run_uwsgi.sh
 
 EXPOSE 3031
