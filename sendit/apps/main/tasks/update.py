@@ -159,9 +159,9 @@ def replace_identifiers(bid, run_upload_storage=True):
     #    bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
     #    return None
 
-    # We don't get here if the call above failed
-    if run_upload_storage is True:
-        bot.warning('upload to storage is not yet implemented!')
-        #upload_storage.apply_async(kwargs={"bid":bid})
-    else:
-        return updated_files
+        # We don't get here if the call above failed
+        if run_upload_storage is True:
+            bot.warning('upload to storage is not yet implemented!')
+            #upload_storage.apply_async(kwargs={"bid":bid})
+        else:
+            return updated_files
