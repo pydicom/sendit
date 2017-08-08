@@ -145,8 +145,12 @@ def replace_identifiers(bid, run_upload_storage=True):
             # Rename the dicom based on suid
             if item_id in updated:
                 item_suid = updated[item_id]['item_id']
-                dicom = dcm.rename(item_suid) # added to [prefix][dcm.name] 
+                dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
                 # accessionnumberSUID.seriesnumber.imagenumber,  
+                # If the image has DERIVED, quarantine
+                if "DERIVED" in dicom.get("ImageType",[]):
+                    dcm = dcm.quarantine()
+
             dcm.save()
 
 
