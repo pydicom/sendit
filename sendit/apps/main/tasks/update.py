@@ -127,7 +127,7 @@ def replace_identifiers(bid):
         updated_files = replace_ids(dicom_files=dicom_files,
                                     deid=deid,
                                     ids=updated,            # ids[item] lookup
-                                    overwrite=True)         # overwrites copied files
+                                    overwrite=True,         # overwrites copied files
                                     default_action="KEEP",  # don't blank fields
                                     strip_sequences=True,
                                     remove_private=True,
