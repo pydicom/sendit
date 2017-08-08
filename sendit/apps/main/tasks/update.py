@@ -150,7 +150,6 @@ def replace_identifiers(bid, run_upload_storage=True):
                 # If the image has DERIVED, quarantine
                 if "DERIVED" in dicom.get("ImageType",[]):
                     dcm = dcm.quarantine()
-
             dcm.save()
 
 

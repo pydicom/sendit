@@ -189,10 +189,16 @@ class Image(models.Model):
         ''' move into quarantine folder.'''
         if new_name is None:
             new_name = os.path.basename(self.image.path)
+
+        # These are both relevant to MEDIA ROOT
         current_dir = os.path.dirname(self.image.name)
-        quarantine_dir = "%s/QUARANTINE" %current_dir
-        if not os.path.exists(quarantine_dir):
-            os.mkdir(quarantine_dir)
+        quarantine_dir = "%s/PHI" %current_dir
+
+        # This is fullpath
+        quarantine_fullpath = "%s/%s" %(MEDIA_ROOT,quarantine_dir)
+        if not os.path.exists(quarantine_fullpath):
+            os.mkdir(quarantine_fullpath)
+
         initial_path = self.image.path
         new_name = "%s/%s" %(quarantine_dir,new_name)
         self.image.name = new_name
