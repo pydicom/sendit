@@ -28,7 +28,6 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 from django.conf.urls import include, url
 from sendit.apps.base import urls as base_urls
 from sendit.apps.main import urls as main_urls
-from sendit.apps.users import urls as user_urls
 from sendit.apps.api import urls as api_urls
 from django.contrib import admin
 
@@ -47,7 +46,6 @@ urlpatterns = [
     url(r'^', include(base_urls)),
     url(r'^api/', include(api_urls)),
     url(r'^', include(main_urls)),
-    url(r'^', include(user_urls)),
 #    url(r'^sitemap\.xml$', index, {'sitemaps': sitemaps}, name="sitemap"),
 #    url(r'^sitemap-(?P<section>.+)\.xml$', sitemap, {'sitemaps': sitemaps},
 #        name='django.contrib.sitemaps.views.sitemap'),

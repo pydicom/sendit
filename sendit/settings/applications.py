@@ -12,11 +12,9 @@ INSTALLED_APPS = [
     'sendit.apps.main',
     'sendit.apps.watcher',
     'sendit.apps.api',
-    'sendit.apps.users',
 ]
 
 THIRD_PARTY_APPS = [
-    'social_django',
     'crispy_forms',
     'opbeat.contrib.django',
     'djcelery',
