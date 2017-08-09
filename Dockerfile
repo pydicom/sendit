@@ -34,8 +34,6 @@ RUN pip install 'dropbox==1.6'
 RUN pip install 'django-dbbackup<2.3'
 RUN pip install psycopg2
 RUN pip install numexpr
-RUN pip install shapely
-RUN pip install Pillow
 RUN pip install requests
 RUN pip install requests-oauthlib
 RUN pip install python-openid
