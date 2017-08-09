@@ -141,6 +141,10 @@ def prepare_items_metadata(batch):
 
 
 def extract_study_ids(cleaned,uid):
+    '''cleaned should be a dictionary with (original item filenames) as
+    lookup, and the uid as the variable defined as `ITEM_ID` in the dict
+    of values under each item in cleaned. We use the uid of the entity as
+    a lookup to link an item (and it's study) to the entity.'''
     studies = []
     for key,vals in cleaned.items():
         if vals[ENTITY_ID]==uid and vals[ITEM_ID] not in studies:
@@ -149,6 +153,8 @@ def extract_study_ids(cleaned,uid):
 
 
 def get_entity_images(images,study_ids):
+    '''Retrieve a list of entity images based
+    on finding the entity id in the study path'''
     entity_images = []
     for study_id in study_ids:
         subset = [x for x in images if study_id in x]

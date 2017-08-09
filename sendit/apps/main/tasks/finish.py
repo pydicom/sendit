@@ -127,7 +127,8 @@ def upload_storage(bid):
                                   collection=collection,
                                   uid=metadata['id'],
                                   images_metadata=items,
-                                  entity_metadata=metadata)
+                                  entity_metadata=metadata,
+                                  permission="projectPrivate")
  
     else:
         message = "batch %s send to Google skipped, storage variables missing." %batch
