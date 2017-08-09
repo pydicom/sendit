@@ -121,6 +121,10 @@ class Batch(models.Model):
             image_files.append(dcm.image.path)
         return image_files
 
+    def get_finished(self):
+        '''return file paths that aren't in PHI folder'''
+        return [ x for x in self.get_image_paths() if "/PHI/" not in x ]
+
     def get_path(self):
         return "%s/%s" %(MEDIA_ROOT,self.id)
 

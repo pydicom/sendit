@@ -40,12 +40,17 @@ from .utils import (
     add_batch_error,
     change_status,
     chunks,
+    prepare_entity_metadata,
+    prepare_items_metadata,
+    extract_study_ids,
+    get_entity_images,
     save_image_dicom
 )
 
 from sendit.settings import (
     GOOGLE_APPLICATION_CREDENTIALS,
     GOOGLE_PROJECT_ID_HEADER,
+    GOOGLE_PROJECT_NAME,
     SEND_TO_ORTHANC,
     SOM_STUDY,
     ORTHANC_IPADDRESS,
@@ -81,36 +86,52 @@ def upload_storage(bid):
         bot.log("Beep boop, not configured yet!")
         # do the send here!
 
-    if SEND_TO_GOOGLE is True and GOOGLE_CLOUD_STORAGE not in [None,""]:
+    # All variables must be defined for sending!
+    if GOOGLE_CLOUD_STORAGE is in [None,""]:
+        SEND_TO_GOOGLE = False
 
-        if GOOGLE_STORAGE_COLLECTION is not None:
-            from som.api.google.storage import Client
-            bot.log("Uploading to Google Storage %s" %(GOOGLE_CLOUD_STORAGE))
-            client = Client(bucket_name=GOOGLE_CLOUD_STORAGE)
+    if GOOGLE_PROJECT_NAME is in [None,""]:
+        SEND_TO_GOOGLE = False
 
-            if GOOGLE_PROJECT_ID_HEADER is not None:
-                client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
+    if GOOGLE_STORAGE_COLLECTION is in [None,""]:
+        SEND_TO_GOOGLE = False
 
-            # Question: what fields to include as metadata?
-            # all in header (this includes image dimensions)
-            # study
-          
+    if SEND_TO_GOOGLE is True;
 
-            # PREPARE FILES HERE
-            # updated files...
+        from som.api.google.storage import Client
 
-            client = Client(bucket_name=GOOGLE_CLOUD_STORAGE)
-            collection = client.create_collection(uid=SOM_STUDY)
+        # Retrieve only images that aren't in PHI folder
+        images = batch.get_finished()
+        items = prepare_items_metadata(batch)
 
-            # Upload the dataset
-            client.upload_dataset(images=updated_files,
+        bot.log("Uploading %s finished to Google Storage %s" %(len(images),
+                                                               GOOGLE_CLOUD_STORAGE))
+        client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
+                        project_name=GOOGLE_CLOUD_PROJECT)
+
+        # I'm not sure we need this
+        #if GOOGLE_PROJECT_ID_HEADER is not None:
+        #    client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
+
+        collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
+        metadata = prepare_entity_metadata(cleaned_ids=batch_ids.cleaned,
+                                           image_count=len(images))
+
+        # Batch metadata    
+        # we could add additional here
+
+        for uid, meta in metadata.items(): # This should only be one
+            study_ids = extract_study_ids(cleaned,uid)
+            entity_images = get_entity_images(images,study_ids)
+            client.upload_dataset(images=entity_images,
                                   collection=collection,
                                   uid=metadata['id'],
+                                  images_metadata=items,
                                   entity_metadata=metadata)
  
-        else:
-            message = "batch %s send to Google skipped, no storage collection defined." %batch
-            batch = add_batch_error(message,batch)
+    else:
+        message = "batch %s send to Google skipped, storage variables missing." %batch
+        batch = add_batch_error(message,batch)
 
         batch.change_images_status('SENT')
 

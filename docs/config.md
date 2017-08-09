@@ -81,6 +81,7 @@ SEND_TO_GOOGLE=False
 # Google Cloud Storage Bucket (must be created)
 GOOGLE_CLOUD_STORAGE='radiology'
 GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
+GOOGLE_PROJECT_NAME="project-name" # not the id, usually the end of the url in Google Cloud
 ```
 
 Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). If this is set to None, it will not upload. Finally, to add a special header to signify a Google Storage project, you should add the name of the intended project to your header:

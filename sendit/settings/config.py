@@ -45,3 +45,4 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 GOOGLE_CLOUD_STORAGE='radiology'
 GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
 GOOGLE_PROJECT_ID_HEADER=None  # define here or in your secrets
+GOOGLE_PROJECT_NAME=None       # define here or in your secrets

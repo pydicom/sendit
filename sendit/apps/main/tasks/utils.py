@@ -30,6 +30,12 @@ from sendit.apps.main.models import (
     Image
 )
 
+from sendit.settings import (
+    GOOGLE_STORAGE_COLLECTION,
+    ENTITY_ID,
+    ITEM_ID
+)
+
 from django.conf import settings
 import os
 
@@ -97,3 +103,54 @@ def change_status(images,status):
     if len(updated) == 1:
         updated = updated[0]
     return updated
+
+
+# METADATA ##############################################################
+
+def prepare_entity_metadata(cleaned_ids, image_count=None):
+    '''prepare metadata for entities for Google Storage
+    ''' 
+    metadata = dict()
+    for secret_id, item in cleaned_ids.items():
+        eid = item[ENTITY_ID]
+        if eid not in metadata:
+            metadata[eid] = dict()
+        if "PatientAge" in item:
+            metadata[eid]["PatientAge"] = item['PatientAge']
+        if "PatientSex" in item:
+            metadata[eid]["PatientSex"] = item['PatientSex']
+    for eid, items in metadata.items():
+        if image_count is not None:
+            metadata[eid]["IMAGE_COUNT"] = image_count
+        metadata[eid]["UPLOAD_AGENT"] = "STARR:SENDITClient"
+        metadata[eid]["id"] = eid
+    return metadata
+
+
+def prepare_items_metadata(batch):
+    '''prepare metadata for items for Google Storage
+    ''' 
+    metadata = dict()
+    cleaned = batch.batchidentifiers_set.last().cleaned
+    for image in batch.image_set.all():
+        secret_id = image.uid        
+        iid = item[ITEM_ID]
+        if secret_id in cleaned:
+            metadata[image.image.path] = cleaned[secret_id]
+    return metadata
+
+
+def extract_study_ids(cleaned,uid):
+    studies = []
+    for key,vals in cleaned.items():
+        if vals[ENTITY_ID]==uid and vals[ITEM_ID] not in studies:
+            studies.append(vals[ITEM_ID])
+    return studies
+
+
+def get_entity_images(images,study_ids):
+    entity_images = []
+    for study_id in study_ids:
+        subset = [x for x in images if study_id in x]
+        entity_images = entity_images + subset
+    return entity_images
