@@ -110,6 +110,9 @@ RUN cmake -DCMAKE_INSTALL_PREFIX=$DCMTK_PREFIX
 RUN make all
 RUN make install
 
+RUN pip install -r /code/google-requirements.txt > /dev/null 2>&1
+RUN pip3 install -r /code/google-requirements.txt > /dev/null 2>&1
+
 WORKDIR /code
 CMD /code/run_uwsgi.sh
 
