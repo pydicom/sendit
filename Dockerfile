@@ -36,7 +36,6 @@ RUN pip install psycopg2
 RUN pip install numexpr
 RUN pip install requests
 RUN pip install requests-oauthlib
-RUN pip install python-openid
 RUN pip install django-sendfile
 RUN pip install django-polymorphic
 RUN pip install celery[redis]==3.1.25
