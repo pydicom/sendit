@@ -1,4 +1,4 @@
-FROM python:3.5.1
+FROM continuumio/anaconda3
 ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y cmake \
                                          libpng12-dev libtiff5-dev libxml2-dev libjpeg62-turbo-dev \
@@ -17,9 +17,7 @@ RUN apt-get update && apt-get install -y cmake \
     vim
 
 RUN pip install --upgrade pip
-RUN pip install cython
-RUN pip install numpy
-RUN pip install scikit-learn pandas h5py matplotlib
+RUN conda install cython
 RUN pip install uwsgi
 RUN pip install Django==1.11.2
 RUN pip install social-auth-app-django

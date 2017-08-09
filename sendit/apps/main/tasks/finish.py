@@ -73,7 +73,7 @@ def upload_storage(bid):
     try:         
         batch = Batch.objects.get(id=bid)
     except:
-        bot.error("In upload_storage: Series %s does not exist." %(sid))
+        bot.error("In upload_storage: Batch %s does not exist." %(sid))
         return None
 
     if SEND_TO_ORTHANC is True:

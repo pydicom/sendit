@@ -44,7 +44,6 @@ import collections
 from datetime import datetime
 from datetime import timedelta
 from itertools import chain
-from numpy import unique
 import operator
 import os
 
