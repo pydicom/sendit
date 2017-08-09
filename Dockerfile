@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3
+FROM python:3.5.1
 ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y cmake \
                                          libpng12-dev libtiff5-dev libxml2-dev libjpeg62-turbo-dev \
@@ -17,7 +17,9 @@ RUN apt-get update && apt-get install -y cmake \
     vim
 
 RUN pip install --upgrade pip
-RUN conda install cython
+RUN pip install cython
+RUN pip install numpy
+RUN pip install scikit-learn pandas h5py matplotlib
 RUN pip install uwsgi
 RUN pip install Django==1.11.2
 RUN pip install social-auth-app-django
@@ -34,6 +36,8 @@ RUN pip install 'dropbox==1.6'
 RUN pip install 'django-dbbackup<2.3'
 RUN pip install psycopg2
 RUN pip install numexpr
+RUN pip install shapely
+RUN pip install Pillow
 RUN pip install requests
 RUN pip install requests-oauthlib
 RUN pip install python-openid
