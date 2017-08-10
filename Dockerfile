@@ -99,6 +99,7 @@ RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # Dcm4che
 ENV DCMTK_PREFIX=/opt/dcmtk361
 ENV PATH /opt/dcmtk361/bin:$PATH
+ENV MESSAGELEVEL -1
 
 # Releases are here http://dicom.offis.de/download/dcmtk/
 RUN wget http://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.tar.gz
