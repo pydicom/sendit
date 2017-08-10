@@ -116,9 +116,10 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
                     # Save the dicom file to storage
-                    basename = "%s/%s" %(batch.id,os.path.basename(dcm_file))
+                    # basename = "%s/%s" %(batch.id,os.path.basename(dcm_file))
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
+
                     # Generate image name based on [SUID] added later
                     # accessionnumberSUID.seriesnumber.imagenumber,  
                     name = "%s_%s.dcm" %(dcm.get('SeriesNumber'),

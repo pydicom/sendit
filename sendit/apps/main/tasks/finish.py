@@ -52,6 +52,7 @@ from sendit.settings import (
     GOOGLE_PROJECT_ID_HEADER,
     GOOGLE_PROJECT_NAME,
     SEND_TO_ORTHANC,
+    SEND_TO_GOOGLE,
     SOM_STUDY,
     ORTHANC_IPADDRESS,
     ORTHANC_PORT,
@@ -73,7 +74,7 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
 @shared_task
-def upload_storage(bid):
+def upload_storage(bid, do_clean_up=True):
     '''upload storage will send data to OrthanC and/or Google Storage, depending on the
     user preference.
     '''
@@ -153,12 +154,13 @@ def upload_storage(bid):
     else:
         message = "batch %s send to Google skipped, storage variables missing." %batch
         batch = add_batch_error(message,batch)
-
+        do_clean_up = False
         batch.change_images_status('SENT')
 
 
     change_status(batch,"DONE")
-    clean_up.apply_async(kwargs={"bid":bid})
+    if do_clean_up is True:
+        clean_up.apply_async(kwargs={"bid":bid})
 
 
 
