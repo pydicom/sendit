@@ -133,7 +133,7 @@ def upload_storage(bid):
                 client.upload_dataset(images=entity_images,
                                       collection=k["collection"],
                                       uid=uid,
-                                      images=mimetype="application/dicom",
+                                      images_mimetype="application/dicom",
                                       images_metadata=k["images_metadata"],
                                       entity_metadata=meta,
                                       permission="projectPrivate")
