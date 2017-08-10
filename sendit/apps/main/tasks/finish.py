@@ -87,16 +87,16 @@ def upload_storage(bid):
         # do the send here!
 
     # All variables must be defined for sending!
-    if GOOGLE_CLOUD_STORAGE is in [None,""]:
+    if GOOGLE_CLOUD_STORAGE in [None,""]:
         SEND_TO_GOOGLE = False
 
-    if GOOGLE_PROJECT_NAME is in [None,""]:
+    if GOOGLE_PROJECT_NAME in [None,""]:
         SEND_TO_GOOGLE = False
 
-    if GOOGLE_STORAGE_COLLECTION is in [None,""]:
+    if GOOGLE_STORAGE_COLLECTION in [None,""]:
         SEND_TO_GOOGLE = False
 
-    if SEND_TO_GOOGLE is True;
+    if SEND_TO_GOOGLE is True:
 
         from som.api.google.storage import Client
 
