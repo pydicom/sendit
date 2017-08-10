@@ -98,11 +98,11 @@ def scrub_pixels(bid):
 
 @shared_task
 def replace_identifiers(bid, run_upload_storage=True):
-        '''replace identifiers is called from get_identifiers, given that the user
-        has asked to deidentify_restful. This function will do the replacement,
-        and then trigger the function to send to storage
-        '''
-    #try:         
+    '''replace identifiers is called from get_identifiers, given that the user
+    has asked to deidentify_restful. This function will do the replacement,
+    and then trigger the function to send to storage
+    '''
+    try:         
         batch = Batch.objects.get(id=bid)
         batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
 
@@ -163,9 +163,9 @@ def replace_identifiers(bid, run_upload_storage=True):
         batch.change_images_status('DONEPROCESSING')
         
 
-    #except:
-    #    bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
-    #    return None
+    except:
+        bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
+        return None
 
         # We don't get here if the call above failed
         if run_upload_storage is True:
@@ -174,4 +174,3 @@ def replace_identifiers(bid, run_upload_storage=True):
         else:
             updated_files = batch.get_image_paths()
             return updated_files
-

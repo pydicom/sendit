@@ -58,6 +58,7 @@ from sendit.settings import (
 from retrying import retry
 from copy import deepcopy
 from django.conf import settings
+import time
 import os
 
 
@@ -156,8 +157,12 @@ def upload_storage(bid, do_clean_up=True):
         do_clean_up = False
         batch.change_images_status('SENT')
 
-
+    # Finish and record time elapsed
     change_status(batch,"DONE")
+    batch.qa['FinishTime'] = time.time()
+    batch.qa['ElapsedTime'] = batch.qa['FinishTime'] - batch.qa['StartTime']
+    batch.save()
+
     if do_clean_up is True:
         clean_up.apply_async(kwargs={"bid":bid})
 
@@ -172,13 +177,13 @@ def clean_up(bid):
     try:         
         batch = Batch.objects.get(id=bid)
     except:
-        bot.error("In clean_up: Series %s does not exist." %(sid))
+        bot.error("In clean_up: Batch %s does not exist." %(bid))
         return None
 
     if not batch.has_error:
         images = batch.image_set.all()
         [x.image.delete() for x in images] # deletes image files
         [x.delete() for x in images] # deletes objects
-        batch.delete() #django-cleanup will delete files on delete
+        # batch.delete() #django-cleanup will delete files on delete
     else:
-        bot.warning("Batch %s has error, will not be cleaned up.")
+        bot.warning("Batch %s has error, will not be cleaned up." %batch.id)

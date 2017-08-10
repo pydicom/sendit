@@ -61,6 +61,7 @@ from sendit.settings import (
 
 from django.conf import settings
 from sendit.apps.main.utils import ls_fullpath
+import time
 import os
 
 from pydicom import read_file
@@ -81,6 +82,8 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
     and is a celery job triggered by the watcher. Here we also flag (and disclude)
     images that have a header value that indicates pixel identifiers.
     '''
+    start_time = time.time()
+
     if os.path.exists(dicom_dir):
         dicom_files = ls_fullpath(dicom_dir)
         bot.debug("Importing %s, found %s .dcm files" %(dicom_dir,len(dicom_files)))        
@@ -146,6 +149,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
 
         # Save batch thus far
         batch.qa['StudyDate'] = study_dates
+        batch.qa['StartTime'] = start_time
         batch.save()
          
         # If there were no errors on import, we should remove the directory
