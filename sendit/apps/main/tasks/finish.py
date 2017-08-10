@@ -160,7 +160,11 @@ def upload_storage(bid, do_clean_up=True):
     # Finish and record time elapsed
     change_status(batch,"DONE")
     batch.qa['FinishTime'] = time.time()
-    batch.qa['ElapsedTime'] = batch.qa['FinishTime'] - batch.qa['StartTime']
+    total_time = batch.qa['FinishTime'] - batch.qa['StartTime']
+    bot.debug("Total time for %s: %s images is %s" %(batch.uid,
+                                                     batch.image_set.count(),
+                                                     total_time))
+    batch.qa['ElapsedTime'] = total_time
     batch.save()
 
     if do_clean_up is True:
