@@ -94,7 +94,6 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
-
             try:
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
@@ -110,23 +109,20 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 if dcm.get("BurnedInAnnotation") is not None:
                     message = "%s has burned pixel annotation, skipping" %dicom_uid
                     batch = add_batch_error(message,batch)
-
                 else:
 
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
-
                     # Save the dicom file to storage
+                    basename = "%s/%s" %(batch.id,os.path.basename(dcm_file))
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
-
                     # Generate image name based on [SUID] added later
                     # accessionnumberSUID.seriesnumber.imagenumber,  
                     name = "%s_%s.dcm" %(dcm.get('SeriesNumber'),
                                          dcm.get('InstanceNumber'))
-
                     dicom.name = name
                     dicom.save()
                     # Only remove files successfully imported

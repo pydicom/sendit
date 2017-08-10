@@ -59,8 +59,9 @@ def save_image_dicom(dicom,dicom_file,basename=None):
     fullpath = "%s/%s" %(settings.MEDIA_ROOT,
                          basename)
 
-    if not os.path.exists(fullpath):
-        os.mkdir(fullpath)
+    folder = os.path.dirname(fullpath)
+    if not os.path.exists(folder):
+        os.mkdir(folder)
 
     with open(dicom_file,'rb') as filey:
               django_file = File(filey)
