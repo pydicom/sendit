@@ -60,6 +60,7 @@ from sendit.settings import (
     GOOGLE_STORAGE_COLLECTION
 )
 
+from retrying import retry
 from copy import deepcopy
 from django.conf import settings
 import os
@@ -104,7 +105,7 @@ def upload_storage(bid):
 
         # Retrieve only images that aren't in PHI folder
         images = batch.get_finished()
-        cleaned = batch_ids.cleaned
+        cleaned = deepcopy(batch_ids.cleaned)
         items = prepare_items_metadata(batch)
 
         bot.log("Uploading %s finished to Google Storage %s" %(len(images),
@@ -117,22 +118,37 @@ def upload_storage(bid):
         #    client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
 
         collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
-        metadata = prepare_entity_metadata(cleaned_ids=batch_ids.cleaned,
+        metadata = prepare_entity_metadata(cleaned_ids=cleaned,
                                            image_count=len(images))
 
         # Batch metadata    
         # we could add additional here
-
-        for uid, meta in metadata.items(): # This should only be one
-            study_ids = extract_study_ids(cleaned,uid)
-            entity_images = get_entity_images(images,study_ids)
-            client.upload_dataset(images=entity_images,
-                                  collection=collection,
-                                  uid=metadata['id'],
-                                  images_metadata=items,
-                                  entity_metadata=metadata,
-                                  permission="projectPrivate")
  
+        # We need to make this a function, so we can apply retrying to it
+        @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=5)
+        def upload_dataset(k):
+            for uid, meta in k["metadata"].items(): # This should only be one
+                study_ids = extract_study_ids(k["cleaned"],uid)
+                entity_images = get_entity_images(k["images"],study_ids)
+                client.upload_dataset(images=entity_images,
+                                      collection=k["collection"],
+                                      uid=uid,
+                                      images_metadata=k["images_metadata"],
+                                      entity_metadata=meta,
+                                      permission="projectPrivate")
+ 
+        kwargs = {"client":client,
+                  "metadata": metadata,
+                  "cleaned":cleaned,
+                  "images":images,
+                  "collection":collection,
+                  "images_metadata":items,
+                  "permission":"projectPrivate"}
+
+        upload_dataset(kwargs)
+
+
+
     else:
         message = "batch %s send to Google skipped, storage variables missing." %batch
         batch = add_batch_error(message,batch)
