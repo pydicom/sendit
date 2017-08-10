@@ -94,6 +94,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
 
         # Data quality check: keep a record of study dates
         study_dates = dict()
+        size_bytes = sum(os.path.getsize(f) for f in os.listdir(dicom_dir) if os.path.isfile(f))
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
@@ -150,6 +151,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         # Save batch thus far
         batch.qa['StudyDate'] = study_dates
         batch.qa['StartTime'] = start_time
+        batch.qa['SizeBytes'] = size_bytes
         batch.save()
          
         # If there were no errors on import, we should remove the directory
