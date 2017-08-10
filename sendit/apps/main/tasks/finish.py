@@ -48,17 +48,11 @@ from .utils import (
 )
 
 from sendit.settings import (
-    GOOGLE_APPLICATION_CREDENTIALS,
-    GOOGLE_PROJECT_ID_HEADER,
-    GOOGLE_PROJECT_NAME,
     SEND_TO_ORTHANC,
     SEND_TO_GOOGLE,
     SOM_STUDY,
     ORTHANC_IPADDRESS,
-    ORTHANC_PORT,
-    SEND_TO_GOOGLE,
-    GOOGLE_CLOUD_STORAGE,
-    GOOGLE_STORAGE_COLLECTION
+    ORTHANC_PORT
 )
 
 from retrying import retry
@@ -78,7 +72,11 @@ def upload_storage(bid, do_clean_up=True):
     '''upload storage will send data to OrthanC and/or Google Storage, depending on the
     user preference.
     '''
-    from sendit.settings import *
+    from sendit.settings import (GOOGLE_CLOUD_STORAGE,
+                                 SEND_TO_GOOGLE,
+                                 GOOGLE_PROJECT_NAME,
+                                 GOOGLE_PROJECT_ID_HEADER,
+                                 GOOGLE_STORAGE_COLLECTION)
     try:         
         batch = Batch.objects.get(id=bid)
         batch_ids = BatchIdentifiers.objects.get(batch=batch)
