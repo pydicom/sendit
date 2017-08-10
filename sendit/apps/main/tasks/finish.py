@@ -60,6 +60,7 @@ from sendit.settings import (
     GOOGLE_STORAGE_COLLECTION
 )
 
+from copy import deepcopy
 from django.conf import settings
 import os
 
@@ -77,6 +78,7 @@ def upload_storage(bid):
     '''
     try:         
         batch = Batch.objects.get(id=bid)
+        batch_ids = BatchIdentifiers.objects.get(batch=batch)
     except:
         bot.error("In upload_storage: Batch %s does not exist." %(sid))
         return None
@@ -102,12 +104,13 @@ def upload_storage(bid):
 
         # Retrieve only images that aren't in PHI folder
         images = batch.get_finished()
+        cleaned = batch_ids.cleaned
         items = prepare_items_metadata(batch)
 
         bot.log("Uploading %s finished to Google Storage %s" %(len(images),
                                                                GOOGLE_CLOUD_STORAGE))
         client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
-                        project_name=GOOGLE_CLOUD_PROJECT)
+                        project_name=GOOGLE_PROJECT_NAME)
 
         # I'm not sure we need this
         #if GOOGLE_PROJECT_ID_HEADER is not None:

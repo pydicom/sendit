@@ -134,7 +134,6 @@ def prepare_items_metadata(batch):
     cleaned = batch.batchidentifiers_set.last().cleaned
     for image in batch.image_set.all():
         secret_id = image.uid        
-        iid = item[ITEM_ID]
         if secret_id in cleaned:
             metadata[image.image.path] = cleaned[secret_id]
     return metadata

@@ -160,8 +160,6 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         # At the end, submit the dicoms to be deidentified as a batch 
         count = batch.image_set.count()
         if count > 0:
-            bot.debug("Submitting task to get_identifiers for batch %s with %s dicoms." %(batch.uid,
-                                                                                          count))
             if DEIDENTIFY_PIXELS is True:
                 bot.warning("Deidentify pixels is not yet implemented. Images were skipped.")
                 # When this is implemented, the function will be modified to add these images
@@ -170,8 +168,11 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 # scrub_pixels.apply_async(kwargs={"bid":batch.id})
             #else:
             if run_get_identifiers is True:
+                bot.debug("Submitting task to get_identifiers for batch %s with %s dicoms." %(batch.uid,
+                                                                                              count))
                 get_identifiers.apply_async(kwargs={"bid":batch.id})
             else:
+                bot.debug("Finished batch %s with %s dicoms" %(batch.uid,count))
                 return batch
 
     else:
