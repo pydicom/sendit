@@ -35,6 +35,7 @@ class Command(BaseCommand):
         contenders = get_contenders(base=base,current=current)
 
         if number is not None:
+            number = int(number)
             if number > len(contenders):
                 number = len(contenders) - 1
             contenders = contenders[0:number]
