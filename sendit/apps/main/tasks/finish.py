@@ -78,6 +78,7 @@ def upload_storage(bid, do_clean_up=True):
     '''upload storage will send data to OrthanC and/or Google Storage, depending on the
     user preference.
     '''
+    from sendit.settings import *
     try:         
         batch = Batch.objects.get(id=bid)
         batch_ids = BatchIdentifiers.objects.get(batch=batch)
