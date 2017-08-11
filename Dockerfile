@@ -97,19 +97,19 @@ RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Dcm4che
-ENV DCMTK_PREFIX=/opt/dcmtk361
-ENV PATH /opt/dcmtk361/bin:$PATH
+#ENV DCMTK_PREFIX=/opt/dcmtk361
+#ENV PATH /opt/dcmtk361/bin:$PATH
 ENV MESSAGELEVEL -1
 
 # Releases are here http://dicom.offis.de/download/dcmtk/
-RUN wget http://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.tar.gz
+#RUN wget http://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.tar.gz
 
 # unpack the archive
-RUN tar -xzvf dcmtk-3.6.2.tar.gz 
-WORKDIR dcmtk-3.6.2
-RUN cmake -DCMAKE_INSTALL_PREFIX=$DCMTK_PREFIX
-RUN make all
-RUN make install
+#RUN tar -xzvf dcmtk-3.6.2.tar.gz 
+#WORKDIR dcmtk-3.6.2
+#RUN cmake -DCMAKE_INSTALL_PREFIX=$DCMTK_PREFIX
+#RUN make all
+#RUN make install
 
 RUN pip install -r /code/google-requirements.txt > /dev/null 2>&1
 RUN pip3 install -r /code/google-requirements.txt > /dev/null 2>&1
