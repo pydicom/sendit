@@ -142,16 +142,26 @@ def replace_identifiers(bid, run_upload_storage=True):
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
             item_id = os.path.basename(dcm.image.path)
+ 
             # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
             if item_id in updated:
                 item_suid = updated[item_id]['item_id']
                 dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
+
                 # accessionnumberSUID.seriesnumber.imagenumber,  
-                # If the image has DERIVED, quarantine
-                if "DERIVED" in dicom.get("ImageType",[]):
-                    quarantine_count += 1
+                # If the image has DERIVED, or blank, or Secondary, quarantine
+
+                phi_likely = ['DERIVED','SECONDARY',None, '']
+                do_quarantine = False
+                for image_type in dicom.get("ImageType",[]):
+                    if image_type in phi_likely and do_quarantine is False:
+                        quarantine_count += 1
+                        do_quarantine = True
+                if do_quarantine is True:
                     dcm = dcm.quarantine()
+
+                        
             dcm.save()
 
         if quarantine_count > 0:
@@ -169,7 +179,6 @@ def replace_identifiers(bid, run_upload_storage=True):
 
     # We don't get here if the call above failed
     if run_upload_storage is True:
-        bot.warning('upload to storage is not yet implemented!')
         upload_storage.apply_async(kwargs={"bid":bid})
     else:
         updated_files = batch.get_image_paths()
