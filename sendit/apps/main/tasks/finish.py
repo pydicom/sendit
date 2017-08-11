@@ -137,8 +137,6 @@ def upload_storage(bid, do_clean_up=True):
 
 
     else:
-        message = "batch %s send to Google skipped, storage variables missing." %batch
-        batch = add_batch_error(message,batch)
         do_clean_up = False
         batch.change_images_status('SENT')
 
