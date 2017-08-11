@@ -14,7 +14,7 @@ import os
 
 def get_size(batch):
     do_calculation = False
-    if batch.status is "DONE":
+    if batch.status == "DONE":
         if "SizeBytes" in batch.qa:
             if batch.qa['SizeBytes'] == 0:
                do_calculation=True        
@@ -23,7 +23,6 @@ def get_size(batch):
     if do_calculation is True: 
         batch_folder = "/data/%s" %(batch.uid)
         dicom_files = ls_fullpath(batch_folder)
-        print("Found %s dicom files" %len(dicom_files))
         batch.qa['SizeBytes'] = sum(os.path.getsize(f) for f in dicom_files)
         batch.save()
     return batch.qa['SizeBytes']/(1024*1024.0)  # bytes to MB
