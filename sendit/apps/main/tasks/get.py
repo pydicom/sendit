@@ -94,7 +94,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
 
         # Data quality check: keep a record of study dates
         study_dates = dict()
-        size_bytes = sum(os.path.getsize(f) for f in os.listdir(dicom_dir) if os.path.isfile(f))
+        size_bytes = sum(os.path.getsize(f) for f in dicom_files)
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
