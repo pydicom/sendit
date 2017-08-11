@@ -119,8 +119,7 @@ def upload_storage(bid, do_clean_up=True):
         #    client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
 
         collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
-        metadata = prepare_entity_metadata(cleaned_ids=cleaned,
-                                           image_count=len(images))
+        metadata = prepare_entity_metadata(cleaned_ids=cleaned)
 
         # Batch metadata    
         # we could add additional here

@@ -111,6 +111,7 @@ ENV MESSAGELEVEL -1
 #RUN make all
 #RUN make install
 
+# This sometimes errors, need to run manually
 RUN pip install -r /code/google-requirements.txt > /dev/null 2>&1
 RUN pip3 install -r /code/google-requirements.txt > /dev/null 2>&1
 

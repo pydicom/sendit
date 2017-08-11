@@ -108,7 +108,7 @@ def change_status(images,status):
 
 # METADATA ##############################################################
 
-def prepare_entity_metadata(cleaned_ids, image_count=None):
+def prepare_entity_metadata(cleaned_ids,image_count=None):
     '''prepare metadata for entities for Google Storage
     ''' 
     metadata = dict()
