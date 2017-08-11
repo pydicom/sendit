@@ -124,21 +124,7 @@ def upload_storage(bid, do_clean_up=True):
 
         # Batch metadata    
         # we could add additional here
- 
-        # We need to make this a function, so we can apply retrying to it
-        @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=5)
-        def upload_dataset(k):
-            for uid, meta in k["metadata"].items(): # This should only be one
-                study_ids = extract_study_ids(k["cleaned"],uid)
-                entity_images = get_entity_images(k["images"],study_ids)
-                client.upload_dataset(images=entity_images,
-                                      collection=k["collection"],
-                                      uid=uid,
-                                      images_mimetype="application/dicom",
-                                      images_metadata=k["images_metadata"],
-                                      entity_metadata=meta,
-                                      permission="projectPrivate")
- 
+  
         kwargs = {"client":client,
                   "metadata": metadata,
                   "cleaned":cleaned,
@@ -146,8 +132,8 @@ def upload_storage(bid, do_clean_up=True):
                   "collection":collection,
                   "images_metadata":items,
                   "permission":"projectPrivate"}
-
-        upload_dataset(kwargs)
+ 
+        batch_upload(kwargs)
 
 
 
@@ -191,3 +177,30 @@ def clean_up(bid):
         # batch.delete() #django-cleanup will delete files on delete
     else:
         bot.warning("Batch %s has error, will not be cleaned up." %batch.id)
+
+
+def batch_upload(d):
+    '''batch upload images, to not stress the datastore api
+    '''
+
+    # We need to make this a function, so we can apply retrying to it
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=5)
+    def upload_dataset(images,k):
+        for uid, meta in k["metadata"].items(): # This should only be one
+            study_ids = extract_study_ids(k["cleaned"],uid)
+            entity_images = get_entity_images(images, study_ids)
+            client.upload_dataset(images=entity_images,
+                                  collection=k["collection"],
+                                  uid=uid,
+                                  images_mimetype="application/dicom",
+                                  images_metadata=k["images_metadata"],
+                                  entity_metadata=meta,
+                                  permission="projectPrivate")
+
+    images = d['images']
+
+    # Run the storage/datastore upload in chunks
+    for imageset in chunks(d['images'], 500):
+        upload_dataset(images=imageset,k=d)
+
+
