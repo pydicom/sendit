@@ -133,7 +133,7 @@ def upload_storage(bid, do_clean_up=True):
                   "images_metadata":items,
                   "permission":"projectPrivate"}
  
-        batch_upload(kwargs)
+        batch_upload(client=client,d=kwargs)
 
 
 
@@ -147,9 +147,9 @@ def upload_storage(bid, do_clean_up=True):
     change_status(batch,"DONE")
     batch.qa['FinishTime'] = time.time()
     total_time = batch.qa['FinishTime'] - batch.qa['StartTime']
-    bot.debug("Total time for %s: %s images is %s" %(batch.uid,
-                                                     batch.image_set.count(),
-                                                     total_time))
+    bot.info("Total time for %s: %s images is %f min" %(batch.uid,
+                                                        batch.image_set.count(),
+                                                        total_time/60))
     batch.qa['ElapsedTime'] = total_time
     batch.save()
 
@@ -179,13 +179,13 @@ def clean_up(bid):
         bot.warning("Batch %s has error, will not be cleaned up." %batch.id)
 
 
-def batch_upload(d):
+def batch_upload(client,d):
     '''batch upload images, to not stress the datastore api
     '''
 
     # We need to make this a function, so we can apply retrying to it
-    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=5)
-    def upload_dataset(images,k):
+    @retry(stop_max_attempt_number=3)
+    def upload_dataset(client,images,k):
         for uid, meta in k["metadata"].items(): # This should only be one
             study_ids = extract_study_ids(k["cleaned"],uid)
             entity_images = get_entity_images(images, study_ids)
@@ -198,9 +198,8 @@ def batch_upload(d):
                                   permission="projectPrivate")
 
     images = d['images']
-
     # Run the storage/datastore upload in chunks
     for imageset in chunks(d['images'], 500):
-        upload_dataset(images=imageset,k=d)
-
-
+        upload_dataset(images=imageset,
+                       client=client,
+                       k=d)
