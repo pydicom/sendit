@@ -19,7 +19,7 @@ def get_size(batch):
             if batch.qa['SizeBytes'] == 0:
                do_calculation=True        
         else:
-            do_calculate = True
+            do_calculation = True
     if do_calculation is True: 
         batch_folder = "/data/%s" %(batch.uid)
         dicom_files = ls_fullpath(batch_folder)
