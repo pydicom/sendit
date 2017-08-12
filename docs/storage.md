@@ -47,6 +47,7 @@ client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
 The `GOOGLE_APPLICATION_CREDENTIALS` are essential for this to work. If you get permissions errors, you have an issue either with finding this file, or the file (the IAM permissions) in Google Cloud not having Read/Write/Admin access to the resource.
 
 We then create a collection. Given that it already exists, it is just retrieved:
+
 ```
 collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
 <Key('Collection', 'IRB41449'), project=som-irlearning>
@@ -58,7 +59,6 @@ This collection is called an "entity" in Datastore, and each entity has a unique
 metadata = prepare_entity_metadata(cleaned_ids=batch_ids.cleaned,
                                    image_count=len(images))
 
-```
 {'IR661f32': 
     {
      'PatientSex': 'M', 'id': 'IR661f32', 
