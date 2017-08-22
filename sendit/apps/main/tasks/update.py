@@ -142,7 +142,7 @@ def replace_identifiers(bid, run_upload_storage=True):
                                                           # config=None, use deid
 
         # Get shared information
-        aggregate = ["BodyPartExamined", "Modality"]
+        aggregate = ["BodyPartExamined", "Modality", "StudyDescription"]
         shared_ids = get_shared_identifiers(dicom_files=updated_files, 
                                             aggregate=aggregate)
         batch_ids.shared = shared_ids
