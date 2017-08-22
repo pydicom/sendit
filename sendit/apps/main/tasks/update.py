@@ -41,7 +41,11 @@ from sendit.apps.main.tasks.utils import (
 )
 
 from deid.data import get_deid
-from deid.dicom import replace_identifiers as replace_ids
+from deid.dicom import (
+    replace_identifiers as replace_ids,
+    get_shared_identifiers
+)
+
 from deid.identifiers import clean_identifiers
 from som.api.identifiers.dicom import prepare_identifiers
 from sendit.apps.main.tasks.finish import upload_storage
@@ -137,12 +141,19 @@ def replace_identifiers(bid, run_upload_storage=True):
                                                           # save = True,
                                                           # config=None, use deid
 
+        # Get shared information
+        aggregate = ["BodyPartExamined", "Modality"]
+        shared_ids = get_shared_identifiers(dicom_files=updated_files, 
+                                            aggregate=aggregate)
+        batch_ids.shared = shared_ids
+        batch_ids.save()
+
         # Rename and Quarantine
         quarantine_count = 0
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
             item_id = os.path.basename(dcm.image.path)
- 
+
             # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
             if item_id in updated:
@@ -151,17 +162,17 @@ def replace_identifiers(bid, run_upload_storage=True):
 
                 # accessionnumberSUID.seriesnumber.imagenumber,  
                 # If the image has DERIVED, or blank, or Secondary, quarantine
-
-                phi_likely = ['DERIVED','SECONDARY',None, '']
+                phi_likely = ['DERIVED','SECONDARY', None, '']
                 do_quarantine = False
+
                 for image_type in dicom.get("ImageType",[]):
                     if image_type in phi_likely and do_quarantine is False:
                         quarantine_count += 1
                         do_quarantine = True
-                if do_quarantine is True:
-                    dcm = dcm.quarantine()
 
-                        
+                if do_quarantine is True:
+                    dcm = dcm.quarantine()                
+
             dcm.save()
 
         if quarantine_count > 0:

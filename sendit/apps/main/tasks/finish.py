@@ -42,6 +42,7 @@ from .utils import (
     chunks,
     prepare_entity_metadata,
     prepare_items_metadata,
+    generate_compressed_file,
     extract_study_ids,
     get_entity_images,
     save_image_dicom
@@ -103,14 +104,39 @@ def upload_storage(bid, do_clean_up=True):
     if SEND_TO_GOOGLE is True:
 
         from som.api.google.storage import Client
+        from deid.identifiers import get_timestamp
 
         # Retrieve only images that aren't in PHI folder
         images = batch.get_finished()
-        cleaned = deepcopy(batch_ids.cleaned)
-        items = prepare_items_metadata(batch)
 
-        bot.log("Uploading %s finished to Google Storage %s" %(len(images),
-                                                               GOOGLE_CLOUD_STORAGE))
+        # IR0001fa6_20160525_IR661B54.tar.gz
+        # (coded MRN?)_jittereddate_studycode
+
+        studycode = batch_ids.shared['AccessionNumber']
+        coded_mrn = batch_ids.shared['PatientID']
+        timestamp = get_timestamp(batch_ids.shared['StudyDate'],
+                                  format = "%Y%m%d")            
+
+        compressed_filename = "%s/%s_%s_%s.tar.gz" %(batch.get_path(),
+                                                     coded_mrn,
+                                                     timestamp,
+                                                     studycode)
+
+        compressed_file = generate_compressed_file(files=images, # mode="w:gz"
+                                                   filename=compressed_filename) 
+
+
+        # We prepare shared metadata for one item
+        items = { compressed_file: batch_ids.shared }
+        cleaned = deepcopy(batch_ids.cleaned)
+        metadata = prepare_entity_metadata(cleaned_ids=cleaned)
+
+        #items = prepare_items_metadata(batch)
+        # DELETE -----------------------------
+
+        bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
+                                                                     len(images),
+                                                                     GOOGLE_CLOUD_STORAGE))
         client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
                         project_name=GOOGLE_PROJECT_NAME)
 
@@ -119,22 +145,18 @@ def upload_storage(bid, do_clean_up=True):
         #    client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
 
         collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
-        metadata = prepare_entity_metadata(cleaned_ids=cleaned)
+
+        # We only expect to have one entity per batch
+        uid = list(metadata.keys())[0]
+        kwargs = {"images":[compressed_file],
+                  "collection":collection,
+                  "uid":uid,
+                  "entity_metadata": metadata[uid],
+                  "images_metadata":items}
 
         # Batch metadata    
         # we could add additional here
-  
-        kwargs = {"client":client,
-                  "metadata": metadata,
-                  "cleaned":cleaned,
-                  "images":images,
-                  "collection":collection,
-                  "images_metadata":items,
-                  "permission":"projectPrivate"}
- 
-        batch_upload(client=client,d=kwargs)
-
-
+        upload_dataset(client=client, k=kwargs)
 
     else:
         do_clean_up = False
@@ -176,24 +198,22 @@ def clean_up(bid):
         bot.warning("Batch %s has error, will not be cleaned up." %batch.id)
 
 
+# We need to make this a function, so we can apply retrying to it
+@retry(stop_max_attempt_number=3)
+def upload_dataset(client, k):
+    client.upload_dataset(images=k['images'],
+                          collection=k["collection"],
+                          uid=k['uid'],
+                          images_mimetype="application/gzip",
+                          images_metadata=k["images_metadata"],
+                          entity_metadata=k['entity_metadata'],
+                          permission="projectPrivate")
+
+
 def batch_upload(client,d):
     '''batch upload images, to not stress the datastore api
+       not in use, we are uploading a single compressed image.
     '''
-
-    # We need to make this a function, so we can apply retrying to it
-    @retry(stop_max_attempt_number=3)
-    def upload_dataset(client,images,k):
-        for uid, meta in k["metadata"].items(): # This should only be one
-            study_ids = extract_study_ids(k["cleaned"],uid)
-            entity_images = get_entity_images(images, study_ids)
-            client.upload_dataset(images=entity_images,
-                                  collection=k["collection"],
-                                  uid=uid,
-                                  images_mimetype="application/dicom",
-                                  images_metadata=k["images_metadata"],
-                                  entity_metadata=meta,
-                                  permission="projectPrivate")
-
     images = d['images']
     # Run the storage/datastore upload in chunks
     for imageset in chunks(d['images'], 500):

@@ -87,7 +87,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
     if os.path.exists(dicom_dir):
         dicom_files = ls_fullpath(dicom_dir)
         bot.debug("Importing %s, found %s .dcm files" %(dicom_dir,len(dicom_files)))        
-        
+
         # The batch --> the folder with a set of dicoms tied to one request
         dcm_folder = os.path.basename(dicom_dir)   
         batch,created = Batch.objects.get_or_create(uid=dcm_folder)
@@ -99,6 +99,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
             try:
+
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
                 dicom_uid = os.path.basename(dcm_file)
@@ -108,13 +109,16 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 if study_date not in study_dates:
                     study_dates[study_date] = 0
                 study_dates[study_date] += 1
+                modality = dcm.get('Modality')
 
                 # If the image has pixel identifiers, we don't include 
                 if dcm.get("BurnedInAnnotation") is not None:
                     message = "%s has burned pixel annotation, skipping" %dicom_uid
                     batch = add_batch_error(message,batch)
+                elif modality not in ['CT', 'MR']:
+                    message = "%s is not CT/MR, found %s skipping" %(dicom_uid, modality)
+                    batch = add_batch_error(message,batch)
                 else:
-
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
@@ -123,7 +127,6 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                     # basename = "%s/%s" %(batch.id,os.path.basename(dcm_file))
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
-
                     # Generate image name based on [SUID] added later
                     # accessionnumberSUID.seriesnumber.imagenumber,  
                     name = "%s_%s.dcm" %(dcm.get('SeriesNumber'),
@@ -142,12 +145,10 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 batch = add_batch_error(message,batch)
             except Exception as e:
                 message = "Exception: %s, for %s, skipping." %(e, dcm_file)
-
         if len(study_dates) > 1:
             message = "% study dates found for %s" %(len(study_dates),
                                                      dcm_file)
             batch = add_batch_error(message,batch)
-
         # Save batch thus far
         batch.qa['StudyDate'] = study_dates
         batch.qa['StartTime'] = start_time
@@ -209,7 +210,8 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
 
         # deid get_identifiers: returns ids[entity][item] = {"field":"value"}
         ids = get_ids(dicom_files=dicom_files,
-                      expand_sequences=True)  # expand sequences to flat structure
+                      expand_sequences=False)  # we are uploading a zip, doesn't make sense
+                                               # to preserve image level metadata
 
         # Prepare identifiers with only minimal required
         # This function expects many items for one entity, returns 

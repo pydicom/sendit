@@ -238,6 +238,7 @@ class BatchIdentifiers(models.Model):
     modify_date = models.DateTimeField('date modified', auto_now=True)
     response = JSONField(default=dict())
     ids = JSONField(default=dict())
+    shared = JSONField(default=dict()) # shared identifiers
     updated = JSONField(default=dict())
     cleaned = JSONField(default=dict())
 

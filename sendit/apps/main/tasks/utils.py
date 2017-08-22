@@ -37,6 +37,8 @@ from sendit.settings import (
 )
 
 from django.conf import settings
+import uuid
+import tarfile
 import os
 
 
@@ -70,6 +72,23 @@ def save_image_dicom(dicom,dicom_file,basename=None):
                                save=True)  
     dicom.save()
     return dicom
+
+
+def generate_compressed_file(files, filename=None, mode="w:gz", archive_basename=None):
+    ''' generate a tar.gz file (default) including a set of files '''
+    if filename is None:
+        filename = "%s.tar.gz" %str(uuid.uuid4())
+    bot.debug("Compressing %s files into %s" %(len(files),filename))
+    tar = tarfile.open(filename, mode)
+    if archive_basename is None:
+        archive_basename = os.path.basename(filename).split('.')[0]
+    for name in files:
+        # Make the archive flat with the images
+        basename = "%s/%s" %(archive_basename,
+                             os.path.basename(name))
+        tar.add(name, arcname=basename)
+    tar.close()
+    return filename
 
 
 ## MODELS ##############################################################
