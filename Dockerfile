@@ -67,9 +67,10 @@ RUN pip install pyinotify
 
 # Install pydicom
 WORKDIR /tmp
-RUN git clone https://github.com/vsoch/pydicom
-WORKDIR pydicom
-RUN python setup.py install
+#RUN git clone https://github.com/vsoch/pydicom
+#WORKDIR pydicom
+#RUN python setup.py install
+RUN pip install git+git://github.com/pydicom/pydicom.git@affb1cf10c6be2aca311c29ddddc622f8bd1f810
 
 # deid
 WORKDIR /tmp
