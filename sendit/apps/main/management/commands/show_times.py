@@ -36,7 +36,10 @@ class Command(BaseCommand):
         
         new_batches = 0
         for batch in Batch.objects.all():
-            if batch.status == "DONE":
+            if batch.status == "ERROR":
+                continue
+
+            elif batch.status == "DONE":
                 size = get_size(batch) # bytes
                 time = batch.qa['FinishTime'] - batch.qa['StartTime']
                 bot.info("Batch %s: %s MB in %s minutes" %(batch.uid,
