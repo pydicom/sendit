@@ -183,13 +183,17 @@ def clean_up(bid):
     from the database. If no errors occurred, the original folder would have been deleted
     after dicom import.
     '''
+    # force clean up for now, we don't have much server space
+    has_error = batch.has_error
+    has_error = False
+
     try:         
         batch = Batch.objects.get(id=bid)
     except:
         bot.error("In clean_up: Batch %s does not exist." %(bid))
         return None
 
-    if not batch.has_error:
+    if not has_error:
         images = batch.image_set.all()
         [x.image.delete() for x in images] # deletes image files
         [x.delete() for x in images] # deletes objects
