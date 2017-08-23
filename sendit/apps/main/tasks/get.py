@@ -183,6 +183,8 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             # No images for further processing
             batch.status = "EMPTY"
             batch.qa['FinishTime'] = time.time()
+            message = "%s is flagged EMPTY, no images pass filter" %(dicom_uid)
+            batch = add_batch_warning(message,batch)
             batch.save()
     else:
         bot.warning('Cannot find %s' %dicom_dir)
