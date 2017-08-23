@@ -181,7 +181,8 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 return batch
         else:
             # No images for further processing
-            batch.status = "DONE"
+            batch.status = "EMPTY"
+            batch.qa['FinishTime'] = time.time()
             batch.save()
     else:
         bot.warning('Cannot find %s' %dicom_dir)

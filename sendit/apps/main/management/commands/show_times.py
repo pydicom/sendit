@@ -38,7 +38,8 @@ class Command(BaseCommand):
         for batch in Batch.objects.all():
             if batch.status == "ERROR":
                 continue
-
+            elif batch.status == "EMPTY":
+                continue
             elif batch.status == "DONE":
                 size = get_size(batch) # bytes
                 time = batch.qa['FinishTime'] - batch.qa['StartTime']
