@@ -73,10 +73,16 @@ The application is being hosted on a server provided by Stanford IRT. Given some
 ## 4. Endpoint Error
 
 ### What kind of error is this?
-The `sendit` application uses many endpoints for obtaining identifiers, and uploading data. This is typically a hiccup in the remote, either if it is down, times out, or has an error parsing the request.
+The `sendit` application uses many endpoints for obtaining identifiers, and uploading data. This is typically a hiccup in the remote, either if it is down, times out, or has an error parsing the request. When we talk about these kinds of errors, we should first know about the typical client to service relationship:
+
+```
+[ client ] -- makes request --> [ service provider receives request ] --> [ valid format? --> authenticated? --> authorized? ] --> [ response ]
+```
+
+In the example above, we might have `sendit` as a client, and `DASHER` as the provider. Communication between the two is done by way of [requests](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods), and then different [status codes](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) sent back with any response. Generally, errors in the `200` family mean success, `300` is some kind of redirect / move, `400` is a client error, and `500` is a service provider error.
 
 ### What does it produce?
-Endpoint errors usually send back responses in the `400` category to the client. Common ones are `400` (authentication required), `403` (Permission Denied or Forbidden) or `404` (oops, not found). Unfortuntely, timeouts don't send back anything at all, and it's the calling application that decides to hang up.
+Endpoint errors usually send back responses in the `400` category to the client. Common ones are `401` (authentication required), `403` (Permission Denied or Forbidden) or `404` (oops, not found). `400` means "bad request" and some providers choose to return this as exposing a more specific error could be a security risk. Unfortuntely, timeouts don't send back anything at all, and it's the calling application that decides to hang up.
 
 ### How is it handled?
 These kinds of errors are expected, and in fact quite reliable for some of the external APIs (for example, connecting to datastore almost always fails on the first attempt because it's run on Google Appspot). The `sendit` application deals with them by way of [exponential backoff](https://cloud.google.com/storage/docs/exponential-backoff) (retrying). This means that we keep trying the request with a longer delay between retries, up to some final number. This should deal with quirks and timeouts, and the error is only raised given that failure is consistent.
@@ -85,7 +91,7 @@ These kinds of errors are expected, and in fact quite reliable for some of the e
 This usually comes down to fixing the endpoint, meaning posting an issue on a board on Github, or in the case of an SOM API, contacting Stanford IRT.
 
 # My Experience
- - The most common endpoint errors I've seen is with communicating with DASHER, mainly because we were figuring out formatting and setup, and since the early days of this it has worked very reliably.
+ - The most common endpoint errors I've seen is with communicating with DASHER, mainly because we were figuring out formatting and setup, and since the early days of this it has worked very reliably. I would say our early troubles had to do with sending too many requests (representing every dicom image as an item). Once we chose to get just two identifiers (suid) per batch (for the patient, and study, respectively) the function was much improved. 
  - Google Cloud pretty reliably has timeouts and hiccups, as do most web applications. The exponential backoff strategy has (thus far) worked very well.
  - The most common error I've come across that is most significant is running out of room for images on the server. We are limited in the number of batches that can be processed because of it. Since it's the case that some batches can have thousands and some a few hundred, it isn't reliable to try and maximize the number processed at once. I've had a few times when 50 batches at once works ok (they are run as asynchronous tasks) but I've also had times when a server alarm went off because too many files were copied and room ran out. I've found N=25 to work reasonably given these constaints.
  - There is no "testing ground" between development and deployment, so typically I will see errors when I am interactively testing a function, and then adjust the software locally, push to Github, and pull to the server. These errors are sometimes logged on Opbeat, but more commonly appear in my console. 
