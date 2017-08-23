@@ -37,6 +37,7 @@ from sendit.apps.main.models import (
 
 from .utils import (
     add_batch_error,
+    add_batch_warning,
     change_status,
     chunks,
     save_image_dicom
@@ -114,10 +115,10 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 # If the image has pixel identifiers, we don't include 
                 if dcm.get("BurnedInAnnotation") is not None:
                     message = "%s has burned pixel annotation, skipping" %dicom_uid
-                    batch = add_batch_error(message,batch)
+                    batch = add_batch_warning(message,batch)
                 elif modality not in ['CT', 'MR']:
                     message = "%s is not CT/MR, found %s skipping" %(dicom_uid, modality)
-                    batch = add_batch_error(message,batch)
+                    batch = add_batch_warning(message,batch)
                 else:
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
@@ -178,7 +179,10 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             else:
                 bot.debug("Finished batch %s with %s dicoms" %(batch.uid,count))
                 return batch
-
+        else:
+            # No images for further processing
+            batch.status = "DONE"
+            batch.save()
     else:
         bot.warning('Cannot find %s' %dicom_dir)
 

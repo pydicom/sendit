@@ -180,10 +180,7 @@ def replace_identifiers(bid, run_upload_storage=True):
 
         # 3) save newly de-identified ids for storage upload
         DEIDENTIFY_PIXELS=False
-        change_status(batch,"DONEPROCESSING")
-        batch.change_images_status('DONEPROCESSING')
         
-
     except:
         bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
         return None
