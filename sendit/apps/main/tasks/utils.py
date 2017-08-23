@@ -112,7 +112,7 @@ def add_batch_warning(message,batch):
                              batch=batch,
                              func=bot.warning)
 
-def add_batch_warning(message,batch):
+def add_batch_error(message,batch):
     return add_batch_message(message=message,
                              batch=batch,
                              func=bot.error)
