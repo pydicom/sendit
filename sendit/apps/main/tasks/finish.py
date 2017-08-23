@@ -181,7 +181,7 @@ def upload_storage(bid, do_clean_up=True):
         clean_up.apply_async(kwargs={"bid":bid})
 
     # Start a new task
-    start_tasks(N=1)
+    start_tasks(count=1)
 
 
 @shared_task

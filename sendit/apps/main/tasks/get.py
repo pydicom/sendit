@@ -181,11 +181,14 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 return batch
         else:
             # No images for further processing
+            from sendit.apps.main.utils import start_tasks
             batch.status = "EMPTY"
             batch.qa['FinishTime'] = time.time()
             message = "%s is flagged EMPTY, no images pass filter" %(dicom_uid)
             batch = add_batch_warning(message,batch)
             batch.save()
+            start_tasks(count=1)
+
     else:
         bot.warning('Cannot find %s' %dicom_dir)
 
