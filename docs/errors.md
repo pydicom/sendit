@@ -4,7 +4,7 @@ We will discuss errors on four levels:
  - [Application Server Errors](#1-application-server-errors)
  - [Expected Errors](#2-expected-errors)
  - [Host Server Errors](#3-host-errors)
- - [Endpoint Errors](4-endpoint-error)
+ - [Endpoint Errors](#4-endpoint-error)
 
 all in the context of the application `sendit`. Specifically we will review:
 
