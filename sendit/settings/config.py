@@ -25,6 +25,13 @@ ITEM_ID="AccessionNumber"
 
 
 #####################################################
+# WORKER
+#####################################################
+RUN_SERIAL=True # should we run tasks serial (recommended
+                # for single/small servers) or async?
+
+
+#####################################################
 # STORAGE
 #####################################################
 

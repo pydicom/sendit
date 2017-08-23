@@ -30,6 +30,7 @@ from sendit.apps.main.models import (
 )
 
 from sendit.logger import bot
+import sys
 import os
 
 
@@ -62,3 +63,41 @@ def ls_fullpath(dirname,ext=None):
     if ext is not None:
         return [os.path.join(dirname, f) for f in os.listdir(dirname) if f.endswith(ext)]
     return [os.path.join(dirname, f) for f in os.listdir(dirname)]
+
+
+
+
+
+#### WORKER ##########################################################
+
+def start_tasks(count=1, base='/data')
+    '''
+    submit some count of tasks based on those that aren't present
+    as batches
+
+    Parameters
+    ==========
+    count: the number to submit. Default is 1
+    base: the base data folder, defaults to /data
+    '''
+    from sendit.apps.main.tasks import import_dicomdir
+    current = [x.uid for x in Batch.objects.all()]
+    contenders = get_contenders(base=base,current=current)
+
+    # We can't return more contenders than are available
+    if count > len(contenders):
+       count = len(contenders) - 1
+
+    contenders = contenders[0:count]
+    bot.debug("Starting deid pipeline for %s folders" %len(contenders))
+    for contender in contenders:
+        dicom_dir = "%s/%s" %(base,contender)
+        import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
+
+
+def get_contenders(base,current=None):
+    contenders = [x for x in os.listdir(base) if not os.path.isdir(x)]
+    contenders = [x for x in contenders if not x.endswith('tmp')]
+    if current is not None:
+        contenders = [x for x in contenders if x not in current]
+    return contenders

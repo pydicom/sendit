@@ -74,6 +74,7 @@ def upload_storage(bid, do_clean_up=True):
     '''upload storage will send data to OrthanC and/or Google Storage, depending on the
     user preference.
     '''
+    from sendit.apps.main.utils import start_tasks
     from sendit.settings import (GOOGLE_CLOUD_STORAGE,
                                  SEND_TO_GOOGLE,
                                  GOOGLE_PROJECT_NAME,
@@ -179,6 +180,8 @@ def upload_storage(bid, do_clean_up=True):
     if do_clean_up is True:
         clean_up.apply_async(kwargs={"bid":bid})
 
+    # Start a new task
+    start_tasks(N=1)
 
 
 @shared_task
