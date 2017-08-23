@@ -70,7 +70,7 @@ def ls_fullpath(dirname,ext=None):
 
 #### WORKER ##########################################################
 
-def start_tasks(count=1, base='/data')
+def start_tasks(count=1, base='/data'):
     '''
     submit some count of tasks based on those that aren't present
     as batches
