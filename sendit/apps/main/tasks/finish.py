@@ -126,14 +126,19 @@ def upload_storage(bid, do_clean_up=True):
         compressed_file = generate_compressed_file(files=images, # mode="w:gz"
                                                    filename=compressed_filename) 
 
+        # File will be None if no files added
+        if compressed_file is None:        
+            message = "batch %s problem compressing file, stopping upload" %(bid)
+            batch = add_batch_error(message,batch)
+            batch.save()
+            return start_tasks(count=1)
+
 
         # We prepare shared metadata for one item
         items = { compressed_file: batch_ids.shared }
         cleaned = deepcopy(batch_ids.cleaned)
         metadata = prepare_entity_metadata(cleaned_ids=cleaned)
 
-        #items = prepare_items_metadata(batch)
-        # DELETE -----------------------------
 
         bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
                                                                      len(images),

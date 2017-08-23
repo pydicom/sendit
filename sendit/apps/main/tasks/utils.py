@@ -82,12 +82,20 @@ def generate_compressed_file(files, filename=None, mode="w:gz", archive_basename
     tar = tarfile.open(filename, mode)
     if archive_basename is None:
         archive_basename = os.path.basename(filename).split('.')[0]
+    images_added = 0
     for name in files:
-        # Make the archive flat with the images
-        basename = "%s/%s" %(archive_basename,
-                             os.path.basename(name))
-        tar.add(name, arcname=basename)
+        try:
+            # Make the archive flat with the images
+            basename = "%s/%s" %(archive_basename,
+                                 os.path.basename(name))
+            tar.add(name, arcname=basename)
+            images_added +=1
+        except FileNotFoundError:
+            pass
+
     tar.close()
+    if images_added == 0:
+        filename = None
     return filename
 
 
