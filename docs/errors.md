@@ -1,5 +1,12 @@
 # Error Handling
-We will discuss errors on three levels, all in the context of the application `sendit`. Specifically we will review:
+We will discuss errors on four levels:
+
+ - [Application Server Errors](#1-application-server-errors)
+ - [Expected Errors](#2-expected-errors)
+ - [Host Server Errors](#3-host-errors)
+ - [Endpoint Errors](4-endpoint-error)
+
+all in the context of the application `sendit`. Specifically we will review:
 
  - the kind of error
  - what it produces
@@ -78,9 +85,22 @@ These kinds of errors are expected, and in fact quite reliable for some of the e
 This usually comes down to fixing the endpoint, meaning posting an issue on a board on Github, or in the case of an SOM API, contacting Stanford IRT.
 
 # My Experience
+ - The most common endpoint errors I've seen is with communicating with DASHER, mainly because we were figuring out formatting and setup, and since the early days of this it has worked very reliably.
+ - Google Cloud pretty reliably has timeouts and hiccups, as do most web applications. The exponential backoff strategy has (thus far) worked very well.
  - The most common error I've come across that is most significant is running out of room for images on the server. We are limited in the number of batches that can be processed because of it. Since it's the case that some batches can have thousands and some a few hundred, it isn't reliable to try and maximize the number processed at once. I've had a few times when 50 batches at once works ok (they are run as asynchronous tasks) but I've also had times when a server alarm went off because too many files were copied and room ran out. I've found N=25 to work reasonably given these constaints.
  - There is no "testing ground" between development and deployment, so typically I will see errors when I am interactively testing a function, and then adjust the software locally, push to Github, and pull to the server. These errors are sometimes logged on Opbeat, but more commonly appear in my console. 
  - The biggest trouble comes with needing to rebuild the image, as a change in one dependency can mean non-functioning of the application. In the long run we will want to have the image pre-built and used, and versions of software specified in detail.
+
+## Summary
+In summary:
+
+ - `host machine`: I (@vsoch) don't know about errors on the host, as I don't manage the machine, but would like notification if the application needs attention. 
+ - `server error`: We are notified immediately of unexpected errors from the application itself, and the error will be (granted that I'm not sleeping) fixed promptly.
+ - `endpoint error`: Is protected greatly with exponential backoff. The fallback to complete failure of an endpoint is the `server error` above and notification.
+ - `expected error`: can be viewed and managed on demand.
+
+This isn't a perfect setup, but it's robust enough to be a good start :)
+
 
 # Metrics
 
