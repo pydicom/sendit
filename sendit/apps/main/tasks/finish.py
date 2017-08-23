@@ -158,6 +158,10 @@ def upload_storage(bid, do_clean_up=True):
         # we could add additional here
         upload_dataset(client=client, k=kwargs)
 
+        # Clean up compressed file
+        if os.path.exists(compressed_file):
+            os.remove(compressed_file)
+
     else:
         do_clean_up = False
         batch.change_images_status('SENT')

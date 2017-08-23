@@ -103,7 +103,6 @@ def add_batch_error(message,batch):
     # Only add the unique error once
     if message not in batch.logs['errors']:
         batch.logs['errors'].append(message)
-    batch.status = 'ERROR'
     batch.save()
     return batch  
 
