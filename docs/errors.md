@@ -142,7 +142,23 @@ Dicom import is when we find a folder in the application data folder, copy it to
 
 5. `modality not in CT or MR`: we found a lot of PHI in images other than MR/CT (eg, Ultrasound, Angiography) and so any image with `ImageType` field with something other than these two is treated as an item in 4 - logged and not added to the batch.
 
-6. `images EMPTY`: in the case that no images pass filters, the count will be 0, and we set the batch status to `EMPTY` and move on to the next. This I've found to be a common issue given that many images are skipped due to potential PHI, and some of the batch folders are rather small.
+6. `images EMPTY`: in the case that no images pass filters, the count will be 0, and we set the batch status to `EMPTY` and move on to the next. This I've found to be a common issue given that many images are skipped due to potential PHI, and some of the batch folders are rather small. For example:
+
+```
+worker_1  | DEBUG Importing /data/XXXXXX, found 9 .dcm files
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX has burned pixel annotation, skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING 2.25.XXXXXXXXXXXXX is not CT/MR, found XA skipping
+worker_1  | WARNING XXXXXXXXXXXXX is flagged EMPTY, no images pass filter
+worker_1  | DEBUG Starting deid pipeline for 1 folders
+worker_1  | [2017-08-23 05:54:29,430: INFO/MainProcess] Received task: sendit.apps.main.tasks.get.import_dicomdir[ec480057-9940-46b9-bfca-fb40eab343b0]
+```
 
 ## Get Identifiers (DASHER)
 
@@ -167,3 +183,17 @@ This step will take a set of de-identified, filtered, and renamed images, compre
 
 3. `timeout / other API error`: right now this is handled by exponential backoff, and I haven't seen any issues. If this fails, the fallback is raising the error to the server, and notification.
 
+4. `token refresh`: it's pretty standard to need to refresh tokens, and the Google python APIs handle this, for example:
+
+```
+worker_1  | LOG Uploading IR1c1d_20150525_IR661B26.tar.gz with 1848 images to Google Storage irlhs-dicom
+worker_1  | [2017-08-23 05:51:37,262: INFO/Worker-1] URL being requested: GET https://www.googleapis.com/storage/v1/b/irlhs-dicom?alt=json
+worker_1  | [2017-08-23 05:51:37,262: INFO/Worker-1] Attempting refresh to obtain initial access_token
+...
+worker_1  | [2017-08-23 05:51:37,303: INFO/Worker-1] Refreshing access_token
+worker_1  | [2017-08-23 05:51:37,656: DEBUG/Worker-1] Making request: POST https://accounts.google.com/o/oauth2/token
+worker_1  | [2017-08-23 05:51:37,657: DEBUG/Worker-1] Starting new HTTPS connection (1): accounts.google.com
+worker_1  | [2017-08-23 05:51:37,752: DEBUG/Worker-1] https://accounts.google.com:443 "POST /o/oauth2/token HTTP/1.1" 200 None
+worker_1  | [2017-08-23 05:51:38,721: INFO/Worker-1] URL being requested: POST https://www.googleapis.com/upload/storage/v1/b/irlhs-dicom/o?predefinedAcl=projectPrivate&uploadType=resumable&alt=json
+
+```
