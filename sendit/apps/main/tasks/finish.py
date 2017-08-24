@@ -110,6 +110,13 @@ def upload_storage(bid, do_clean_up=True):
         # Retrieve only images that aren't in PHI folder
         images = batch.get_finished()
 
+        # Stop if no images pass filters
+        if len(images) == 0:        
+            message = "batch %s has no images for processing, stopping upload" %(bid)
+            batch = add_batch_warning(message,batch)
+            batch.save()
+            return start_tasks(count=1)
+
         # IR0001fa6_20160525_IR661B54.tar.gz
         # (coded MRN?)_jittereddate_studycode
 
