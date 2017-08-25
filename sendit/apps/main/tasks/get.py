@@ -55,8 +55,8 @@ from .finish import upload_storage
 from som.api.identifiers import Client
 
 from sendit.settings import (
-    DEIDENTIFY_RESTFUL,
-    DEIDENTIFY_PIXELS,
+    ANONYMIZE_PIXELS,
+    ANONYMIZE_RESTFUL
     SOM_STUDY
 )
 
@@ -162,11 +162,11 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             # Should only be called given no error, and should trigger error if not empty
             #os.rmdir(dicom_dir)
 
-        # At the end, submit the dicoms to be deidentified as a batch 
+        # At the end, submit the dicoms to be anonymized as a batch 
         count = batch.image_set.count()
         if count > 0:
-            if DEIDENTIFY_PIXELS is True:
-                bot.warning("Deidentify pixels is not yet implemented. Images were skipped.")
+            if ANONYMIZE_PIXELS is True:
+                bot.warning("Anonimization of pixels is not yet implemented. Images were skipped.")
                 # When this is implemented, the function will be modified to add these images
                 # to the batch, which will then be first sent through a function to
                 # scrub pixels before header data is looked at.
@@ -201,7 +201,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
     '''get identifiers is the celery task to get identifiers for 
     all images in a batch. A batch is a set of dicom files that may include
     more than one series/study. This is done by way of sending one restful call
-    to the DASHER endpoint. If DEIDENTIFY_RESTFUL is False
+    to the DASHER endpoint. If ANONYMIZE_RESTFUL is False
     under settings, this function doesn't run
     '''
     batch = Batch.objects.get(id=bid)
@@ -209,7 +209,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
     if study is None:
         study = SOM_STUDY
 
-    if DEIDENTIFY_RESTFUL is True:    
+    if ANONYMIZE_RESTFUL is True:    
 
         images = batch.image_set.all()
 
@@ -228,7 +228,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         # request['identifiers'] --> [ entity-with-study-item ]
         request = prepare_identifiers_request(ids) # force: True
 
-        bot.debug("som.client making request to deidentify batch %s" %(bid))
+        bot.debug("som.client making request to anonymize batch %s" %(bid))
 
         # We need to break into items of size 1000 max, 900 to be safe
         cli = Client(study=study)
@@ -249,7 +249,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
             batch = add_batch_error(message,batch)
 
     else:
-        bot.debug("Restful de-identification skipped [DEIDENTIFY_RESTFUL is False]")
+        bot.debug("Restful de-identification skipped [ANONYMIZE_RESTFUL is False]")
         change_status(batch,"DONEPROCESSING")
         change_status(batch.image_set.all(),"DONEPROCESSING")
         upload_storage.apply_async(kwargs={"bid":bid})

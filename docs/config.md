@@ -25,17 +25,17 @@ and coincide with the following variables in [config.py](../sendit/settings/conf
 
 ```
 # If True, we will have the images first go to a task to retrieve fields to anonymize
-DEIDENTIFY_RESTFUL=True
+ANONYMIZE_RESTFUL=True
 ```
 
-If `DEIDENTIFY_RESTFUL` is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. You should **not** do this without careful thought because you **cannot** send identified data to Google Cloud.  If `DEIDENTIFY_RESTFUL` is True, the batch is first put in the queue to be anonymized, and then upon receival of the identifiers, the batch is put into the queue to be sent to storage.
+If `ANONYMIZE_RESTFUL` is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. You should **not** do this without careful thought because you **cannot** send identified data to Google Cloud.  If `ANONYMIZE_RESTFUL` is True, the batch is first put in the queue to be anonymized, and then upon receival of the identifiers, the batch is put into the queue to be sent to storage.
 
 ```
 # If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
-DEIDENTIFY_PIXELS=False
+ANONYMIZE_PIXELS=False
 ```
 
-**Important** the pixel scrubbing is not yet implemented, so this variable will currently only check for the header, and alert you of the image, and skip it. Regardless of the setting that you choose for the variable `DEIDENTIFY_PIXELS` the header will always be checked. If you have pixel scrubbing turned on (and it's implemented) the images will be scrubbed, and included. If you have scrubbing turned on (and it's not implemented) it will just yell at you and skip them. The same thing will happen if it's off, just to alert you that they exist.
+**Important** the pixel scrubbing is not yet implemented, so this variable will currently only check for the header, and alert you of the image, and skip it. Regardless of the setting that you choose for the variable `ANONYMIZE_PIXELS` the header will always be checked. If you have pixel scrubbing turned on (and it's implemented) the images will be scrubbed, and included. If you have scrubbing turned on (and it's not implemented) it will just yell at you and skip them. The same thing will happen if it's off, just to alert you that they exist.
 
 ```
 # The default study to use

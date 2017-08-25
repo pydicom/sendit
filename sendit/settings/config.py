@@ -4,16 +4,16 @@ import os
 # RESTFUL API
 #####################################################
 
-# De-identify
-# If True, we will have the images first go to a task to retrieve fields to deidentify
-DEIDENTIFY_RESTFUL=True
+# Anonynize
+# If True, we will have the images first go to a task to retrieve fields to anonymize
+ANONYMIZE_RESTFUL=True
 
 # These credentials are required for the DASHER endpoint
 STANFORD_APPLICATION_CREDENTIALS='/code/.stanford'
 os.environ['STANFORD_CLIENT_SECRETS'] = STANFORD_APPLICATION_CREDENTIALS
 
 # If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
-DEIDENTIFY_PIXELS=False # currently not supported 
+ANONYMIZE_PIXELS=False # currently not supported 
 
 # The default study to use
 SOM_STUDY="test"

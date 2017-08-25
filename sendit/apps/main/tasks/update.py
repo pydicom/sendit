@@ -51,7 +51,8 @@ from som.api.identifiers.dicom import prepare_identifiers
 from sendit.apps.main.tasks.finish import upload_storage
 
 from sendit.settings import (
-    DEIDENTIFY_PIXELS,
+    ANONYMIZE_PIXELS,
+    ANONYMIZE_RESTFUL,
     SOM_STUDY,
     ENTITY_ID,
     ITEM_ID
@@ -88,10 +89,10 @@ def scrub_pixels(bid):
         if dicom.get("BurnedInAnnotation") is not None:
 
             # We shouldn't be in this function if False, but we will check again anyway
-            if DEIDENTIFY_PIXELS is True:
-                print("De-identification will be done here.")
+            if ANONYMIZE_PIXELS is True:
+                print("Anonymization will be done here.")
             else:
-                message = "%s has pixel identifiers, deidentify pixels is off, but added to batch. Removing!" %dcm_file
+                message = "%s has pixel identifiers, anonymize pixels is off, but added to batch. Removing!" %dcm_file
                 dicom.delete() # if django-cleanup not in apps, will not delete image file
                 batch = add_batch_error(message,batch)
 
@@ -103,7 +104,7 @@ def scrub_pixels(bid):
 @shared_task
 def replace_identifiers(bid, run_upload_storage=True):
     '''replace identifiers is called from get_identifiers, given that the user
-    has asked to deidentify_restful. This function will do the replacement,
+    has asked to anonymize_restful. This function will do the replacement,
     and then trigger the function to send to storage
     '''
     try:         
@@ -116,7 +117,7 @@ def replace_identifiers(bid, run_upload_storage=True):
                                        ids=working)
         updated = deepcopy(prepared)
 
-        # 3) use response from API to deidentify all fields in batch.ids
+        # 3) use response from API to anonymize all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
         deid = get_deid('dicom.blacklist')
         cleaned = clean_identifiers(ids=updated,
@@ -178,8 +179,8 @@ def replace_identifiers(bid, run_upload_storage=True):
         if quarantine_count > 0:
             bot.debug('Found %s images to quarantine with "DERIVED" ImageType' %quarantine_count)
 
-        # 3) save newly de-identified ids for storage upload
-        DEIDENTIFY_PIXELS=False
+        # 3) save newly anonymized ids for storage upload
+        ANONYMIZE_PIXELS=False
         
     except:
         bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
