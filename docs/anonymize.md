@@ -1,4 +1,4 @@
-# De-id Request
+# Anonymize Request
 anonymization happens by way of a series of celery tasks defined in [main/tasks.py](../sendit/apps/main/tasks.py) that are triggered by the first task that adds a complete set of dicom files (beloning to a dataset with one accession number) to the database as a batch. If you aren't familiar with the terms study, session, and how it relates to the radiologist workflow, the head of engineering at SOM IRT explained it well:
 
  - when a patient is placed on the scanner bed and the technician starts taking pictures, that’s a `study`.  Studies are identified by accession numbers and have a single associated date, patient, and ordering provider.
