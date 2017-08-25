@@ -116,6 +116,8 @@ def upload_storage(bid, do_clean_up=True):
             message = "batch %s has no images for processing, stopping upload" %(bid)
             batch = add_batch_warning(message,batch)
             batch.save()
+            if do_clean_up is True:
+                clean_up.apply_async(kwargs={"bid":bid})
             return start_tasks(count=1)
 
         # IR0001fa6_20160525_IR661B54.tar.gz
@@ -140,6 +142,9 @@ def upload_storage(bid, do_clean_up=True):
             message = "batch %s problem compressing file, stopping upload" %(bid)
             batch = add_batch_error(message,batch)
             batch.save()
+
+            if do_clean_up is True:
+                clean_up.apply_async(kwargs={"bid":bid})
             return start_tasks(count=1)
 
 
