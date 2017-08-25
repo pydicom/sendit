@@ -38,6 +38,7 @@ from sendit.apps.main.models import (
 
 from .utils import (
     add_batch_error,
+    add_batch_warning,
     change_status,
     chunks,
     prepare_entity_metadata,
