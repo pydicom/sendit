@@ -112,6 +112,7 @@ def upload_storage(bid, do_clean_up=True):
 
         # Stop if no images pass filters
         if len(images) == 0:        
+            change_status(batch,"EMPTY")
             message = "batch %s has no images for processing, stopping upload" %(bid)
             batch = add_batch_warning(message,batch)
             batch.save()
@@ -135,6 +136,7 @@ def upload_storage(bid, do_clean_up=True):
 
         # File will be None if no files added
         if compressed_file is None:        
+            change_status(batch,"ERROR")
             message = "batch %s problem compressing file, stopping upload" %(bid)
             batch = add_batch_error(message,batch)
             batch.save()
