@@ -49,5 +49,5 @@ Now that the application is started, you can learn about usage, starting with th
 
 # Questions
  - Given no errors for a batch, we will be cleaning up the database and the media files, which means complete deletion. Is there any desire for a log to be maintained somewhere, and if so, where? Right now, the logs that we have are for the watcher, that logs the name of the folders and when they are complete. If we want more logging, for what actions, under what circumstances?
- - For de-identification, we have the option to remove private tags (`dicom.remove_private_tags()`), which are those that have been added to the dataset (but don't conform to the standard). If we don't remove them, they will be blanked. Should we remove? Is there reason they would have private tags?
+ - For anonymization, we have the option to remove private tags (`dicom.remove_private_tags()`), which are those that have been added to the dataset (but don't conform to the standard). If we don't remove them, they will be blanked. Should we remove? Is there reason they would have private tags?
 

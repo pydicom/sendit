@@ -4,7 +4,7 @@
 The Sendit application is intended to be a modular application that includes the following:
 
  - a data folder that is watched for complete DICOM datasets.
- - an (optional) pipeline for de-identification, meaning removing/replacing fields in the header and image data.
+ - an (optional) pipeline for anonymization, meaning removing/replacing fields in the header and image data.
  - (optionally) sending data to storage, meaning an Orthanc server, and/or Google Cloud Storage/Datastore
 
 Reasonable updates would be:
@@ -28,6 +28,6 @@ Reasonable updates would be:
 
 ## Steps in Pipeline
  1. [Dicom Import](dicom_import.md): The logic for when a session directory is detected as finished by the Watcher.
- 2. [Deidentify](deidentify.md): the defaults (and configuration) for the de-identification step of the pipeline. This currently includes just header fields, and we expect to add pixel anonymization.
- 3. [Storage](storage.md): Is the final step to move the de-identified dicom files to OrthanCP and/or Google Cloud Storage.
+ 2. [Anonymize](anonymize.md): the defaults (and configuration) for the anonymization step of the pipeline. This currently includes just header fields, and we expect to add pixel anonymization.
+ 3. [Storage](storage.md): Is the final step to move the anonymized dicom files to OrthanCP and/or Google Cloud Storage.
  4. [Error Handling](errors.md): an overview of how the application managers server, API, and other potential issues.

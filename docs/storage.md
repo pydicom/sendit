@@ -1,7 +1,7 @@
 # Storage
-When we get here, we have de-identified our data, and the user can optionally choose to send it off to cloud storage. As a reminder, this is determined in the settings, under [settings.config.py](../sendit/settings.config.py):
+When we get here, we have anonynized our data, and the user can optionally choose to send it off to cloud storage. As a reminder, this is determined in the settings, under [settings.config.py](../sendit/settings.config.py):
 
-We can first choose to send the images to an OrthanCP instance. If we turn this off, we won't, and the images will just stop after de-identification.
+We can first choose to send the images to an OrthanCP instance. If we turn this off, we won't, and the images will just stop after anonymization.
 
 ```
 # We can turn on/off send to Orthanc. If turned off, the images would just be processed
@@ -27,7 +27,7 @@ GOOGLE_CLOUD_STORAGE='som-pacs'
 Importantly, for the above, there must be `GOOGLE_APPLICATION_CREDENTIALS` filepath, a `GOOGLE_PROJECT_NAME`, and a `GOOGLE_STORAGE_COLLECTION` variables exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
 
 ## Upload Process
-By the time we get here, we've de-identified the images, and prepared an equivalent corresponding lookup (with old image identifier) that also has the same de-identified metadata. The difference is that the lookup has additional information from nested sequences that are easy to extract. We now proceed to use the som tools google storage API client to upload a set of images associated with an entity and metadata to Google Storage (images) and Google Datastore (metadata).
+By the time we get here, we've anonymized the images, and prepared an equivalent corresponding lookup (with old image identifier) that also has the same anonymized metadata. The difference is that the lookup has additional information from nested sequences that are easy to extract. We now proceed to use the som tools google storage API client to upload a set of images associated with an entity and metadata to Google Storage (images) and Google Datastore (metadata).
 
 ```
 from som.api.google.storage import Client

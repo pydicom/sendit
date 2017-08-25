@@ -1,11 +1,11 @@
 # De-id Request
-De-identification happens by way of a series of celery tasks defined in [main/tasks.py](../sendit/apps/main/tasks.py) that are triggered by the first task that adds a complete set of dicom files (beloning to a dataset with one accession number) to the database as a batch. If you aren't familiar with the terms study, session, and how it relates to the radiologist workflow, the head of engineering at SOM IRT explained it well:
+anonymization happens by way of a series of celery tasks defined in [main/tasks.py](../sendit/apps/main/tasks.py) that are triggered by the first task that adds a complete set of dicom files (beloning to a dataset with one accession number) to the database as a batch. If you aren't familiar with the terms study, session, and how it relates to the radiologist workflow, the head of engineering at SOM IRT explained it well:
 
  - when a patient is placed on the scanner bed and the technician starts taking pictures, that’s a `study`.  Studies are identified by accession numbers and have a single associated date, patient, and ordering provider.
  - Each study may have more than one `Series` of images.  A series is what it sounds like: a set of closely associated images in a specified order.  A single image in a series is sometimes referred to as a `Slice`.  The PACS workstations allow you to rapidly scroll back and forth through all slices of a given study, just like a flip book, so you can "fly" through the scanned section of a patient’s body
  - After the conclusion of a study, a radiologist reviews the series' images and produces a report, referenced by the study accession number.  This accession number is present in the report and is a frequently used lookup key to get back to both the images and the associated report.
 
-To be clear, for the purposes of this application a `batch` corresponds with one `study`, which is one or more series of images.  We will send one request to the DASHER API per batch (study), and then use the response to de-identify all associated images.
+To be clear, for the purposes of this application a `batch` corresponds with one `study`, which is one or more series of images.  We will send one request to the DASHER API per batch (study), and then use the response to anonymize all associated images.
 
 
 The tasks include the following:
@@ -20,7 +20,7 @@ batch.change_images_status('PROCESSING')
 ```
 
 ### 1. Extraction
-We now want to extract all fields, including unwrapping nested lists, and we will do that with the function  `get_identifiers`. This function only skips over returning pixel data. This means that all header fields with a defined value (not None or blank) are returned. Items in sequences are unwrapped. Private values, which are usually for specific machines or applications, are not returned, and will be removed later in the de-identification process.
+We now want to extract all fields, including unwrapping nested lists, and we will do that with the function  `get_identifiers`. This function only skips over returning pixel data. This means that all header fields with a defined value (not None or blank) are returned. Items in sequences are unwrapped. Private values, which are usually for specific machines or applications, are not returned, and will be removed later in the anonymization process.
 
 
 ```
@@ -47,11 +47,11 @@ request = prepare_identifiers_request(ids) # entity_custom_fields: True
                                            # item_custom_fields: False 
 ```
 
-Note the defaults of the function are mentioned - by default we are including entity custom fields, but not item custom fields. We set these defaults by way of setting the variables `entity_custom_fields` to True (meaning we send custom entity fields to DASHER and `item_custom_fields` to False (meaning we don't send item custom fields). We originally were sending all of this data to the som DASHER endpoint, primarily with an entity id and timestamp, and then a huge list of `custom_fields` for each item and entity. This was a very slow process, and for purposes of searching, it puts a huge burden on DASHER for doing tasks outside of simple identity management. We have decided to try a different strategy. We send the minimum amount of data to DASHER to get back date jitters and item ids, and then the rest of the data gets put (de-identified) into Google Datastore.
+Note the defaults of the function are mentioned - by default we are including entity custom fields, but not item custom fields. We set these defaults by way of setting the variables `entity_custom_fields` to True (meaning we send custom entity fields to DASHER and `item_custom_fields` to False (meaning we don't send item custom fields). We originally were sending all of this data to the som DASHER endpoint, primarily with an entity id and timestamp, and then a huge list of `custom_fields` for each item and entity. This was a very slow process, and for purposes of searching, it puts a huge burden on DASHER for doing tasks outside of simple identity management. We have decided to try a different strategy. We send the minimum amount of data to DASHER to get back date jitters and item ids, and then the rest of the data gets put (anonymized) into Google Datastore.
 
 
 ### 3. Request
-We now want to give our request to the API and get back a lookup for what the "deidentified" ids are. (eg, an MRN mapping to a SUID). We post one request to the DASHER API, with the unit of "study" as the item, meaning that the request looks like this:
+We now want to give our request to the API and get back a lookup for what the "anonymized" ids are. (eg, an MRN mapping to a SUID). We post one request to the DASHER API, with the unit of "study" as the item, meaning that the request looks like this:
 
 ```
 {
@@ -78,14 +78,14 @@ Note that the first section is pertaining to an entity, in this case a `PatientI
 ```
 from som.api.identifiers import Client
 cli = Client(study='irlhs')
-result = cli.deidentify(ids=request, study=study)
+result = cli.anonymize(ids=request, study=study)
 ```
 
 However, the API can only handle 1000 items per entity. To help with this, we have a task that handles parsing the request into batches, and then reassembling into one object:
 
 ```   
 # in sendit.apps.main.tasks.get
-results = batch_deidentify(ids=request,
+results = batch_anonymize(ids=request,
                            study=study,
                            bid=batch.id)
 ```
@@ -167,7 +167,7 @@ batch_ids.save()
 
 and note the last two lines, we replace our original ids with the updated structure.
 
-Essentially the `ids` datastructure is returned and updated with our response from the som DASHER API. The reason that the functions `prepare_identifiers` and `update_identifiers` are separate from the general deidentification module, `deid`, is because `deid` is agnostic to the specific way that we want to update our identifiers. In our case, we are simply adding fields like `jitter` and `timestamp_jitter` to the data structure, for use during replacement.
+Essentially the `ids` datastructure is returned and updated with our response from the som DASHER API. The reason that the functions `prepare_identifiers` and `update_identifiers` are separate from the general anonymization module, `deid`, is because `deid` is agnostic to the specific way that we want to update our identifiers. In our case, we are simply adding fields like `jitter` and `timestamp_jitter` to the data structure, for use during replacement.
 
 
 ### 2. Clean Identifiers
@@ -190,7 +190,7 @@ ContentTime,AcquisitionTime,entity_timestamp,SeriesNumber,StudyID,OperatorsName
 
 This same set of operations and standard is done for the imaging data, but the default action is `BLANK` so all original headers are preserved. Sequences are removed by default. In addition, the images are renamed according to their assigned suid.
 
-## Customizing De-identification
+## Customizing anonymization
 If you have a different use case, you have several options for customizing this step.
 
 1. you can specify a different `config.json` to the get_identifiers function, in the case that you want a different set of rules applied to the orginal data extraction.
@@ -198,4 +198,4 @@ If you have a different use case, you have several options for customizing this 
 3. If you don't use DASHER, or do something entirely different, you have complete control to not use these som provided functions at all, in which case you will want to tweak the functions in the [tasks](../sendit/apps/main/tasks) folder.
 
 
-At this point, we have finished the de-identification process (for header data, pixel anonymization is a separate thing still need to be developed) and can move on to [storage.md](storage.md)
+At this point, we have finished the anonymization process (for header data, pixel anonymization is a separate thing still need to be developed) and can move on to [storage.md](storage.md)

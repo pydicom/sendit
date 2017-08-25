@@ -37,4 +37,4 @@ All files in the folder are assumed to be dicom, as it is the case the extension
 The dicom file itself, when saved to the model, is saved with the application's media at `/images`. Once the file is saved here, it is deleted from it's temporary folder in `/data`. This is to maximize space on the server, in case that is needed.
 
 ## 3. Finishing Batch
-All the images found in a folder are considered to be a "batch," and when all files for a batch have been added, the function fires off the list to be deidentified. If there were no files in the batch, the function is not fired.
+All the images found in a folder are considered to be a "batch," and when all files for a batch have been added, the function fires off the list to be anonymized. If there were no files in the batch, the function is not fired.

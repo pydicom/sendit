@@ -162,7 +162,7 @@ worker_1  | [2017-08-23 05:54:29,430: INFO/MainProcess] Received task: sendit.ap
 
 ## Get Identifiers (DASHER)
 
-1. `Error with DASHER`: An error in DASHER, in that no deidentification occurs, MUST be raised and stop processing. Thus, we don't try to catch anything at the moment. 
+1. `Error with DASHER`: An error in DASHER, in that no anonymization occurs, MUST be raised and stop processing. Thus, we don't try to catch anything at the moment. 
 
 2. Malformed response from `DASHER`: In the case that results are not delivered with suid identifiers, we typically will get a response missing the 'results' header. In this case, the batch is flagged with an error. I also chose to stop processing here, because I'd want to investigate this issue. Arguably this could (and should) be better handled if/when I get a better sense of different error responses that might come back. So far, I've only seen one trigger of an error at this step, which likely was some issue with the VPN of the host.
 
@@ -174,7 +174,7 @@ This task will take the data from Dasher, and parse the data to replace identifi
 
 
 ## Upload to Storage
-This step will take a set of de-identified, filtered, and renamed images, compress them, and upload to storage.
+This step will take a set of anonymized, filtered, and renamed images, compress them, and upload to storage.
 
 1. `batch or batch_ids not found`: I'm not sure how this might happen, but you never know. If a previously submit task is missing the database information, the pipeline logs an error and stops. This is something else I'd want to know about it, because it shouldn't logically happen unless something bad happens like the postgres database goes down, but the redis does not (and still thinks it is there).
 

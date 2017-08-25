@@ -14,8 +14,8 @@ Once you have your `secrets.py`, it needs the following added:
  - `SECRET_KEY`: Django will not run without one! You can generate one [here](http://www.miniwebtool.com/django-secret-key-generator/)
  - `DEBUG`: Make sure to set this to `False` for production.
 
-## "De-identification" (Coding)
-For [config.py](../sendit/settings/config.py) you should first configure settings for the deidentification process, which is everything that happens after images are import, but before sending to storage. These steps broadly include:
+## "anonymization" (Coding)
+For [config.py](../sendit/settings/config.py) you should first configure settings for the anonymization process, which is everything that happens after images are import, but before sending to storage. These steps broadly include:
 
  - extraction of header data from the image
  - preparation of data to send to the DASHER REST API
@@ -24,11 +24,11 @@ For [config.py](../sendit/settings/config.py) you should first configure setting
 and coincide with the following variables in [config.py](../sendit/settings/config.py):
 
 ```
-# If True, we will have the images first go to a task to retrieve fields to deidentify
+# If True, we will have the images first go to a task to retrieve fields to anonymize
 DEIDENTIFY_RESTFUL=True
 ```
 
-If `DEIDENTIFY_RESTFUL` is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. You should **not** do this without careful thought because you **cannot** send identified data to Google Cloud.  If `DEIDENTIFY_RESTFUL` is True, the batch is first put in the queue to be de-identified, and then upon receival of the identifiers, the batch is put into the queue to be sent to storage.
+If `DEIDENTIFY_RESTFUL` is False, we skip this task, and the batch is sent to the next task (or tasks) to send to different storage. You should **not** do this without careful thought because you **cannot** send identified data to Google Cloud.  If `DEIDENTIFY_RESTFUL` is True, the batch is first put in the queue to be anonymized, and then upon receival of the identifiers, the batch is put into the queue to be sent to storage.
 
 ```
 # If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
@@ -53,7 +53,7 @@ CUSTOM_ENTITY_ID="DCM Accession #"  # if the string index of the
                                     # set a custom one here
 ```
 
-Note that the fields for `ENTITY_ID` and `ITEM_ID` are set to the default of [deid](https://pydicom.github.io/deid), but I've added them here in case it ever needs to be changed.  Additionally, note that if you want the string that designates the "source_id" for the entity to be something other than it's index (eg AccessionNumber) you can set that here. If not, define as `None`. For all functions provided by `deid`, remember that they can be modified to use different endpoints, or do different replacements in the data. For more details about the deidentify functions, see [docs/deidentify.md](deidentify.md)
+Note that the fields for `ENTITY_ID` and `ITEM_ID` are set to the default of [deid](https://pydicom.github.io/deid), but I've added them here in case it ever needs to be changed.  Additionally, note that if you want the string that designates the "source_id" for the entity to be something other than it's index (eg AccessionNumber) you can set that here. If not, define as `None`. For all functions provided by `deid`, remember that they can be modified to use different endpoints, or do different replacements in the data. For more details about the anonymization functions, see [docs/anonymize.md](anonymize.md)
 
 
 ## Storage
