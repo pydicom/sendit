@@ -14,6 +14,8 @@ The job queue generally works by processing tasks when the server has available 
      a. In the case of anonymization, the next job will do the data strubbing with the identifiers, and then trigger sending to storage.
  3. Sending to storage can be enabled to work with any or none of OrthanC and Google Cloud storage. If no storage is taken, then the application works as a static storage.
 
+**Important note**: for this first testing when we are starting with many pre-existing folders, we are using instead a continuous worker queue with 16 threads (over 16 cores). 
+
 ## Status
 In order to track status of images, we have status states for images and batches. 
 
@@ -27,8 +29,15 @@ IMAGE_STATUS = (('NEW', 'The image was just added to the application.'),
 
 BATCH_STATUS = (('NEW', 'The batch was just added to the application.'),
                ('PROCESSING', 'The batch currently being processed.'),
-               ('DONEPROCESSING', 'The batch is done processing'),
+               ('EMPTY', 'No images passed filters'),
                ('DONE','The batch is done, and images are ready for cleanup.'))
+```
+
+You can use the command line manage.py to export a table of processing times and status:
+
+```
+python manage.py export_metrics
+sendit-process-time-2017-08-26.tsv
 ```
 
 ### Image Status
