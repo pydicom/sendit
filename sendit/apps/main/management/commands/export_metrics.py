@@ -10,6 +10,8 @@ from sendit.apps.main.utils import ls_fullpath
 
 import sys
 import os
+import datetime
+import pandas
 
 
 def get_size(batch):
@@ -30,23 +32,25 @@ def get_size(batch):
     
 
 class Command(BaseCommand):
-    help = '''get a quick overview of stats for running times'''
+    help = '''export metrics about size and times to file'''
 
     def handle(self,*args, **options):
         
-        new_batches = 0
-        for batch in Batch.objects.all():
-            if batch.status == "ERROR":
-                continue
-            elif batch.status == "EMPTY":
-                continue
-            elif batch.status == "DONE":
-                size = get_size(batch) # mb
-                time = batch.qa['FinishTime'] - batch.qa['StartTime']
-                bot.info("Batch %s: %s MB in %s minutes" %(batch.uid,
-                                                           size,
-                                                           time/60))
-            else:
-                new_batches+=1
+        df = pandas.DataFrame(columns=['batch_id','status','size_mb',
+                                       'start_time','finish_time',
+                                       'total_time_sec','total_time_min'])
 
-        bot.info("%s new batches still processing." %(new_batches))
+        output_file = 'sendit-process-time-%s.tsv' %datetime.datetime.today().strftime('%Y-%m-%d') 
+        for batch in Batch.objects.all():
+            df.loc[batch.id,'batch_id'] = batch.id
+            df.loc[batch.id,'status'] = batch.status
+            if batch.status == "DONE":
+                df.loc[batch.id,'size_mb'] = get_size(batch)
+                df.loc[batch.id,'start_time'] = batch.qa['StartTime']
+                df.loc[batch.id,'finish_time'] = batch.qa['FinishTime']
+                time = batch.qa['FinishTime'] - batch.qa['StartTime']
+                df.loc[batch.id,'total_time_sec'] = time
+                df.loc[batch.id,'total_time_min'] = time/60.0
+
+        df.sort_values(by=['status'],inplace=True)
+        df.to_csv(output_file,sep='\t')
