@@ -44,6 +44,7 @@ from .utils import (
 )
 
 from deid.dicom import get_identifiers as get_ids
+from retrying import retry
 
 from som.api.identifiers.dicom import (
     prepare_identifiers_request
@@ -230,9 +231,18 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
 
         bot.debug("som.client making request to anonymize batch %s" %(bid))
 
-        # We need to break into items of size 1000 max, 900 to be safe
-        cli = Client(study=study)
-        result = cli.deidentify(ids=request, study=study)
+        # Run with retrying, in case issue with token refresh
+        try:
+            result = run_client(study,request)
+        except:
+            from sendit.apps.main.utils import start_tasks
+            message = "error with client, stopping job."
+            batch = add_batch_error(message,batch)
+            batch.status = "ERROR"
+            batch.qa['FinishTime'] = time.time()
+            batch.save()
+            start_tasks(count=1)
+
 
         # Create a batch for all results
         if "results" in result:
@@ -253,6 +263,13 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         change_status(batch,"DONEPROCESSING")
         change_status(batch.image_set.all(),"DONEPROCESSING")
         upload_storage.apply_async(kwargs={"bid":bid})
+
+
+
+@retry(stop_max_attempt_number=3)
+def run_client(study,request):
+    cli = Client(study=study)
+    return cli.deidentify(ids=request, study=study)
 
 
 @shared_task
