@@ -56,7 +56,7 @@ from som.api.identifiers import Client
 
 from sendit.settings import (
     ANONYMIZE_PIXELS,
-    ANONYMIZE_RESTFUL
+    ANONYMIZE_RESTFUL,
     SOM_STUDY
 )
 
