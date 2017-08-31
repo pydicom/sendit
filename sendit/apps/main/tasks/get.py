@@ -220,7 +220,12 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         batch.save() # redundant
 
         # deid get_identifiers: returns ids[entity][item] = {"field":"value"}
+        skip_fields = ["RedPaletteColorLookupTableData",
+                       "GreenPaletteColorLookupTableData",
+                       "BluePaletteColorLookupTableData"]
+
         ids = get_ids(dicom_files=dicom_files,
+                      skip_fields=skip_fields,
                       expand_sequences=False)  # we are uploading a zip, doesn't make sense
                                                # to preserve image level metadata
 
