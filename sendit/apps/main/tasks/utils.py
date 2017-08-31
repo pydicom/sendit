@@ -101,11 +101,12 @@ def generate_compressed_file(files, filename=None, mode="w:gz", archive_basename
 
 ## MODELS ##############################################################
 
-def add_batch_message(message,batch,func):
+def add_batch_message(message,batch,func,quiet=False):
     '''add batch error or warning to log, 
     and flag the batch to have error.
     '''
-    func(message)
+    if quiet is False:
+        func(message)
     batch.has_error = True
     if "errors" not in batch.logs:
         batch.logs['errors'] = []
@@ -115,15 +116,17 @@ def add_batch_message(message,batch,func):
     batch.save()
     return batch  
 
-def add_batch_warning(message,batch):
+def add_batch_warning(message,batch,quiet=False):
     return add_batch_message(message=message,
                              batch=batch,
-                             func=bot.warning)
+                             func=bot.warning,
+                             quiet=quiet)
 
-def add_batch_error(message,batch):
+def add_batch_error(message,batch,quiet=False):
     return add_batch_message(message=message,
                              batch=batch,
-                             func=bot.error)
+                             func=bot.error,
+                             quiet=quiet)
 
 
 def change_status(images,status):

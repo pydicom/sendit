@@ -97,6 +97,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         # Data quality check: keep a record of study dates
         study_dates = dict()
         size_bytes = sum(os.path.getsize(f) for f in dicom_files)
+        messages = [] # print all unique messages / warnings at end
 
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
@@ -116,10 +117,18 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 # If the image has pixel identifiers, we don't include 
                 if dcm.get("BurnedInAnnotation") is not None:
                     message = "%s has burned pixel annotation, skipping" %dicom_uid
-                    batch = add_batch_warning(message,batch)
+                    batch = add_batch_warning(message,batch,quiet=True)
+                    message = "BurnedInAnnotation found for batch %s" %batch.uid
+                    if message not in messages:
+                        messages.append(message)
+
                 elif modality not in ['CT', 'MR']:
                     message = "%s is not CT/MR, found %s skipping" %(dicom_uid, modality)
-                    batch = add_batch_warning(message,batch)
+                    batch = add_batch_warning(message,batch,quiet=True)
+                    message = "Modality %s found for batch %s" %(modality,batch.uid)
+                    if message not in messages:
+                        messages.append(message)
+
                 else:
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
@@ -147,6 +156,11 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 batch = add_batch_error(message,batch)
             except Exception as e:
                 message = "Exception: %s, for %s, skipping." %(e, dcm_file)
+
+        # Print summary messages all at once
+        for message in messages:
+            bot.warning(message)
+
         if len(study_dates) > 1:
             message = "% study dates found for %s" %(len(study_dates),
                                                      dcm_file)
