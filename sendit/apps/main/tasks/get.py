@@ -120,16 +120,22 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 flag, flag_group, reason = has_burned_pixels(dcm)
 
                 # If the image is flagged, we don't include and move on
-                if flag is True:
-                    message = "%s is flagged in %s: %s, skipping" %(dicom_uid, 
-                                                                    flag_group,
-                                                                    reason)
-                    batch = add_batch_warning(message,batch,quiet=True)
-                    message = "BurnedInAnnotation found for batch %s" %batch.uid
-                    if message not in messages:
-                        messages.append(message)
+                continue_processing = True
 
-                else:
+                if flag is True:
+
+                    if flag_group is not "whitelist":
+                        continue_processing = False
+                        message = "%s is flagged in %s: %s, skipping" %(dicom_uid, 
+                                                                        flag_group,
+                                                                        reason)
+                        batch = add_batch_warning(message,batch,quiet=True)
+                        message = "BurnedInAnnotation found for batch %s" %batch.uid
+                        if message not in messages:
+                            messages.append(message)
+
+                if continue_processing is True:
+
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
