@@ -119,7 +119,7 @@ def replace_identifiers(bid, run_upload_storage=True):
 
         # 3) use response from API to anonymize all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
-        deid = get_deid('dicom.blacklist')
+        deid = get_deid('dicom')
         cleaned = clean_identifiers(ids=updated,
                                     default="KEEP",
                                     deid=deid)

@@ -35,7 +35,7 @@ from sendit.apps.main.models import (
     Image
 )
 
-from .utils import (
+from sendit.apps.main.tasks.utils import (
     add_batch_error,
     add_batch_warning,
     change_status,
@@ -43,7 +43,10 @@ from .utils import (
     save_image_dicom
 )
 
-from deid.dicom import get_identifiers as get_ids
+from deid.dicom import (
+    get_identifiers as get_ids,
+    has_burned_pixels_single as has_burned_pixels
+)
 from retrying import retry
 
 from som.api.identifiers.dicom import (
@@ -114,18 +117,15 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 study_dates[study_date] += 1
                 modality = dcm.get('Modality')
 
-                # If the image has pixel identifiers, we don't include 
-                if dcm.get("BurnedInAnnotation") is not None:
-                    message = "%s has burned pixel annotation, skipping" %dicom_uid
+                flag, flag_group, reason = has_burned_pixels(dcm)
+
+                # If the image is flagged, we don't include and move on
+                if flag is True:
+                    message = "%s is flagged in %s: %s, skipping" %(dicom_uid, 
+                                                                    flag_group,
+                                                                    reason)
                     batch = add_batch_warning(message,batch,quiet=True)
                     message = "BurnedInAnnotation found for batch %s" %batch.uid
-                    if message not in messages:
-                        messages.append(message)
-
-                elif modality not in ['CT', 'MR']:
-                    message = "%s is not CT/MR, found %s skipping" %(dicom_uid, modality)
-                    batch = add_batch_warning(message,batch,quiet=True)
-                    message = "Modality %s found for batch %s" %(modality,batch.uid)
                     if message not in messages:
                         messages.append(message)
 
@@ -233,13 +233,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         batch.change_images_status('PROCESSING')
         batch.save() # redundant
 
-        # deid get_identifiers: returns ids[entity][item] = {"field":"value"}
-        skip_fields = ["RedPaletteColorLookupTableData",
-                       "GreenPaletteColorLookupTableData",
-                       "BluePaletteColorLookupTableData"]
-
         ids = get_ids(dicom_files=dicom_files,
-                      skip_fields=skip_fields,
                       expand_sequences=False)  # we are uploading a zip, doesn't make sense
                                                # to preserve image level metadata
 
@@ -289,46 +283,3 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
 def run_client(study,request):
     cli = Client(study=study)
     return cli.deidentify(ids=request, study=study)
-
-
-@shared_task
-def batch_deidentify(ids,bid,study=None):
-    '''batch deidentify will send requests to the API in batches of 1000
-    items per, and reassemble into one response.
-    '''
-    batch = Batch.objects.get(id=bid)
-    results = []
-    if study is None:
-        study = SOM_STUDY
-
-    # Create an som client
-    cli = Client(study=study)
-
-    for entity in ids['identifiers']:
-        entity_parsed = None
-        template = entity.copy()
-        items_response = []
-
-        for itemset in chunks(entity['items'], 950):
-            template['items'] = itemset
-            request = {'identifiers': [template] }             
-            result = cli.deidentify(ids=request, study=study)  # should return dict with "results"
-
-            if "results" in result:
-
-                for entity_parsed in result['results']:                        
-                    if 'items' in entity_parsed:
-                        items_response += entity_parsed['items']
-
-                if 'items' in result['results']:
-                    print("Adding %s items" %len(result['results']['items']))
-                    items_response += result['results']['items']
-
-            else:
-                message = "Error calling som uid endpoint: %s" %result
-                batch = add_batch_error(message,batch)
-
-        # For last entity, compile items with entity response
-        entity_parsed['items'] = items_response
-        results.append(entity_parsed)
-    return results
