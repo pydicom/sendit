@@ -102,7 +102,7 @@ def scrub_pixels(bid):
 
 
 @shared_task
-def replace_identifiers(bid, run_upload_storage=True):
+def replace_identifiers(bid, run_upload_storage=True, run_quarantine=False):
     '''replace identifiers is called from get_identifiers, given that the user
     has asked to anonymize_restful. This function will do the replacement,
     and then trigger the function to send to storage
@@ -149,8 +149,7 @@ def replace_identifiers(bid, run_upload_storage=True):
         batch_ids.shared = shared_ids
         batch_ids.save()
 
-        # Rename and Quarantine
-        quarantine_count = 0
+        # Rename
         for dcm in batch.image_set.all():
             dicom = dcm.load_dicom()
             item_id = os.path.basename(dcm.image.path)
@@ -161,23 +160,12 @@ def replace_identifiers(bid, run_upload_storage=True):
                 item_suid = updated[item_id]['item_id']
                 dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
 
-                # accessionnumberSUID.seriesnumber.imagenumber,  
-                # If the image has DERIVED, or blank, or Secondary, quarantine
-                phi_likely = ['DERIVED','SECONDARY', None, '']
-                do_quarantine = False
-
-                for image_type in dicom.get("ImageType",[]):
-                    if image_type in phi_likely and do_quarantine is False:
-                        quarantine_count += 1
-                        do_quarantine = True
-
-                if do_quarantine is True:
-                    dcm = dcm.quarantine()                
-
+            # If we don't have the id, don't risk uploading
+            else:
+                message = "%s for Image Id %s not found in lookup: quarantined." %(item_id, dcm.id)
+                batch = add_batch_error(message,batch)                
+                dcm = dcm.quarantine()
             dcm.save()
-
-        if quarantine_count > 0:
-            bot.debug('Found %s images to quarantine with "DERIVED" ImageType' %quarantine_count)
 
         # 3) save newly anonymized ids for storage upload
         ANONYMIZE_PIXELS=False
