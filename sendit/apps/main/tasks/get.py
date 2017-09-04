@@ -90,7 +90,14 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
     start_time = time.time()
 
     if os.path.exists(dicom_dir):
-        dicom_files = ls_fullpath(dicom_dir)
+        try:
+            dicom_files = ls_fullpath(dicom_dir)
+        except NotADirectoryError:
+            bot.error('%s is not a directory, skipping.' %dicom_dir)
+            if run_get_identifiers is True:
+                start_tasks(count=1)
+            return None
+
         bot.debug("Importing %s, found %s .dcm files" %(dicom_dir,len(dicom_files)))        
 
         # The batch --> the folder with a set of dicoms tied to one request
