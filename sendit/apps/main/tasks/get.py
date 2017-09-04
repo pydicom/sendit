@@ -105,7 +105,6 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
             try:
-
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
                 dicom_uid = os.path.basename(dcm_file)
@@ -115,9 +114,9 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 if study_date not in study_dates:
                     study_dates[study_date] = 0
                 study_dates[study_date] += 1
-                modality = dcm.get('Modality')
 
-                flag, flag_group, reason = has_burned_pixels(dcm)
+                flag, flag_group, reason = has_burned_pixels(dicom_file=dcm_file,
+                                                             quiet=True)
 
                 # If the image is flagged, we don't include and move on
                 continue_processing = True
@@ -208,7 +207,8 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             message = "%s is flagged EMPTY, no images pass filter" %(dicom_uid)
             batch = add_batch_warning(message,batch)
             batch.save()
-            start_tasks(count=1)
+            if run_get_identifiers is True:
+                start_tasks(count=1)
 
     else:
         bot.warning('Cannot find %s' %dicom_dir)
