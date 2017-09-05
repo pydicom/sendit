@@ -18,6 +18,13 @@ ANONYMIZE_PIXELS=False # currently not supported
 # The default study to use
 SOM_STUDY="test"
 
+# An additional specification for white, black, and greylisting data
+# If None, only the default (for burned pixel filtering) is used
+# Currently, these live with the deid software, eg:
+# https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom.xray.chest
+# would be referenced with STUDY_DEID="dicom.xray.chest"
+STUDY_DEID=None
+
 # PatientID and SOPInstanceUID:
 # These are default for deid, but we can change that here
 ENTITY_ID="PatientID"

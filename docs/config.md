@@ -43,6 +43,19 @@ SOM_STUDY="test"
 ```
 The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. 
 
+Next, you likely want a custom filter applied to whitelist (accept no matter what), greylist (not accept, but in the future know how to clean the data) and blacklist (not accept). Currently, the deid software applies a [default filter](https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom) to filter out images with known burned in pixels. If you want to add a custom file, currently it must live with the repository, and is referenced by the name of the file after the `deid`. You can specify this string in the config file:
+
+```
+# An additional specification for white, black, and greylisting data
+# If None, only the default (for burned pixel filtering) is used
+# Currently, these live with the deid software, eg:
+# https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom.xray.chest
+# would be referenced with STUDY_DEID="dicom.xray.chest"
+STUDY_DEID=None
+```
+
+and if you leave as None, the default filters will be used. Anything that passes through the filter, or belongs to the whitelist, is deemed to be clean.
+
 ```
 # AccessionNumber and SOPInstanceUID:
 # These are default for deid, but we can change that here

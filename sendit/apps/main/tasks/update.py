@@ -54,6 +54,7 @@ from sendit.settings import (
     ANONYMIZE_PIXELS,
     ANONYMIZE_RESTFUL,
     SOM_STUDY,
+    STUDY_DEID,
     ENTITY_ID,
     ITEM_ID
 )
@@ -119,7 +120,9 @@ def replace_identifiers(bid, run_upload_storage=True, run_quarantine=False):
 
         # 3) use response from API to anonymize all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
-        deid = get_deid('dicom')
+        # deid as None will use default "deid.dicom" provided in application
+        # specifying a custom file/tag will use this filter first (in addition)
+        deid = STUDY_DEID
         cleaned = clean_identifiers(ids=updated,
                                     default="KEEP",
                                     deid=deid)
