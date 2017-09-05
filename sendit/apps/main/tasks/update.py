@@ -40,7 +40,6 @@ from sendit.apps.main.tasks.utils import (
     change_status
 )
 
-from deid.data import get_deid
 from deid.dicom import (
     replace_identifiers as replace_ids,
     get_shared_identifiers
@@ -143,7 +142,6 @@ def replace_identifiers(bid, run_upload_storage=True, run_quarantine=False):
                                     strip_sequences=True,
                                     remove_private=True)  # force = True
                                                           # save = True,
-                                                          # config=None, use deid
 
         # Get shared information
         aggregate = ["BodyPartExamined", "Modality", "StudyDescription"]
