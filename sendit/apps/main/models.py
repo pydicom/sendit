@@ -119,8 +119,14 @@ class Batch(models.Model):
         with a batch'''
         image_files = []
         for dcm in self.image_set.all():
-            if hasattr(dcm.image, 'file'):
-                image_files.append(dcm.image.path)
+            try:
+                if hasattr(dcm.image, 'file'):
+                    image_files.append(dcm.image.path)
+
+            # Image object has no file associated with it
+            except ValueError:
+                pass
+
         return image_files
 
     def get_finished(self):

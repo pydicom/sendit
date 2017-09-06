@@ -95,9 +95,18 @@ def start_tasks(count=1, base='/data'):
         import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
 
 
-def get_contenders(base,current=None):
+def get_contenders(base,current=None, filters=None):
+    ''' get contenders will return a full set of contender folders from
+    a base directory, taking account a list of currently known (current) 
+    and filtering to not include folder names ending with the list
+    specified by filters
+    '''
+    if filters is None:
+        filters = ['tmp','part']
     contenders = [x for x in os.listdir(base) if not os.path.isdir(x)]
-    contenders = [x for x in contenders if not x.endswith('tmp')]
+    for ending in filters:
+        contenders = [x for x in contenders if not x.endswith(ending)]
+
     if current is not None:
         contenders = [x for x in contenders if x not in current]
     return contenders
