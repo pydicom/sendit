@@ -102,21 +102,20 @@ def scrub_pixels(bid):
 
 
 @shared_task
-def replace_identifiers(bid, run_upload_storage=True, run_quarantine=False):
+def replace_identifiers(bid, run_upload_storage=True):
     '''replace identifiers is called from get_identifiers, given that the user
     has asked to anonymize_restful. This function will do the replacement,
     and then trigger the function to send to storage
     '''
     try:         
+
         batch = Batch.objects.get(id=bid)
         batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
-
         # 1) use response from API to generate new fields
         working = deepcopy(batch_ids.ids)
         prepared = prepare_identifiers(response=batch_ids.response,
                                        ids=working)
         updated = deepcopy(prepared)
-
         # 3) use response from API to anonymize all fields in batch.ids
         # clean_identifiers(ids, deid=None, image_type=None, default=None)
         # deid as None will use default "deid.dicom" provided in application
@@ -157,6 +156,7 @@ def replace_identifiers(bid, run_upload_storage=True, run_quarantine=False):
 
             # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
+
             if item_id in updated:
                 item_suid = updated[item_id]['item_id']
                 dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 

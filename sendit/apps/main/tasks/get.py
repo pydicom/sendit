@@ -61,7 +61,8 @@ from som.api.identifiers import Client
 from sendit.settings import (
     ANONYMIZE_PIXELS,
     ANONYMIZE_RESTFUL,
-    SOM_STUDY
+    SOM_STUDY,
+    STUDY_DEID
 )
 
 from django.conf import settings
@@ -112,6 +113,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         # Add in each dicom file to the series
         for dcm_file in dicom_files:
             try:
+
                 # The dicom folder will be named based on the accession#
                 dcm = read_file(dcm_file,force=True)
                 dicom_uid = os.path.basename(dcm_file)
@@ -121,35 +123,35 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 if study_date not in study_dates:
                     study_dates[study_date] = 0
                 study_dates[study_date] += 1
-
                 flag, flag_group, reason = has_burned_pixels(dicom_file=dcm_file,
-                                                             quiet=True)
+                                                             quiet=True,
+                                                             deid=STUDY_DEID)
 
                 # If the image is flagged, we don't include and move on
                 continue_processing = True
-
                 if flag is True:
-
-                    if flag_group is not "whitelist":
+                    if flag_group not in ["whitelist"]:
                         continue_processing = False
                         message = "%s is flagged in %s: %s, skipping" %(dicom_uid, 
                                                                         flag_group,
                                                                         reason)
+
                         batch = add_batch_warning(message,batch,quiet=True)
                         message = "BurnedInAnnotation found for batch %s" %batch.uid
                         if message not in messages:
                             messages.append(message)
 
                 if continue_processing is True:
-
                     # Create the Image object in the database
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
+
                     # Save the dicom file to storage
                     # basename = "%s/%s" %(batch.id,os.path.basename(dcm_file))
                     dicom = save_image_dicom(dicom=dicom,
                                              dicom_file=dcm_file) # Also saves
+
                     # Generate image name based on [SUID] added later
                     # accessionnumberSUID.seriesnumber.imagenumber,  
                     name = "%s_%s.dcm" %(dcm.get('SeriesNumber'),
