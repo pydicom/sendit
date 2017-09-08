@@ -42,7 +42,6 @@ from .utils import (
     change_status,
     chunks,
     prepare_entity_metadata,
-    prepare_items_metadata,
     generate_compressed_file,
     extract_study_ids,
     get_entity_images,
@@ -150,7 +149,9 @@ def upload_storage(bid, do_clean_up=True):
 
 
         # We prepare shared metadata for one item
-        items = { compressed_file: batch_ids.shared }
+        items_metadata = batch_ids.shared
+        items_metadata['IMAGE_COUNT'] = len(images)
+        items = { compressed_file: items_metadata }
         cleaned = deepcopy(batch_ids.cleaned)
         metadata = prepare_entity_metadata(cleaned_ids=cleaned)
 
