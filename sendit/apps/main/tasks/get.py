@@ -84,9 +84,10 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 @shared_task
 def import_dicomdir(dicom_dir, run_get_identifiers=True):
-    '''import dicom directory manages importing a valid dicom set into the application,
-    and is a celery job triggered by the watcher. Here we also flag (and disclude)
-    images that have a header value that indicates pixel identifiers.
+    '''import dicom directory manages importing a valid dicom set into 
+    the application, and is a celery job triggered by the watcher. 
+    Here we also flag (and disclude) images that have a header value 
+    that indicates pixel identifiers.
     '''
     start_time = time.time()
 
@@ -260,31 +261,31 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         bot.debug("som.client making request to anonymize batch %s" %(bid))
 
         # Run with retrying, in case issue with token refresh
+        result = None
         try:
             result = run_client(study,request)
         except:
-            from sendit.apps.main.utils import start_tasks
+            # But any error, don't continue, don't launch new job
             message = "error with client, stopping job."
             batch = add_batch_error(message,batch)
             batch.status = "ERROR"
             batch.qa['FinishTime'] = time.time()
             batch.save()
-            start_tasks(count=1)
-
 
         # Create a batch for all results
-        if "results" in result:
-            batch_ids,created = BatchIdentifiers.objects.get_or_create(batch=batch)
-            batch_ids.response = result['results']
-            batch_ids.ids = ids
-            batch_ids.save()
-            if run_replace_identifiers is True:
-                replace_identifiers.apply_async(kwargs={"bid":bid})
+        if result is not None:
+            if "results" in result:
+                batch_ids,created = BatchIdentifiers.objects.get_or_create(batch=batch)
+                batch_ids.response = result['results']
+                batch_ids.ids = ids
+                batch_ids.save()
+                if run_replace_identifiers is True:
+                    replace_identifiers.apply_async(kwargs={"bid":bid})
+                else:
+                    return batch_ids
             else:
-                return batch_ids
-        else:
-            message = "'results' field not found in response: %s" %result
-            batch = add_batch_error(message,batch)
+                message = "'results' field not found in response: %s" %result
+                batch = add_batch_error(message,batch)
 
     else:
         bot.debug("Restful de-identification skipped [ANONYMIZE_RESTFUL is False]")
