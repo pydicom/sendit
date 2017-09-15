@@ -149,8 +149,12 @@ def upload_storage(bid, do_clean_up=True):
 
 
         # We prepare shared metadata for one item
+        batch_ids.shared['IMAGE_COUNT'] = len(images)
+        batch.logs['IMAGE_COUNT'] = len(images)
+        batch_ids.save()
+        batch.save()
+
         items_metadata = batch_ids.shared
-        items_metadata['IMAGE_COUNT'] = len(images)
         items = { compressed_file: items_metadata }
         cleaned = deepcopy(batch_ids.cleaned)
         metadata = prepare_entity_metadata(cleaned_ids=cleaned)

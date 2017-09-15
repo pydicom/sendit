@@ -105,6 +105,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         # The batch --> the folder with a set of dicoms tied to one request
         dcm_folder = os.path.basename(dicom_dir)   
         batch,created = Batch.objects.get_or_create(uid=dcm_folder)
+        batch.logs['STARTING_IMAGE_COUNT'] = len(dicom_files)
 
         # Data quality check: keep a record of study dates
         study_dates = dict()
