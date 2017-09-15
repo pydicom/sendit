@@ -80,6 +80,7 @@ def start_tasks(count=1, base='/data/1_6'):
     count: the number to submit. Default is 1
     base: the base data folder, defaults to /data
     '''
+    from random import choice
     from sendit.apps.main.tasks import import_dicomdir
     current = [x.uid for x in Batch.objects.all()]
     contenders = get_contenders(base=base,current=current)
@@ -88,11 +89,32 @@ def start_tasks(count=1, base='/data/1_6'):
     if count > len(contenders):
        count = len(contenders) - 1
 
-    contenders = contenders[0:count]
-    bot.debug("Starting deid pipeline for %s folders" %len(contenders))
-    for contender in contenders:
-        dicom_dir = "%s/%s" %(base,contender)
-        import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
+    chosen = [choice(contenders) for x in range(count)]
+    bot.debug("Starting deid pipeline for %s folders" %len(chosen))
+    seen = []
+
+    while len(chosen) > 0:
+
+        contender = chosen.pop(0)
+        if contender not in seen:
+            seen.append(contender)
+
+            # Make the batches immediately so we don't double process 
+            # not seen folders in queue
+            dicom_dir = "%s/%s" %(base,contender)
+            dcm_folder = os.path.basename(dicom_dir)
+            batch,created = Batch.objects.get_or_create(uid=dcm_folder)
+
+            # Let's be conservative - don't process if it's created
+            if created is True:
+                batch.save()
+                import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
+            else:
+                additional = contenders.pop()
+                chosen.append(additional)
+        else:
+            additional = contenders.pop()
+            chosen.append(additional)
 
 
 def get_contenders(base,current=None, filters=None):
@@ -103,7 +125,7 @@ def get_contenders(base,current=None, filters=None):
     '''
     if filters is None:
         filters = ['tmp','part']
-    contenders = [x for x in os.listdir(base) if not os.path.isdir(x)]
+    contenders = [x for x in os.listdir(base) if not os.path.isfile(x)]
     for ending in filters:
         contenders = [x for x in contenders if not x.endswith(ending)]
 
