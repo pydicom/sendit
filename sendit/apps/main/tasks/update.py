@@ -161,20 +161,20 @@ def replace_identifiers(bid, run_upload_storage=True):
             if item_id in updated:
                 item_suid = updated[item_id]['item_id']
                 dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
+                dcm.save()
 
             # If we don't have the id, don't risk uploading
             else:
-                message = "%s for Image Id %s file read error: quarantined." %(item_id, dcm.id)
+                message = "%s for Image Id %s file read error: skipping." %(item_id, dcm.id)
                 batch = add_batch_error(message,batch)                
-                dcm = dcm.quarantine()
+                dcm.delete()
+
 
         except FileNotFoundError:
-            message = "%s for Image Id %s not found in lookup: quarantined." %(item_id, dcm.id)
+            message = "%s for Image Id %s not found in lookup: skipping." %(item_id, dcm.id)
             batch = add_batch_error(message,batch)                
-            dcm = dcm.quarantine()
+            dcm.delete()
   
-        dcm.save()
-
 
     # We don't get here if the call above failed
     if run_upload_storage is True:
