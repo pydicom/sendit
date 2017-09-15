@@ -96,10 +96,9 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             dicom_files = ls_fullpath(dicom_dir)
         except NotADirectoryError:
             bot.error('%s is not a directory, skipping.' %dicom_dir)
-            if run_get_identifiers is True:
-                from sendit.apps.main.utils import start_tasks
-                start_tasks(count=1)
-            return None
+            from sendit.apps.main.utils import start_tasks
+            return start_tasks(count=1)
+            
 
         bot.debug("Importing %s, found %s .dcm files" %(dicom_dir,len(dicom_files)))        
 
@@ -182,6 +181,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             message = "% study dates found for %s" %(len(study_dates),
                                                      dcm_file)
             batch = add_batch_error(message,batch)
+
         # Save batch thus far
         batch.qa['StudyDate'] = study_dates
         batch.qa['StartTime'] = start_time
@@ -219,8 +219,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             message = "%s is flagged EMPTY, no images pass filter" %(dicom_uid)
             batch = add_batch_warning(message,batch)
             batch.save()
-            if run_get_identifiers is True:
-                start_tasks(count=1)
+            return start_tasks(count=1)
 
     else:
         bot.warning('Cannot find %s' %dicom_dir)
@@ -251,9 +250,17 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         batch.change_images_status('PROCESSING')
         batch.save() # redundant
 
-        ids = get_ids(dicom_files=dicom_files,
-                      expand_sequences=False)  # we are uploading a zip, doesn't make sense
-                                               # to preserve image level metadata
+        try:
+            ids = get_ids(dicom_files=dicom_files,
+                          expand_sequences=False)  # we are uploading a zip, doesn't make sense
+                                                   # to preserve image level metadata
+        except FileNotFoundError:
+            from sendit.apps.main.utils import start_tasks
+            batch.status = "ERROR"
+            message = "batch %s is missing dicom files and should be reprocessed" %(batch.id)
+            batch = add_batch_warning(message,batch)
+            batch.save()
+            return start_tasks(count=1)
 
         # Prepare identifiers with only minimal required
         # This function expects many items for one entity, returns 

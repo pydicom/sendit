@@ -107,73 +107,67 @@ def replace_identifiers(bid, run_upload_storage=True):
     has asked to anonymize_restful. This function will do the replacement,
     and then trigger the function to send to storage
     '''
-    try:         
 
-        batch = Batch.objects.get(id=bid)
-        batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
-        # 1) use response from API to generate new fields
-        working = deepcopy(batch_ids.ids)
-        prepared = prepare_identifiers(response=batch_ids.response,
-                                       ids=working)
-        updated = deepcopy(prepared)
-        # 3) use response from API to anonymize all fields in batch.ids
-        # clean_identifiers(ids, deid=None, image_type=None, default=None)
-        # deid as None will use default "deid.dicom" provided in application
-        # specifying a custom file/tag will use this filter first (in addition)
-        deid = STUDY_DEID
-        cleaned = clean_identifiers(ids=updated,
-                                    default="KEEP",
-                                    deid=deid)
+    batch = Batch.objects.get(id=bid)
+    batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
 
-        # Save progress
-        batch_ids.cleaned = cleaned 
-        batch_ids.updated = updated
-        batch_ids.save()
+    # 1) use response from API to generate new fields
+    working = deepcopy(batch_ids.ids)
+    prepared = prepare_identifiers(response=batch_ids.response,
+                                   ids=working)
+    updated = deepcopy(prepared)
+    # 3) use response from API to anonymize all fields in batch.ids
+    # clean_identifiers(ids, deid=None, image_type=None, default=None)
+    # deid as None will use default "deid.dicom" provided in application
+    # specifying a custom file/tag will use this filter first (in addition)
+    deid = STUDY_DEID
+    cleaned = clean_identifiers(ids=updated,
+                                default="KEEP",
+                                deid=deid)
+
+    # Save progress
+    batch_ids.cleaned = cleaned 
+    batch_ids.updated = updated
+    batch_ids.save()
                                   
-        # Get updated files
-        dicom_files = batch.get_image_paths()
-        output_folder = batch.get_path()
-        updated_files = replace_ids(dicom_files=dicom_files,
-                                    deid=deid,
-                                    ids=updated,            # ids[item] lookup
-                                    overwrite=True,         # overwrites copied files
-                                    output_folder=output_folder,
-                                    strip_sequences=True,
-                                    remove_private=True)  # force = True
-                                                          # save = True,
+    # Get updated files
+    dicom_files = batch.get_image_paths()
+    output_folder = batch.get_path()
+    updated_files = replace_ids(dicom_files=dicom_files,
+                                deid=deid,
+                                ids=updated,            # ids[item] lookup
+                                overwrite=True,         # overwrites copied files
+                                output_folder=output_folder,
+                                strip_sequences=True,
+                                remove_private=True)  # force = True
+                                                      # save = True,
 
-        # Get shared information
-        aggregate = ["BodyPartExamined", "Modality", "StudyDescription"]
-        shared_ids = get_shared_identifiers(dicom_files=updated_files, 
+    # Get shared information
+    aggregate = ["BodyPartExamined", "Modality", "StudyDescription"]
+    shared_ids = get_shared_identifiers(dicom_files=updated_files, 
                                             aggregate=aggregate)
-        batch_ids.shared = shared_ids
-        batch_ids.save()
+    batch_ids.shared = shared_ids
+    batch_ids.save()
 
-        # Rename
-        for dcm in batch.image_set.all():
-            dicom = dcm.load_dicom()
-            item_id = os.path.basename(dcm.image.path)
+    # Rename
+    for dcm in batch.image_set.all():
+        dicom = dcm.load_dicom()
+        item_id = os.path.basename(dcm.image.path)
 
-            # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
-            # Rename the dicom based on suid
+        # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
+        # Rename the dicom based on suid
 
-            if item_id in updated:
-                item_suid = updated[item_id]['item_id']
-                dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
+        if item_id in updated:
+            item_suid = updated[item_id]['item_id']
+            dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
 
-            # If we don't have the id, don't risk uploading
-            else:
-                message = "%s for Image Id %s not found in lookup: quarantined." %(item_id, dcm.id)
-                batch = add_batch_error(message,batch)                
-                dcm = dcm.quarantine()
-            dcm.save()
+        # If we don't have the id, don't risk uploading
+        else:
+            message = "%s for Image Id %s not found in lookup: quarantined." %(item_id, dcm.id)
+            batch = add_batch_error(message,batch)                
+            dcm = dcm.quarantine()
+        dcm.save()
 
-        # 3) save newly anonymized ids for storage upload
-        ANONYMIZE_PIXELS=False
-        
-    except:
-        bot.error("In replace_identifiers: Batch %s or identifiers does not exist." %(bid))
-        return None
 
     # We don't get here if the call above failed
     if run_upload_storage is True:
