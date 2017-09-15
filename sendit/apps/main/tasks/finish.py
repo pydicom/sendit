@@ -123,6 +123,16 @@ def upload_storage(bid, do_clean_up=True):
         # IR0001fa6_20160525_IR661B54.tar.gz
         # (coded MRN?)_jittereddate_studycode
 
+        required_fields = ['AccessionNumber', 'PatientID']
+        for required_field in required_fields:
+            if required_field not in batch_ids.shared:
+                change_status(batch,"ERROR")
+                message = "batch ids %s do not have shared PatientID or AccessionNumber, stopping upload" %(bid)
+                batch = add_batch_warning(message,batch)
+                batch.save()
+                return start_tasks(count=1)
+
+
         studycode = batch_ids.shared['AccessionNumber']
         coded_mrn = batch_ids.shared['PatientID']
         timestamp = get_timestamp(batch_ids.shared['StudyDate'],
