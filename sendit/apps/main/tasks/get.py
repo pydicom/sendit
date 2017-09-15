@@ -97,6 +97,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
         except NotADirectoryError:
             bot.error('%s is not a directory, skipping.' %dicom_dir)
             if run_get_identifiers is True:
+                from sendit.apps.main.utils import start_tasks
                 start_tasks(count=1)
             return None
 
