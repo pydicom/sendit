@@ -170,7 +170,7 @@ def replace_identifiers(bid, run_upload_storage=True):
                 dcm.delete()
 
 
-        except FileNotFoundError:
+        except:
             message = "%s for Image Id %s not found in lookup: skipping." %(item_id, dcm.id)
             batch = add_batch_error(message,batch)                
             dcm.delete()
