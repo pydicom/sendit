@@ -151,21 +151,28 @@ def replace_identifiers(bid, run_upload_storage=True):
 
     # Rename
     for dcm in batch.image_set.all():
-        dicom = dcm.load_dicom()
-        item_id = os.path.basename(dcm.image.path)
+        try:
+            dicom = dcm.load_dicom()
+            item_id = os.path.basename(dcm.image.path)
 
-        # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
-        # Rename the dicom based on suid
+            # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
+            # Rename the dicom based on suid
 
-        if item_id in updated:
-            item_suid = updated[item_id]['item_id']
-            dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
+            if item_id in updated:
+                item_suid = updated[item_id]['item_id']
+                dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
 
-        # If we don't have the id, don't risk uploading
-        else:
+            # If we don't have the id, don't risk uploading
+            else:
+                message = "%s for Image Id %s file read error: quarantined." %(item_id, dcm.id)
+                batch = add_batch_error(message,batch)                
+                dcm = dcm.quarantine()
+
+        except FileNotFoundError:
             message = "%s for Image Id %s not found in lookup: quarantined." %(item_id, dcm.id)
             batch = add_batch_error(message,batch)                
             dcm = dcm.quarantine()
+  
         dcm.save()
 
 

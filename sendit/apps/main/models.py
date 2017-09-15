@@ -121,7 +121,9 @@ class Batch(models.Model):
         for dcm in self.image_set.all():
             try:
                 if hasattr(dcm.image, 'file'):
-                    image_files.append(dcm.image.path)
+                    dicom_file = dcm.image.path
+                    if os.path.exists(dicom_file):
+                        image_files.append(dicom_file)
 
             # Image object has no file associated with it
             except ValueError:
@@ -216,6 +218,7 @@ class Image(models.Model):
         self.image.name = new_name
         new_path = os.path.join(settings.MEDIA_ROOT, new_name)
         shutil.move(initial_path, new_path)
+        self.image.path = new_path
         self.image.file.name = self.image.path
         self.save()
         return self
