@@ -106,6 +106,8 @@ GOOGLE_PROJECT_ID_HEADER="12345"
 x-goog-project-id: 12345
 ```
 
+** Note we aren't currently using this header and it works fine.
+
 Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
 
 
@@ -152,5 +154,12 @@ LOCKDOWN_PASSWORDS = ('mysecretpassword',)
 
 Note that here we will need to add notes about securing the server (https), etc. For now, I'll just mention that it will come down to changing the [nginx.conf](../nginx.conf) and [docker-compose.yml](../docker-compose.yml) to those provided in the folder [https](../https).
 
+
+Finally, if you want to parse a specific subfolder under data, specify it in the config. If you set it to None, it will use the `/data` base.
+
+```
+# Optionally, parse a subfolder under /data, or set to None
+DATA_SUBFOLDER="1_6"
+```
 
 Next, you should read a bit to understand the [application](application.md).

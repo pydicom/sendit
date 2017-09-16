@@ -30,9 +30,11 @@ from django.http import (
 
 from django.template import RequestContext
 from django.shortcuts import render, render_to_response
+from django.http import JsonResponse
 import hashlib
 
 from sendit.settings import API_VERSION as APIVERSION
+from sendit.apps.main.utils import get_database
 from sendit.apps.main.models import (
     Batch,
     Image
@@ -46,6 +48,8 @@ from sendit.apps.api.serializers import (
     ImageSerializer
 )
 from django.contrib.auth.models import User
+from datetime import datetime
+from glob import glob
 
 #########################################################################
 # GET
@@ -66,8 +70,28 @@ class BatchViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Batch.objects.all().order_by('uid')
     serializer_class = BatchSerializer
 
+
 class ImageViewSet(viewsets.ReadOnlyModelViewSet):
     '''An image is one dicom image (beloning to a batch) to process
     '''
     queryset = Image.objects.all().order_by('uid')
     serializer_class = ImageSerializer
+
+
+def metrics_view(request):
+    '''simple metrics to expose for local user'''
+
+    base = get_database()
+    timestamp = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+    batchlog = {'SEEN': Batch.objects.count(),
+                'SENT': Batch.objects.filter(status="DONE").count(),
+                'EMPTY':Batch.objects.filter(status="EMPTY").count(),
+                'ERROR':Batch.objects.filter(status="ERROR").count(),
+                'NEW': Batch.objects.filter(status="NEW").count()}
+
+    response = {"timestamp":timestamp,
+                "data_base": base,
+                "data_total": len(glob("%s/*" %(base))),
+                "batches": batchlog}
+
+    return JsonResponse(response)

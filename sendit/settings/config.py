@@ -34,9 +34,9 @@ ITEM_ID="AccessionNumber"
 #####################################################
 # WORKER
 #####################################################
-RUN_SERIAL=True # should we run tasks serial (recommended
-                # for single/small servers) or async?
 
+# Optionally, parse a subfolder under /data, or set to None
+DATA_SUBFOLDER="1_6"
 
 #####################################################
 # STORAGE

@@ -1,6 +1,5 @@
 #!/bin/bash
 python /code/manage.py makemigrations base
-python /code/manage.py makemigrations users
 python /code/manage.py makemigrations main
 python /code/manage.py makemigrations watcher
 python /code/manage.py makemigrations api

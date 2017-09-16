@@ -40,5 +40,6 @@ router.register(r'^batches', api_views.BatchViewSet)
 urlpatterns = [
 
     url(r'^$', swagger_view),
+    url(r'^metrics', api_views.metrics_view, name='metrics_view'),
     url(r'^docs$', api_views.api_view, name="api"),
 ]

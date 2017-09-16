@@ -24,11 +24,13 @@ SOFTWARE.
 
 from django.core.files import File
 from django.http.response import Http404
+from sendit.settings import DATA_SUBFOLDER
 from sendit.apps.main.models import (
     Image,
     Batch
 )
 
+import time
 from sendit.logger import bot
 import sys
 import os
@@ -58,6 +60,17 @@ def get_image(sid):
         return image
 
 
+def get_database():
+    ''' get the base directory for parsing images,
+    if DATA_SUBFOLDER in settings is None, returns /data
+    if set, returns /data/<subfolder>
+    '''
+    base = "/data"
+    if DATA_SUBFOLDER is not None:
+        base = "%s/%s" %(base, DATA_SUBFOLDER.strip('/'))
+    return base
+
+
 def ls_fullpath(dirname,ext=None):
     '''get full path of all files in a directory'''
     if ext is not None:
@@ -70,7 +83,7 @@ def ls_fullpath(dirname,ext=None):
 
 #### WORKER ##########################################################
 
-def start_tasks(count=1, base='/data/1_6'):
+def start_tasks(count=1, base=None):
     '''
     submit some count of tasks based on those that aren't present
     as batches
@@ -82,6 +95,11 @@ def start_tasks(count=1, base='/data/1_6'):
     '''
     from random import choice
     from sendit.apps.main.tasks import import_dicomdir
+    start_time = time.time()
+
+    if base is None:
+        base = get_database()
+
     current = [x.uid for x in Batch.objects.all()]
     contenders = get_contenders(base=base,current=current)
 
@@ -90,7 +108,6 @@ def start_tasks(count=1, base='/data/1_6'):
        count = len(contenders) - 1
 
     chosen = [choice(contenders) for x in range(count)]
-    bot.debug("Starting deid pipeline for %s folders" %len(chosen))
     seen = []
 
     while len(chosen) > 0:
@@ -115,6 +132,11 @@ def start_tasks(count=1, base='/data/1_6'):
         else:
             additional = contenders.pop()
             chosen.append(additional)
+
+    end_time = time.time()
+    elapsed_time = (end_time - start_time)/60
+    bot.debug("Started deid pipeline for %s folders, search took %s minutes" %(len(chosen),
+                                                                               elapsed_time))
 
 
 def get_contenders(base,current=None, filters=None):

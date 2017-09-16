@@ -1,4 +1,4 @@
-FROM python:3.5.1
+FROM python:3.6
 ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y cmake \
                                          libpng12-dev libtiff5-dev libxml2-dev libjpeg62-turbo-dev \
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y cmake \
     wget \
     vim
 
+RUN pip install --upgrade setuptools
 RUN pip install --upgrade pip
 RUN pip install cython
 RUN pip install numpy
@@ -74,7 +75,7 @@ RUN python setup.py install
 
 # deid
 WORKDIR /tmp
-RUN git clone https://github.com/pydicom/deid
+RUN git clone -b development https://github.com/pydicom/deid
 WORKDIR /tmp/deid
 RUN python setup.py install
 
@@ -101,16 +102,6 @@ RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 #ENV DCMTK_PREFIX=/opt/dcmtk361
 #ENV PATH /opt/dcmtk361/bin:$PATH
 ENV MESSAGELEVEL -1
-
-# Releases are here http://dicom.offis.de/download/dcmtk/
-#RUN wget http://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.tar.gz
-
-# unpack the archive
-#RUN tar -xzvf dcmtk-3.6.2.tar.gz 
-#WORKDIR dcmtk-3.6.2
-#RUN cmake -DCMAKE_INSTALL_PREFIX=$DCMTK_PREFIX
-#RUN make all
-#RUN make install
 
 # This sometimes errors, need to run manually
 #RUN pip install -r /code/google-requirements.txt > /dev/null 2>&1
