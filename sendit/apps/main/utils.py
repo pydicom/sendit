@@ -109,23 +109,22 @@ def start_tasks(count=1, base=None):
 
     chosen = [choice(contenders) for x in range(count)]
     seen = []
+    started = 0
 
     while len(chosen) > 0:
-
         contender = chosen.pop(0)
         if contender not in seen:
             seen.append(contender)
-
             # Make the batches immediately so we don't double process 
             # not seen folders in queue
             dicom_dir = "%s/%s" %(base,contender)
             dcm_folder = os.path.basename(dicom_dir)
             batch,created = Batch.objects.get_or_create(uid=dcm_folder)
-
             # Let's be conservative - don't process if it's created
             if created is True:
                 batch.save()
                 import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
+                started+=1
             else:
                 additional = contenders.pop()
                 chosen.append(additional)
@@ -135,7 +134,7 @@ def start_tasks(count=1, base=None):
 
     end_time = time.time()
     elapsed_time = (end_time - start_time)/60
-    bot.debug("Started deid pipeline for %s folders, search took %s minutes" %(len(chosen),
+    bot.debug("Started deid pipeline for %s folders, search took %s minutes" %(started,
                                                                                elapsed_time))
 
 
