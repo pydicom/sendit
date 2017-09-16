@@ -216,7 +216,7 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             from sendit.apps.main.utils import start_tasks
             batch.status = "EMPTY"
             batch.qa['FinishTime'] = time.time()
-            message = "%s is flagged EMPTY, no images pass filter" %(dicom_uid)
+            message = "%s is flagged EMPTY, no images pass filter" %(batch.id)
             batch = add_batch_warning(message,batch)
             batch.save()
             return start_tasks(count=1)
