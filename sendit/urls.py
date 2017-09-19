@@ -33,8 +33,8 @@ from django.contrib import admin
 
 # Configure custom error pages
 from django.conf.urls import ( handler404, handler500 )
-handler404 = 'sendit.apps.main.views.handler404'
-handler500 = 'sendit.apps.main.views.handler500'
+handler404 = 'sendit.apps.base.views.handler404'
+handler500 = 'sendit.apps.base.views.handler500'
 
 # Sitemaps
 #from sendit.apps.api.sitemap import ReportCollectionSitemap, ReportSitemap
