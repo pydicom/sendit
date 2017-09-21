@@ -37,7 +37,7 @@ class Command(BaseCommand):
         parser.add_argument('--days', dest='days', default=7, type=int)
 
     def handle(self,*args, **options):
-        days_ago = datetime.today() - timedelta(days=options['days'])
+        days_ago = datetime.now() - timedelta(days=options['days'])
         total_gb = 0
         for batch in Batch.objects.all():
             if batch.status == "DONE":
