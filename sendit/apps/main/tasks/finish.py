@@ -173,8 +173,17 @@ def upload_storage(bid, do_clean_up=True):
         bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
                                                                      len(images),
                                                                      GOOGLE_CLOUD_STORAGE))
-        client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
-                        project_name=GOOGLE_PROJECT_NAME)
+        try:
+            client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
+                            project_name=GOOGLE_PROJECT_NAME)
+
+        # Client is unreachable, usually network is being stressed
+        except OSError:
+            delay = choice([0,1,2,3,4,5,6,7,8,9,10])
+            sleep(delay)
+            clean_up(batch.id, remove_batch=True)
+            return
+
 
         # I'm not sure we need this
         #if GOOGLE_PROJECT_ID_HEADER is not None:
@@ -216,7 +225,7 @@ def upload_storage(bid, do_clean_up=True):
 
 
 @shared_task
-def clean_up(bid):
+def clean_up(bid, remove_batch=False):
     '''clean up will check a batch for errors, and if none exist, clear the entries
     from the database. If no errors occurred, the original folder would have been deleted
     after dicom import.
@@ -236,7 +245,8 @@ def clean_up(bid):
         images = batch.image_set.all()
         [x.image.delete() for x in images] # deletes image files
         [x.delete() for x in images] # deletes objects
-        # batch.delete() #django-cleanup will delete files on delete
+        if remove_batch is True:
+            batch.delete() #django-cleanup will delete files on delete
     else:
         bot.warning("Batch %s has error, will not be cleaned up." %batch.id)
 
