@@ -155,11 +155,32 @@ LOCKDOWN_PASSWORDS = ('mysecretpassword',)
 Note that here we will need to add notes about securing the server (https), etc. For now, I'll just mention that it will come down to changing the [nginx.conf](../nginx.conf) and [docker-compose.yml](../docker-compose.yml) to those provided in the folder [https](../https).
 
 
-Finally, if you want to parse a specific subfolder under data, specify it in the config. If you set it to None, it will use the `/data` base.
+### Reading Input
+The original application (watcher) has not yet been used in a production environment.
+This means that you have the following (other options):
+
+#### 1. Query Filesystem
+The default will query the filesystem, meaning looking for batch folders under `/data`.
+This will be fine for a small number of directories, but can extremely slow down processing
+if the parsing needed is substantial.
+
+### 2. Subfolder in data
+If you want to parse a specific subfolder under data (with the same strategy as 1.), specify it in the config. If you set it to None, it will use the `/data` base.
 
 ```
 # Optionally, parse a subfolder under /data, or set to None
 DATA_SUBFOLDER="1_6"
 ```
+
+### 3. Pre-cache
+Finally, if you want to avoid looking over the file system every time (recommended)
+either for 1. or 2. above, you can define a set of `DATA_INPUT_FOLDERS` in settings:
+
+```
+DATA_INPUT_FOLDERS=['/data/1_%s' %s for x in range(8) ]  # /data/1_0 through /data/1_7
+```
+Otherwise, leave set as None.
+
+These folders should all start with paths relevant to `/data`. 
 
 Next, you should read a bit to understand the [application](application.md).

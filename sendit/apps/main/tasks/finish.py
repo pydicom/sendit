@@ -23,7 +23,6 @@ SOFTWARE.
 '''
 
 from sendit.logger import bot
-from celery.decorators import periodic_task
 from celery import (
     shared_task, 
     Celery
@@ -74,7 +73,6 @@ def upload_storage(bid, do_clean_up=True):
     '''upload storage will send data to OrthanC and/or Google Storage, depending on the
     user preference.
     '''
-    from sendit.apps.main.utils import start_tasks
     from sendit.settings import (GOOGLE_CLOUD_STORAGE,
                                  SEND_TO_GOOGLE,
                                  GOOGLE_PROJECT_NAME,
@@ -118,7 +116,7 @@ def upload_storage(bid, do_clean_up=True):
             batch.save()
             if do_clean_up is True:
                 clean_up.apply_async(kwargs={"bid":bid})
-            return start_tasks(count=1)
+            return
 
         # IR0001fa6_20160525_IR661B54.tar.gz
         # (coded MRN?)_jittereddate_studycode
@@ -130,7 +128,7 @@ def upload_storage(bid, do_clean_up=True):
                 message = "batch ids %s do not have shared PatientID or AccessionNumber, stopping upload" %(bid)
                 batch = add_batch_warning(message,batch)
                 batch.save()
-                return start_tasks(count=1)
+                return
 
 
         studycode = batch_ids.shared['AccessionNumber']
@@ -155,7 +153,7 @@ def upload_storage(bid, do_clean_up=True):
 
             if do_clean_up is True:
                 clean_up.apply_async(kwargs={"bid":bid})
-            return start_tasks(count=1)
+            return
 
 
         # We prepare shared metadata for one item
@@ -215,9 +213,6 @@ def upload_storage(bid, do_clean_up=True):
     if do_clean_up is True:
         clean_up.apply_async(kwargs={"bid":bid})
 
-    # Start a new task
-    return start_tasks(count=1)
-
 
 @shared_task
 def clean_up(bid):
@@ -262,6 +257,7 @@ def batch_upload(client,d):
        not in use, we are uploading a single compressed image.
     '''
     images = d['images']
+
     # Run the storage/datastore upload in chunks
     for imageset in chunks(d['images'], 500):
         upload_dataset(images=imageset,

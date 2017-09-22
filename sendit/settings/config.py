@@ -36,7 +36,9 @@ ITEM_ID="AccessionNumber"
 #####################################################
 
 # Optionally, parse a subfolder under /data, or set to None
-DATA_SUBFOLDER="1_6"
+DATA_BASE = "/data"
+DATA_SUBFOLDER="1_6"  # ignored if DATA_INPUT_FOLDERS is set
+DATA_INPUT_FOLDERS=None
 
 #####################################################
 # STORAGE
