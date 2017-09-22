@@ -83,6 +83,7 @@ def metrics_view(request):
 
     base = get_database()
     timestamp = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+
     batchlog = {'SEEN': Batch.objects.count(),
                 'SENT': Batch.objects.filter(status="DONE").count(),
                 'EMPTY':Batch.objects.filter(status="EMPTY").count(),
@@ -91,6 +92,7 @@ def metrics_view(request):
 
     response = {"timestamp":timestamp,
                 "data_base": base,
+                "queued": Batch.objects.filter(status="QUEUE").count(),
                 "data_total": len(glob("%s/*" %(base))),
                 "batches": batchlog}
 

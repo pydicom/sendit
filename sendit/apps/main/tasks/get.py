@@ -201,12 +201,11 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 # When this is implemented, the function will be modified to add these images
                 # to the batch, which will then be first sent through a function to
                 # scrub pixels before header data is looked at.
-                # scrub_pixels.apply_async(kwargs={"bid":batch.id})
+                # scrub_pixels(bid=batch.id)
             #else:
             if run_get_identifiers is True:
-                bot.debug("Submitting task to get_identifiers for batch %s with %s dicoms." %(batch.uid,
-                                                                                              count))
-                get_identifiers.apply_async(kwargs={"bid":batch.id})
+                bot.debug("get_identifiers submit batch %s with %s dicoms." %(batch.uid,count))
+                return get_identifiers(bid=batch.id)
             else:
                 bot.debug("Finished batch %s with %s dicoms" %(batch.uid,count))
                 return batch
@@ -285,7 +284,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
                 batch_ids.ids = ids
                 batch_ids.save()
                 if run_replace_identifiers is True:
-                    replace_identifiers.apply_async(kwargs={"bid":bid})
+                    return replace_identifiers(bid=bid)
                 else:
                     return batch_ids
             else:
@@ -296,7 +295,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         bot.debug("Restful de-identification skipped [ANONYMIZE_RESTFUL is False]")
         change_status(batch,"DONEPROCESSING")
         change_status(batch.image_set.all(),"DONEPROCESSING")
-        upload_storage.apply_async(kwargs={"bid":bid})
+        return upload_storage(bid=bid)
 
 
 

@@ -97,8 +97,7 @@ def scrub_pixels(bid):
                 batch = add_batch_error(message,batch)
 
     # At the end, move on to processing headers    
-    get_identifiers.apply_async(kwargs={"bid":batch.id})
- 
+    return get_identifiers(bid=batch.id) 
 
 
 @shared_task
@@ -178,7 +177,7 @@ def replace_identifiers(bid, run_upload_storage=True):
 
     # We don't get here if the call above failed
     if run_upload_storage is True:
-        upload_storage.apply_async(kwargs={"bid":bid})
+        return upload_storage(bid=bid)
     else:
         updated_files = batch.get_image_paths()
         return updated_files

@@ -34,7 +34,7 @@ If we run into some case where the fields are not defined, I have put a check th
 ## 2. Saving Dicoms
 All files in the folder are assumed to be dicom, as it is the case the extensions may vary. If a file is attempted to be read as dicom fails, a warning is issued and the file skipped, but the process continued. The file is not removed, in case inspection is warranted later (is this how we want it?) (some notification?)
 
-The dicom file itself, when saved to the model, is saved with the application's media at `/images`. Once the file is saved here, it is deleted from it's temporary folder in `/data`. This is to maximize space on the server, in case that is needed.
+The dicom file itself, when saved to the model, is saved with the application's media at `/images`. 
 
 ## 3. Finishing Batch
 All the images found in a folder are considered to be a "batch," and when all files for a batch have been added, the function fires off the list to be anonymized. If there were no files in the batch, the function is not fired.

@@ -1,5 +1,44 @@
 # Start the Application
-After configuration is done and you have a good understanding of how things work, you are ready to turn it on! First, let's learn about how to start and stop the watcher, and the kind of datasets and location that the watcher is expecting. It is up to you to plop these dataset folders into the application's folder being watched.
+After configuration is done and you have a good understanding of how things work, you are ready to turn it on! You have two options - using the watcher (better for on demand, streamed processing) or with a cached queue (better if many datasets are already present). For both, an important note is that each job added to the queue to do dicom import will also handle the complete processing for that job. This is so that we don't have a tasks in the queue relevant
+to the same job (for example, imagine a queue of 1000, and adding the "next step" for the first
+item to the end. We wouldn't process it until the other 999 are started! Our disk might run
+out of space.
+
+## Cached Queue
+This approach add jobs to a queue and they are processed when workers are available. This is a slightly longer process since it needs to read the filesystem, but it's only run when the 
+previous set of folders found and queued is empty (meaning no Batch objects with status `QUEUE`). 
+A cached queue is NOT processed by way of the watcher, but instead the python manage.py start_queue.py script:
+
+```
+python manage.py start_queue
+```
+
+optionally you can provide the following arguments:
+
+```
+--number: a max count to add to the queue
+--subfolder: optionally, a subfolder to use assumed in /data, to take preference
+```
+
+without any arguments, it goes over the bases defined as subfolders to create the cache
+
+```
+DATA_INPUT_FOLDERS=['/data/1_%s' %s for x in range(8) ]  # /data/1_0 through /data/1_7
+```
+
+The cache will not be generated until the current set is done and processed.
+
+
+## Streaming with Watcher
+The watcher is intended to be used for streaming data. The folders will be looked for in the  `DATA_BASE` and optionally a specific subfolder, if defined:
+
+
+```
+# Optionally, parse a subfolder under /data, or set to None
+DATA_SUBFOLDER="1_6"
+```
+
+First, let's learn about how to start and stop the watcher, and the kind of datasets and location that the watcher is expecting. It is up to you to plop these dataset folders into the application's folder being watched.
 
 ## 1. Running the Watcher
 This initial setup is stupid in that it's going to be checking an input folder to find new images. We do this using the [watcher](../sendit/apps/watcher) application, which is started and stopped with a manage.py command:
@@ -46,8 +85,3 @@ The Dockerized application is constantly monitoring the folder to look for folde
 Generally, the query of interest will retrieve a set of images with an associated accession number, and the input folder will be named by the accession number. Since there is variance in the data with regard to `AccessionNumber` and different series identifiers, for our batches we give them ids based on the folder name.
 
 Now that the application is started, you can learn about usage, starting with the [manager](manager.md), or check out details about the simple [interface](interface.md).
-
-# Questions
- - Given no errors for a batch, we will be cleaning up the database and the media files, which means complete deletion. Is there any desire for a log to be maintained somewhere, and if so, where? Right now, the logs that we have are for the watcher, that logs the name of the folders and when they are complete. If we want more logging, for what actions, under what circumstances?
- - For anonymization, we have the option to remove private tags (`dicom.remove_private_tags()`), which are those that have been added to the dataset (but don't conform to the standard). If we don't remove them, they will be blanked. Should we remove? Is there reason they would have private tags?
-

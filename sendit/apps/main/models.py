@@ -70,7 +70,8 @@ IMAGE_STATUS = (('NEW', 'The image was just added to the application.'),
                ('SENT','The image has been sent, and verified received.'),
                ('DONE','The image has been received, and is ready for cleanup.'))
 
-BATCH_STATUS = (('NEW', 'The batch was just added to the application.'),
+BATCH_STATUS = (('QUEUE', 'The batch is queued and not picked up by worker.'),
+               ('NEW', 'The batch was just added to the application.'),
                ('EMPTY', 'After processing, no images passed filtering.'),
                ('PROCESSING', 'The batch currently being processed.'),
                ('DONE','The batch is done, and images are ready for cleanup.'))
