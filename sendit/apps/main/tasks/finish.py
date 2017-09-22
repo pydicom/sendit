@@ -178,7 +178,7 @@ def upload_storage(bid, do_clean_up=True):
                             project_name=GOOGLE_PROJECT_NAME)
 
         # Client is unreachable, usually network is being stressed
-        except OSError:
+        except: #OSError and ServiceUnavailable
             delay = choice([0,1,2,3,4,5,6,7,8,9,10])
             sleep(delay)
             clean_up(batch.id, remove_batch=True)
