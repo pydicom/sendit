@@ -254,7 +254,7 @@ def clean_up(bid, remove_batch=False):
 # We need to make this a function, so we can apply retrying to it
 @retry(stop_max_attempt_number=3)
 def upload_dataset(client, k):
-    upload_delay = choice([0,1,2,3,4,5,6,7,8,9,10])
+    upload_delay = choice([2,4,6,8,10,12,14,16])
     sleep(upload_delay)
     client.upload_dataset(images=k['images'],
                           collection=k["collection"],
