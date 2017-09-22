@@ -143,7 +143,7 @@ def start_queue(subfolder=None, max_count=None):
     This job submission is done all at once to ensure that we don't have race
     conditions of multiple workers trying to grab a job at the same time.
     '''
-   
+    from sendit.apps.main.tasks import import_dicomdir
     contenders = Batch.objects.filter(status="QUEUE")
     if len(contenders) == 0:
         update_cached(subfolder)
@@ -151,15 +151,12 @@ def start_queue(subfolder=None, max_count=None):
 
     started = 0    
     for batch in contenders:
-
         # not seen folders in queue
         dicom_dir = batch.logs.get('DICOM_DIR')
         if dicom_dir is not None:
             import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
-
             # If user supplies a count, only start first N
             started +=1
-
         if max_count is not None:
             if started >= max_count:
                 break
