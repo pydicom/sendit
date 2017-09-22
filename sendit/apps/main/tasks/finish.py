@@ -191,8 +191,6 @@ def upload_storage(bid, do_clean_up=True):
                   "images_metadata":items}
 
         # Batch metadata    
-        upload_delay = choice([0,1,2,3,4,5,6,7,8,9,10])
-        sleep(upload_delay)
         upload_dataset(client=client, k=kwargs)
 
         # Clean up compressed file
@@ -246,6 +244,8 @@ def clean_up(bid):
 # We need to make this a function, so we can apply retrying to it
 @retry(stop_max_attempt_number=3)
 def upload_dataset(client, k):
+    upload_delay = choice([0,1,2,3,4,5,6,7,8,9,10])
+    sleep(upload_delay)
     client.upload_dataset(images=k['images'],
                           collection=k["collection"],
                           uid=k['uid'],
