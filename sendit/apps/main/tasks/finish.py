@@ -59,6 +59,7 @@ from retrying import retry
 from copy import deepcopy
 from django.conf import settings
 import time
+from random import choice
 from time import sleep
 import os
 
@@ -190,7 +191,8 @@ def upload_storage(bid, do_clean_up=True):
                   "images_metadata":items}
 
         # Batch metadata    
-        sleep(2)
+        upload_delay = choice([0,1,2,3,4,5,6,7,8,9,10])
+        sleep(upload_delay)
         upload_dataset(client=client, k=kwargs)
 
         # Clean up compressed file
