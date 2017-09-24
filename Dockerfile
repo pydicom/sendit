@@ -94,13 +94,13 @@ ADD . /code/
 RUN /usr/bin/yes | pip uninstall cython
 RUN apt-get remove -y gfortran
 
+# Crontab
+RUN apt-get update && apt-get install -y gnome-schedule
+
 RUN apt-get autoremove -y
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Dcm4che
-#ENV DCMTK_PREFIX=/opt/dcmtk361
-#ENV PATH /opt/dcmtk361/bin:$PATH
 ENV MESSAGELEVEL -1
 
 # This sometimes errors, need to run manually

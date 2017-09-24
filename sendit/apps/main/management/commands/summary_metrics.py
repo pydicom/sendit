@@ -34,7 +34,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--days', dest='days', default=7, type=int)
-
+        
     def handle(self,*args, **options):
         days_ago = datetime.today() - timedelta(days=options['days'])
         total_gb = 0

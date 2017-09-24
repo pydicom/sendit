@@ -1,4 +1,46 @@
 # Logging
+
+## Google Sheets
+Sendit has a helper script that can be run with cron to update a Google Sheet at some
+frequency with GB/day. Note that this assumes the following headers:
+
+```
+pipeline  | start_date  |  end_date   | duration (days)  | G/day Getit  |  G/day Sendit
+1         |  9/11/2017  |  9/18/2017  |  7               | 300          | 77.0				
+```
+
+The titles are not important, but rather, the order and indexes. If you change this standard,
+you should update the script [save_google_sheets.py](../scripts/save_google_sheets.py).
+
+### 1. Set up Authentication
+You will need to generate an [OAuth2 token](https://developers.google.com/sheets/api/guides/authorizing) for sheets on the server. This should be saved
+to your server somewhere, the full file path accessible via the environment variable `GOOGLE_SHEETS_CREDENTIALS`.
+
+```
+GOOGLE_SHEETS_CREDENTIALS=/path/to/client_secrets.json
+export GOOGLE_SHEETS_CREDENTIALS
+```
+
+### 1. Set up Cron
+Running the script comes down to adding a line to crontab. This is NOT on the server (host) but
+inside the image. Remember in the Dockerfile we installed crontab as follows:
+
+```
+# Install crontab to setup job
+apt-get update && apt-get install -y gnome-schedule
+```
+
+You then want to edit the script [save_google_sheets.sh](../scripts/save_google_sheets.sh) to include
+the specific sheet id. We take this approach (instead of adding it to crontab) so that if we need to
+change the call, we don't need to edit crontab. Then we echo the line to crontab, and this command
+will ensure it happens nightly at midnight
+
+```
+echo "0 0 * * * /bin/bash /code/scripts/save_google_sheets.sh" >> /code/cronjob
+crontab /code/cronjob
+```
+
+## Internal Logging
 The application has a simple logger, defined at [../sendit/logger.py](logger.py). To use it, you import as follows:
 
 ```
