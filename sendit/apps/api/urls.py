@@ -41,6 +41,7 @@ urlpatterns = [
 
     url(r'^$', swagger_view),
     url(r'^metrics$', api_views.metrics_view, name='metrics_view'),
-    url(r'^metrics/(?P<days>\d+)/$', api_views.gb_day, name="gb_day"),
+    url(r'^metrics/gb/(?P<days>\d+)/$', api_views.gb_day, name="gb_day"),
+    url(r'^metrics/gb$', api_views.gb_day, name="gb_day"),
     url(r'^docs$', api_views.api_view, name="api"),
 ]
