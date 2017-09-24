@@ -40,6 +40,9 @@ echo "0 0 * * * /bin/bash /code/scripts/save_google_sheets.sh" >> /code/cronjob
 crontab /code/cronjob
 ```
 
+The script uses the simple sheets client [provided by som-tools](https://github.com/vsoch/som/blob/master/som/api/google/sheets/client.py#L44), and adds an extra check to make sure column headers have not changed.
+If a change is found, the new row isn't added (assuming the sheet has changed).
+
 ## Internal Logging
 The application has a simple logger, defined at [../sendit/logger.py](logger.py). To use it, you import as follows:
 

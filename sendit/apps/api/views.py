@@ -34,6 +34,7 @@ from django.http import JsonResponse
 import hashlib
 
 from sendit.settings import API_VERSION as APIVERSION
+from sendit.apps.api.utils import get_size
 from sendit.apps.main.utils import get_database
 from sendit.apps.main.models import (
     Batch,
@@ -47,6 +48,7 @@ from sendit.apps.api.serializers import (
     BatchSerializer,
     ImageSerializer
 )
+
 from django.contrib.auth.models import User
 from datetime import datetime
 from glob import glob
@@ -87,13 +89,34 @@ def metrics_view(request):
     batchlog = {'SEEN': Batch.objects.count(),
                 'SENT': Batch.objects.filter(status="DONE").count(),
                 'EMPTY':Batch.objects.filter(status="EMPTY").count(),
-                'ERROR':Batch.objects.filter(status="ERROR").count(),
-                'NEW': Batch.objects.filter(status="NEW").count()}
+                'QUEUE':Batch.objects.filter(status="QUEUE").count()}
 
     response = {"timestamp":timestamp,
                 "data_base": base,
-                "queued": Batch.objects.filter(status="QUEUE").count(),
                 "data_total": len(glob("%s/*" %(base))),
                 "batches": batchlog}
+
+    return JsonResponse(response)
+
+
+
+def gb_day(request, days=1):
+    '''show gb per N days for user. (Default is 1)'''
+
+    days_ago = datetime.today() - timedelta(days=options['days'])
+    total_gb = 0
+    for batch in Batch.objects.all():
+        if batch.status == "DONE":
+            if "FinishTime" in batch.qa:
+                finish_time = datetime.fromtimestamp(batch.qa['FinishTime'])
+                if finish_time > days_ago:
+                    size=get_size(batch)
+                    total_gb += size
+
+    gb_per_day = total_gb/options['days']
+
+    response = {"timestamp":timestamp,
+                "gb_per_day": gb_per_day,
+                "days": days}
 
     return JsonResponse(response)

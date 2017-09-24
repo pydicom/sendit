@@ -21,26 +21,22 @@ SOFTWARE.
 
 '''
 
-from django.views.generic.base import TemplateView
-from django.conf.urls import url, include
+from sendit.apps.main.utils import ls_fullpath
+import os
 
-from rest_framework import routers
-from rest_framework.authtoken import views as rest_views
-from rest_framework_swagger.views import get_swagger_view
-
-import sendit.apps.api.views as api_views
-from sendit.settings import API_VERSION
-
-swagger_view = get_swagger_view(title='sendit API', url='')
-router = routers.DefaultRouter()
-router.register(r'^images', api_views.ImageViewSet)
-router.register(r'^batches', api_views.BatchViewSet)
-
-
-urlpatterns = [
-
-    url(r'^$', swagger_view),
-    url(r'^metrics$', api_views.metrics_view, name='metrics_view'),
-    url(r'^metrics/(?P<days>\d+)/$', api_views.gb_day, name="gb_day"),
-    url(r'^docs$', api_views.api_view, name="api"),
-]
+def get_size(batch):
+    '''get the size of a batch, in gb
+    '''
+    do_calculation = False
+    if batch.status == "DONE":
+        if "SizeBytes" in batch.qa:
+            if batch.qa['SizeBytes'] == 0:
+               do_calculation=True        
+        else:
+            do_calculation = True
+    if do_calculation is True: 
+        batch_folder = "/data/%s" %(batch.uid)
+        dicom_files = ls_fullpath(batch_folder)
+        batch.qa['SizeBytes'] = sum(os.path.getsize(f) for f in dicom_files)
+        batch.save()
+    return batch.qa['SizeBytes']/(1024*1024*1024.0)  # bytes to GB
