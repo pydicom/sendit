@@ -104,6 +104,8 @@ def gb_day(request=None, days=1):
     '''show gb per N days for user. (Default is 1)'''
 
     days_ago = datetime.today() - timedelta(days=days)
+    timestamp = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+
     total_gb = 0
     for batch in Batch.objects.all():
         if batch.status == "DONE":
