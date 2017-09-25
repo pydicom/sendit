@@ -40,8 +40,10 @@ def main():
 
     command = ["python", "manage.py", "summary_metrics", "--days", str(args.days)]
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
-    gb_day,error =  process.communicate()
+    result,error =  process.communicate()
     
+    gb_day = result["gb_per_day"]
+
     secrets = os.environ.get('GOOGLE_SHEETS_CREDENTIALS')
     if secrets is None:
         print("Please export client secrets file name at GOOGLE_SHEETS_CREDENTIALS")

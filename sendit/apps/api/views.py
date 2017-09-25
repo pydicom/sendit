@@ -50,7 +50,7 @@ from sendit.apps.api.serializers import (
 )
 
 from django.contrib.auth.models import User
-from datetime import datetime
+from datetime import datetime, timedelta
 from glob import glob
 
 #########################################################################
