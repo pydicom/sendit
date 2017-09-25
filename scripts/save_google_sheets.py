@@ -2,7 +2,6 @@
 
 # Command line script to get GB/day from manager, then save to google sheet.
 from som.api.google.sheets import Client
-from sendit.apps.main.models import Batch
 from datetime import datetime, timedelta
 import subprocess
 import argparse
@@ -39,7 +38,7 @@ def main():
     except:
         sys.exit(0)
 
-    command = ["python", "manage.py", "summary_metrics", "--days", args.days]
+    command = ["python", "manage.py", "summary_metrics", "--days", str(args.days)]
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
     gb_day,error =  process.communicate()
     

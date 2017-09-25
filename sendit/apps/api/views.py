@@ -100,7 +100,7 @@ def metrics_view(request):
 
 
 
-def gb_day(request, days=1):
+def gb_day(request=None, days=1):
     '''show gb per N days for user. (Default is 1)'''
 
     days_ago = datetime.today() - timedelta(days=options['days'])
