@@ -52,6 +52,7 @@ from sendit.apps.api.serializers import (
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from glob import glob
+import json
 
 #########################################################################
 # GET
@@ -122,5 +123,5 @@ def gb_day(request=None, days=1):
                 "days": days}
 
     if request is None:
-        return response
+        return json.dumps(response)
     return JsonResponse(response)
