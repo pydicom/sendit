@@ -21,6 +21,8 @@ GOOGLE_SHEETS_CREDENTIALS=/path/to/client_secrets.json
 export GOOGLE_SHEETS_CREDENTIALS
 ```
 
+It's ultimately going to generate a credentials file under your /home/.credentials directory. If you have trouble doing this on the server, do it locally and transfer the file.
+
 ### 1. Set up Cron
 Running the script comes down to adding a line to crontab. This is NOT on the server (host) but
 inside the image. Remember in the Dockerfile we installed crontab as follows:
@@ -33,7 +35,7 @@ apt-get update && apt-get install -y gnome-schedule
 You then want to edit the script [save_google_sheets.sh](../scripts/save_google_sheets.sh) to include
 the specific sheet id. We take this approach (instead of adding it to crontab) so that if we need to
 change the call, we don't need to edit crontab. Then we echo the line to crontab, and this command
-will ensure it happens nightly at midnight
+will ensure it happens nightly at midnight (feel free to change the frequency)
 
 ```
 echo "0 0 * * * /bin/bash /code/scripts/save_google_sheets.sh" >> /code/cronjob
