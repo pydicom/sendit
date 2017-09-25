@@ -5,6 +5,7 @@ from som.api.google.sheets import Client
 from datetime import datetime, timedelta
 import subprocess
 import argparse
+import json
 import os
 import sys
 
@@ -41,7 +42,12 @@ def main():
     command = ["python", "manage.py", "summary_metrics", "--days", str(args.days)]
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
     result,error =  process.communicate()
+
+    if isinstance(result,bytes):
+        result = result.decode('utf-8')
     
+    result = json.loads(result)
+
     gb_day = result["gb_per_day"]
 
     secrets = os.environ.get('GOOGLE_SHEETS_CREDENTIALS')
@@ -52,41 +58,46 @@ def main():
     cli = Client()
 
     # Define date range for metric
-    start_date = (datetime.now() - timedelta(days=days)).strftime("%m/%d/%Y")
+    start_date = (datetime.now() - timedelta(days=args.days)).strftime("%m/%d/%Y")
     end_date = datetime.now().strftime("%m/%d/%Y")
 
     # Get previous values
-    values = cli.read_spreadsheet(sheet_id=args.sheet_id)
+    values = cli.read_spreadsheet(sheet_id=args.sheet_id, range_name="A:E")
 
+    # Only update if we are sure about values
+    required = ['pipeline', 
+                'start_date',
+                'end_date',
+                'G/day GetIt',
+                'G/day SendIt']
+
+    for h in range(len(required)):
+        if required[h] != values[0][h]:
+            print("Warning, sheet is possibly changed.")
+            print("Required: %s" %",".join(required))
+            print("Found: %s" %",".join(values[0]))
+            sys.exit(0)
+        
     # Create row, append
-    # pipeline	start_date	end_date	duration (days)	G/day GetIt	G/day SendIt
+    # pipeline	start_date	end_date   G/day GetIt	G/day SendIt
     # Define new row, add
 
     row = [1,              # pipeline
            start_date,     # start_date
            end_date,       # end_date
-           None,           # duration (days)
            None,           # G/day GetIt
-           amount,         # G/day SendIt
-           None,           
-           None,
-           None,
-           None,
-           None]
+           gb_day]         # G/day SendIt
 
     values.append(row)
 
-    print_table(values)
+    for row in values:
+        print('      '.join([str(x) for x in row]))
 
     # Update sheet
     if args.save is True:
         print("Saving result to sheet %s" %args.sheet_id)
-        result = cli.write_spreadsheet(args.sheet_id, values)
+        result = cli.write_spreadsheet(args.sheet_id, values, range_name="A:E")
 
-
-def print_table(table):
-    for row in table:
-        print(" |".join(row))
 
 if __name__ == '__main__':
     main()
