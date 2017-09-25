@@ -1,0 +1,41 @@
+#####################################################
+# RESTFUL API
+#####################################################
+
+@ANONYMIZE_RESTFUL=True
+
+# If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
+# This is currently not supported
+@ANONYMIZE_PIXELS=False # currently not supported 
+
+# The study to use
+@SOM_STUDY="test"
+
+# An additional specification for white, black, and greylisting data
+# If None, only the default (for burned pixel filtering) is used
+# Currently, these live with the deid software, eg:
+# https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom.xray.chest
+# would be referenced with STUDY_DEID="dicom.xray.chest"
+@STUDY_DEID=None
+
+# Comma separated list of folders under sendit/1
+# EG, sendit/1/1_6 --> /data/1_6
+@DATA_INPUT_FOLDERS=None
+
+#####################################################
+# STORAGE
+#####################################################
+
+# Orthanc Storage
+@SEND_TO_ORTHANC=False
+@ORTHANC_IPADDRESS="127.0.0.1"
+@ORTHANC_PORT=4747
+
+# Google Storage
+# Should we send to Google at all?
+@SEND_TO_GOOGLE=True
+
+# Google Cloud Storage Bucket (must be created)
+@GOOGLE_CLOUD_STORAGE='radiology'
+@GOOGLE_STORAGE_COLLECTION="" 
+@GOOGLE_PROJECT_NAME=""
