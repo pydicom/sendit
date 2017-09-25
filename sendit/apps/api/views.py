@@ -103,7 +103,7 @@ def metrics_view(request):
 def gb_day(request=None, days=1):
     '''show gb per N days for user. (Default is 1)'''
 
-    days_ago = datetime.today() - timedelta(days=options['days'])
+    days_ago = datetime.today() - timedelta(days=days)
     total_gb = 0
     for batch in Batch.objects.all():
         if batch.status == "DONE":
@@ -113,7 +113,7 @@ def gb_day(request=None, days=1):
                     size=get_size(batch)
                     total_gb += size
 
-    gb_per_day = total_gb/options['days']
+    gb_per_day = total_gb/days
 
     response = {"timestamp":timestamp,
                 "gb_per_day": gb_per_day,
