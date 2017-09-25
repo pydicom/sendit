@@ -16,11 +16,11 @@
 # Currently, these live with the deid software, eg:
 # https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom.xray.chest
 # would be referenced with STUDY_DEID="dicom.xray.chest"
-@STUDY_DEID=None
+@STUDY_DEID=""
 
 # Comma separated list of folders under sendit/1
 # EG, sendit/1/1_6 --> /data/1_6
-@DATA_INPUT_FOLDERS=None
+@DATA_INPUT_FOLDERS=""
 
 #####################################################
 # STORAGE
