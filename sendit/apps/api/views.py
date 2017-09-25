@@ -121,4 +121,6 @@ def gb_day(request=None, days=1):
                 "gb_per_day": gb_per_day,
                 "days": days}
 
+    if request is None:
+        return response
     return JsonResponse(response)
