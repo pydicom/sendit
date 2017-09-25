@@ -120,6 +120,7 @@ def update_cached(subfolder=None):
     count = 0
     current = [x.uid for x in Batch.objects.all()]
     for base in CHECK_FOLDERS:
+        print('Checking base %s' %base)
         if os.path.exists(base):
             contenders = get_contenders(base=base,current=current)
             for contender in contenders:
