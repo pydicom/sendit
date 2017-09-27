@@ -104,7 +104,6 @@ def upload_storage(bid, do_clean_up=True):
 
     if SEND_TO_GOOGLE is True:
 
-        from som.api.google.storage import Client
         from deid.identifiers import get_timestamp
 
         # Retrieve only images that aren't in PHI folder
@@ -174,13 +173,11 @@ def upload_storage(bid, do_clean_up=True):
                                                                      len(images),
                                                                      GOOGLE_CLOUD_STORAGE))
         try:
-            client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
-                            project_name=GOOGLE_PROJECT_NAME)
+            client = get_client(bucket_name=GOOGLE_CLOUD_STORAGE,
+                                project_name=GOOGLE_PROJECT_NAME)
 
         # Client is unreachable, usually network is being stressed
         except: #OSError and ServiceUnavailable
-            delay = choice([0,1,2,3,4,5,6,7,8,9,10])
-            sleep(delay)
             clean_up(batch.id, remove_batch=True)
             return
 
@@ -252,10 +249,10 @@ def clean_up(bid, remove_batch=False):
 
 
 # We need to make this a function, so we can apply retrying to it
-@retry(stop_max_attempt_number=3)
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=3)
 def upload_dataset(client, k):
-    upload_delay = choice([2,4,6,8,10,12,14,16])
-    sleep(upload_delay)
+    #upload_delay = choice([2,4,6,8,10,12,14,16])
+    #sleep(upload_delay)
     client.upload_dataset(images=k['images'],
                           collection=k["collection"],
                           uid=k['uid'],
@@ -276,3 +273,10 @@ def batch_upload(client,d):
         upload_dataset(images=imageset,
                        client=client,
                        k=d)
+
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=3)
+def get_client(bucket_name, project_name):
+    from som.api.google.storage import Client
+    return Client(bucket_name=bucket_name,
+                  project_name=project_name)
