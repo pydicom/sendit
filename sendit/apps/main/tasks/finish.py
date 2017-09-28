@@ -104,7 +104,7 @@ def upload_storage():
                                 project_name=GOOGLE_PROJECT_NAME)
         # Client is unreachable, usually network is being stressed
  
-       except: #OSError and ServiceUnavailable
+        except: #OSError and ServiceUnavailable
             bot.error("Cannot connect to client.")
             return
 
@@ -134,6 +134,8 @@ def upload_storage():
                     batch = add_batch_warning(message,batch)
                     batch.save()
                     valid = False
+                if valid is False:
+                    continue
 
             studycode = batch_ids.shared['AccessionNumber']
             coded_mrn = batch_ids.shared['PatientID']
@@ -154,6 +156,7 @@ def upload_storage():
                 batch = add_batch_error(message,batch)
                 batch.save()
                 valid = False
+                continue
 
             # We prepare shared metadata for one item
             batch_ids.shared['IMAGE_COUNT'] = len(images)
@@ -168,23 +171,24 @@ def upload_storage():
                 bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
                                                                          len(images),
                                                                          GOOGLE_CLOUD_STORAGE))
-            # We only expect to have one entity per batch
-            uid = list(metadata.keys())[0]
-            kwargs = {"images":[compressed_file],
-                      "collection":collection,
-                      "uid":uid,
-                      "entity_metadata": metadata[uid],
-                      "images_metadata":items}
+                # We only expect to have one entity per batch
+                uid = list(metadata.keys())[0]
+                kwargs = {"images":[compressed_file],
+                          "collection":collection,
+                          "uid":uid,
+                          "entity_metadata": metadata[uid],
+                          "images_metadata":items}
 
-            # Batch metadata    
-            upload_dataset(client=client, k=kwargs)
+                # Batch metadata    
+                upload_dataset(client=client, k=kwargs)
 
-            # Clean up compressed file
-            if os.path.exists(compressed_file):
-                os.remove(compressed_file)
+                # Clean up compressed file
+                if os.path.exists(compressed_file):
+                    os.remove(compressed_file)
 
-            # Finish and record time elapsed
-            change_status(batch,"DONE")
+                # Finish and record time elapsed
+                change_status(batch,"DONE")
+
             batch.qa['FinishTime'] = time.time()
             total_time = batch.qa['FinishTime'] - batch.qa['StartTime']
             bot.info("Total time for %s: %s images is %f min" %(batch.uid,
@@ -200,7 +204,6 @@ def clean_up(bid, remove_batch=False):
     from the database. If no errors occurred, the original folder would have been deleted
     after dicom import.
     '''
-
     try:         
         batch = Batch.objects.get(id=bid)
     except:

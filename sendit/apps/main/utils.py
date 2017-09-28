@@ -165,6 +165,14 @@ def start_queue(subfolder=None, max_count=None):
     print("Added %s tasks to the active queue." %started)
 
 
+def upload_finished():
+    '''upload finished will upload datasets with status DONEPROCESSING
+    to google storage. We do this with one worker to reduce the number
+    of concurrent API calls. In the future, this will be better optimized.
+    '''
+    from sendit.apps.main.tasks import upload_storage
+    return upload_storage.apply_async()
+
 
 def get_contenders(base,current=None, filters=None):
     ''' get contenders will return a full set of contender folders from
