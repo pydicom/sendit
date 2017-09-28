@@ -71,26 +71,17 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
 @shared_task
-def upload_storage(bid, do_clean_up=True):
-    '''upload storage will send data to OrthanC and/or Google Storage, depending on the
-    user preference.
+def upload_storage():
+    '''upload storage will as a batch, send all batches with DONEPROCESSING status
+    to google cloud storage.
     '''
     from sendit.settings import (GOOGLE_CLOUD_STORAGE,
                                  SEND_TO_GOOGLE,
                                  GOOGLE_PROJECT_NAME,
                                  GOOGLE_PROJECT_ID_HEADER,
                                  GOOGLE_STORAGE_COLLECTION)
-    try:         
-        batch = Batch.objects.get(id=bid)
-        batch_ids = BatchIdentifiers.objects.get(batch=batch)
-    except:
-        bot.error("In upload_storage: Batch %s does not exist." %(bid))
-        return None
 
-    if SEND_TO_ORTHANC is True:
-        bot.log("Sending %s to %s:%s" %(batch,ORTHANC_IPADDRESS,ORTHANC_PORT))
-        bot.log("Beep boop, not configured yet!")
-        # do the send here!
+    batches = Batch.objects.filter(status="DONEPROCESSING")
 
     # All variables must be defined for sending!
     if GOOGLE_CLOUD_STORAGE in [None,""]:
@@ -103,84 +94,7 @@ def upload_storage(bid, do_clean_up=True):
         SEND_TO_GOOGLE = False
 
     if SEND_TO_GOOGLE is True:
-
         from deid.identifiers import get_timestamp
-
-        # Retrieve only images that aren't in PHI folder
-        images = batch.get_finished()
-
-        # Stop if no images pass filters
-        if len(images) == 0:        
-            change_status(batch,"EMPTY")
-            message = "batch %s has no images for processing, stopping upload" %(bid)
-            batch = add_batch_warning(message,batch)
-            batch.save()
-            if do_clean_up is True:
-                return clean_up(bid=bid)
-            return
-
-        # IR0001fa6_20160525_IR661B54.tar.gz
-        # (coded MRN?)_jittereddate_studycode
-
-        required_fields = ['AccessionNumber', 'PatientID']
-        for required_field in required_fields:
-            if required_field not in batch_ids.shared:
-                change_status(batch,"ERROR")
-                message = "batch ids %s do not have shared PatientID or AccessionNumber, stopping upload" %(bid)
-                batch = add_batch_warning(message,batch)
-                batch.save()
-                return
-
-
-        studycode = batch_ids.shared['AccessionNumber']
-        coded_mrn = batch_ids.shared['PatientID']
-        timestamp = get_timestamp(batch_ids.shared['StudyDate'],
-                                  format = "%Y%m%d")            
-
-        compressed_filename = "%s/%s_%s_%s.tar.gz" %(batch.get_path(),
-                                                     coded_mrn,
-                                                     timestamp,
-                                                     studycode)
-
-        compressed_file = generate_compressed_file(files=images, # mode="w:gz"
-                                                   filename=compressed_filename) 
-
-        # File will be None if no files added
-        if compressed_file is None:        
-            change_status(batch,"ERROR")
-            message = "batch %s problem compressing file, stopping upload" %(bid)
-            batch = add_batch_error(message,batch)
-            batch.save()
-
-            if do_clean_up is True:
-                return clean_up(bid=bid)
-            return
-
-
-        # We prepare shared metadata for one item
-        batch_ids.shared['IMAGE_COUNT'] = len(images)
-        batch.logs['IMAGE_COUNT'] = len(images)
-        batch_ids.save()
-        batch.save()
-
-        items_metadata = batch_ids.shared
-        items = { compressed_file: items_metadata }
-        cleaned = deepcopy(batch_ids.cleaned)
-        metadata = prepare_entity_metadata(cleaned_ids=cleaned)
-
-
-        bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
-                                                                     len(images),
-                                                                     GOOGLE_CLOUD_STORAGE))
-        try:
-            client = get_client(bucket_name=GOOGLE_CLOUD_STORAGE,
-                                project_name=GOOGLE_PROJECT_NAME)
-
-        # Client is unreachable, usually network is being stressed
-        except: #OSError and ServiceUnavailable
-            clean_up(batch.id, remove_batch=True)
-            return
-
 
         # I'm not sure we need this
         #if GOOGLE_PROJECT_ID_HEADER is not None:
@@ -188,38 +102,106 @@ def upload_storage(bid, do_clean_up=True):
 
         collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
 
-        # We only expect to have one entity per batch
-        uid = list(metadata.keys())[0]
-        kwargs = {"images":[compressed_file],
-                  "collection":collection,
-                  "uid":uid,
-                  "entity_metadata": metadata[uid],
-                  "images_metadata":items}
+        try:
+            client = get_client(bucket_name=GOOGLE_CLOUD_STORAGE,
+                                project_name=GOOGLE_PROJECT_NAME)
 
-        # Batch metadata    
-        upload_dataset(client=client, k=kwargs)
+        # Client is unreachable, usually network is being stressed
+        except: #OSError and ServiceUnavailable
+            bot.error("Cannot connect to client.")
+            return
 
-        # Clean up compressed file
-        if os.path.exists(compressed_file):
-            os.remove(compressed_file)
+        for batch in batches:
+            valid = True
+            batch_ids = BatchIdentifiers.objects.get(batch=batch)
 
-    else:
-        do_clean_up = False
-        batch.change_images_status('SENT')
+            # Retrieve only images that aren't in PHI folder
+            images = batch.get_finished()
 
-    # Finish and record time elapsed
-    change_status(batch,"DONE")
-    batch.qa['FinishTime'] = time.time()
-    total_time = batch.qa['FinishTime'] - batch.qa['StartTime']
-    bot.info("Total time for %s: %s images is %f min" %(batch.uid,
-                                                        batch.image_set.count(),
-                                                        total_time/60))
-    batch.qa['ElapsedTime'] = total_time
-    batch.save()
+            # Stop if no images pass filters
+            if len(images) == 0:        
+                change_status(batch,"EMPTY")
+                message = "batch %s has no images for processing, stopping upload" %(bid)
+                batch = add_batch_warning(message,batch)
+                batch.save()
+                continue
 
-    if do_clean_up is True:
-        return clean_up(bid=bid)
+            # IR0001fa6_20160525_IR661B54.tar.gz
+            # (coded MRN?)_jittereddate_studycode
 
+            required_fields = ['AccessionNumber', 'PatientID']
+            for required_field in required_fields:
+                if required_field not in batch_ids.shared:
+                    change_status(batch,"ERROR")
+                    message = "batch ids %s do not have shared PatientID or AccessionNumber, stopping upload" %(bid)
+                    batch = add_batch_warning(message,batch)
+                    batch.save()
+                    valid = False            
+
+
+            studycode = batch_ids.shared['AccessionNumber']
+            coded_mrn = batch_ids.shared['PatientID']
+            timestamp = get_timestamp(batch_ids.shared['StudyDate'],
+                                      format = "%Y%m%d")            
+
+            compressed_filename = "%s/%s_%s_%s.tar.gz" %(batch.get_path(),
+                                                         coded_mrn,
+                                                         timestamp,
+                                                         studycode)
+
+            compressed_file = generate_compressed_file(files=images, # mode="w:gz"
+                                                       filename=compressed_filename) 
+
+            # File will be None if no files added
+            if compressed_file is None:        
+                change_status(batch,"ERROR")
+                message = "batch %s problem compressing file, stopping upload" %(bid)
+                batch = add_batch_error(message,batch)
+                batch.save()
+                valid = False
+
+            # We prepare shared metadata for one item
+            batch_ids.shared['IMAGE_COUNT'] = len(images)
+            batch.logs['IMAGE_COUNT'] = len(images)
+            batch_ids.save()
+            batch.save()
+
+            items_metadata = batch_ids.shared
+            items = { compressed_file: items_metadata }
+            cleaned = deepcopy(batch_ids.cleaned)
+            metadata = prepare_entity_metadata(cleaned_ids=cleaned)
+
+
+            bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
+                                                                         len(images),
+                                                                         GOOGLE_CLOUD_STORAGE))
+
+            # We only expect to have one entity per batch
+            uid = list(metadata.keys())[0]
+            kwargs = {"images":[compressed_file],
+                      "collection":collection,
+                      "uid":uid,
+                      "entity_metadata": metadata[uid],
+                      "images_metadata":items}
+
+            # Batch metadata    
+            upload_dataset(client=client, k=kwargs)
+
+            # Clean up compressed file
+            if os.path.exists(compressed_file):
+                os.remove(compressed_file)
+
+            # Finish and record time elapsed
+            change_status(batch,"DONE")
+            batch.qa['FinishTime'] = time.time()
+            total_time = batch.qa['FinishTime'] - batch.qa['StartTime']
+            bot.info("Total time for %s: %s images is %f min" %(batch.uid,
+                                                                batch.image_set.count(),
+                                                                total_time/60))
+            batch.qa['ElapsedTime'] = total_time
+            batch.save()
+
+    
 
 @shared_task
 def clean_up(bid, remove_batch=False):
