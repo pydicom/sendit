@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 from sendit.apps.main.tasks.finish import upload_storage
 from sendit.apps.main.models import Batch
-from sendit.apps.main.tasks.utils import chunks
 from sendit.logger import bot
 
 class Command(BaseCommand):
