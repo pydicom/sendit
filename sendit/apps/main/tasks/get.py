@@ -54,7 +54,6 @@ from som.api.identifiers.dicom import (
 )
 
 from .update import replace_identifiers
-from .finish import upload_storage
 
 from som.api.identifiers import Client
 
@@ -283,6 +282,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
                 batch_ids.response = result['results']
                 batch_ids.ids = ids
                 batch_ids.save()
+                batch.qa['DasherFinishTime'] = time.time()
                 if run_replace_identifiers is True:
                     return replace_identifiers(bid=bid)
                 else:
@@ -295,7 +295,6 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         bot.debug("Restful de-identification skipped [ANONYMIZE_RESTFUL is False]")
         change_status(batch,"DONEPROCESSING")
         change_status(batch.image_set.all(),"DONEPROCESSING")
-        return upload_storage(bid=bid)
 
 
 

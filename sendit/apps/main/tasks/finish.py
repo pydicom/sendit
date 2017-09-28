@@ -99,18 +99,16 @@ def upload_storage():
         # I'm not sure we need this
         #if GOOGLE_PROJECT_ID_HEADER is not None:
         #    client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
-
-        collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
-
         try:
             client = get_client(bucket_name=GOOGLE_CLOUD_STORAGE,
                                 project_name=GOOGLE_PROJECT_NAME)
-
         # Client is unreachable, usually network is being stressed
-        except: #OSError and ServiceUnavailable
+ 
+       except: #OSError and ServiceUnavailable
             bot.error("Cannot connect to client.")
             return
 
+        collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
         for batch in batches:
             valid = True
             batch_ids = BatchIdentifiers.objects.get(batch=batch)
@@ -128,7 +126,6 @@ def upload_storage():
 
             # IR0001fa6_20160525_IR661B54.tar.gz
             # (coded MRN?)_jittereddate_studycode
-
             required_fields = ['AccessionNumber', 'PatientID']
             for required_field in required_fields:
                 if required_field not in batch_ids.shared:
@@ -136,8 +133,7 @@ def upload_storage():
                     message = "batch ids %s do not have shared PatientID or AccessionNumber, stopping upload" %(bid)
                     batch = add_batch_warning(message,batch)
                     batch.save()
-                    valid = False            
-
+                    valid = False
 
             studycode = batch_ids.shared['AccessionNumber']
             coded_mrn = batch_ids.shared['PatientID']
@@ -148,7 +144,6 @@ def upload_storage():
                                                          coded_mrn,
                                                          timestamp,
                                                          studycode)
-
             compressed_file = generate_compressed_file(files=images, # mode="w:gz"
                                                        filename=compressed_filename) 
 
@@ -165,17 +160,14 @@ def upload_storage():
             batch.logs['IMAGE_COUNT'] = len(images)
             batch_ids.save()
             batch.save()
-
-            items_metadata = batch_ids.shared
-            items = { compressed_file: items_metadata }
-            cleaned = deepcopy(batch_ids.cleaned)
-            metadata = prepare_entity_metadata(cleaned_ids=cleaned)
-
-
-            bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
+            if valid is True:
+                items_metadata = batch_ids.shared
+                items = { compressed_file: items_metadata }
+                cleaned = deepcopy(batch_ids.cleaned)
+                metadata = prepare_entity_metadata(cleaned_ids=cleaned)
+                bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
                                                                          len(images),
                                                                          GOOGLE_CLOUD_STORAGE))
-
             # We only expect to have one entity per batch
             uid = list(metadata.keys())[0]
             kwargs = {"images":[compressed_file],
@@ -201,7 +193,6 @@ def upload_storage():
             batch.qa['ElapsedTime'] = total_time
             batch.save()
 
-    
 
 @shared_task
 def clean_up(bid, remove_batch=False):
@@ -232,6 +223,7 @@ def clean_up(bid, remove_batch=False):
 
 # We need to make this a function, so we can apply retrying to it
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=3)
+
 def upload_dataset(client, k):
     #upload_delay = choice([2,4,6,8,10,12,14,16])
     #sleep(upload_delay)
