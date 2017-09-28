@@ -71,7 +71,7 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
 @shared_task
-def upload_storage():
+def upload_storage(batch_ids=None):
     '''upload storage will as a batch, send all batches with DONEPROCESSING status
     to google cloud storage.
     '''
@@ -81,7 +81,10 @@ def upload_storage():
                                  GOOGLE_PROJECT_ID_HEADER,
                                  GOOGLE_STORAGE_COLLECTION)
 
-    batches = Batch.objects.filter(status="DONEPROCESSING")
+    if batch_ids is None:
+        batches = Batch.objects.filter(status="DONEPROCESSING")
+    else:
+        batches = Batch.objects.filter(status="DONEPROCESSING", id__in=batch_ids)
 
     # All variables must be defined for sending!
     if GOOGLE_CLOUD_STORAGE in [None,""]:
