@@ -101,7 +101,7 @@ def scrub_pixels(bid):
 
 
 @shared_task
-def replace_identifiers(bid, run_upload_storage=True):
+def replace_identifiers(bid, run_upload_storage=False):
     '''replace identifiers is called from get_identifiers, given that the user
     has asked to anonymize_restful. This function will do the replacement,
     and then trigger the function to send to storage

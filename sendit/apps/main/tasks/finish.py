@@ -71,7 +71,7 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
 @shared_task
-def upload_storage(bid, do_clean_up=True):
+def upload_storage(bid, do_clean_up=False):
     '''upload storage will send data to OrthanC and/or Google Storage, depending on the
     user preference.
     '''
@@ -86,11 +86,6 @@ def upload_storage(bid, do_clean_up=True):
     except:
         bot.error("In upload_storage: Batch %s does not exist." %(bid))
         return None
-
-    if SEND_TO_ORTHANC is True:
-        bot.log("Sending %s to %s:%s" %(batch,ORTHANC_IPADDRESS,ORTHANC_PORT))
-        bot.log("Beep boop, not configured yet!")
-        # do the send here!
 
     # All variables must be defined for sending!
     if GOOGLE_CLOUD_STORAGE in [None,""]:
