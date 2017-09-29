@@ -6,3 +6,5 @@ from .get import (
 from .update import (
     replace_identifiers
 )
+
+from .finish import upload_storage
