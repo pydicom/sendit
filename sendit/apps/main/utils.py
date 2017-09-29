@@ -136,7 +136,7 @@ def update_cached(subfolder=None):
     print("Added %s contenders for processing queue." %count)
 
 
-def start_queue(subfolder=None, max_count=None):
+def start_queue(subfolder=None, max_count=None, to_storage=True):
     '''
     start queue will be used to move new Batches (jobs) from the QUEUE to be
     run with celery tasks. The status is changed from QUEUE to NEW when this is done.
@@ -144,24 +144,34 @@ def start_queue(subfolder=None, max_count=None):
     This job submission is done all at once to ensure that we don't have race
     conditions of multiple workers trying to grab a job at the same time.
     '''
-    from sendit.apps.main.tasks import import_dicomdir
+    from sendit.apps.main.tasks import import_dicomdir, upload_storage
+
     contenders = Batch.objects.filter(status="QUEUE")
     if len(contenders) == 0:
         update_cached(subfolder)
         contenders = Batch.objects.filter(status="QUEUE")
 
     started = 0    
+    batch_ids = []
     for batch in contenders:
         # not seen folders in queue
         dicom_dir = batch.logs.get('DICOM_DIR')
         if dicom_dir is not None:
             import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
-            # If user supplies a count, only start first N
+            # Run an upload batch every 1000
+            if to_storage is True: 
+                if len(batch_ids) % 1000 == 0:
+                    upload_storage.apply_async(kwargs={"batch_ids": batch_ids})
+                batch_ids = []
+            batch_ids.append(batch.id)
             started +=1
         if max_count is not None:
             if started >= max_count:
                 break
 
+    # Upload remaining
+    if to_storage is True:
+        upload_storage.apply_async(kwargs={"batch_ids": batch_ids})
     print("Added %s tasks to the active queue." %started)
 
 
@@ -171,7 +181,7 @@ def upload_finished():
     of concurrent API calls. In the future, this will be better optimized.
     '''
     from sendit.apps.main.tasks import upload_storage
-    return upload_storage.apply_async()
+    upload_storage.apply_async()
 
 
 def get_contenders(base,current=None, filters=None):
