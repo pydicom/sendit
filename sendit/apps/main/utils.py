@@ -154,10 +154,12 @@ def start_queue(subfolder=None, max_count=None, to_storage=True):
     started = 0    
     batch_ids = []
     for batch in contenders:
+
         # not seen folders in queue
         dicom_dir = batch.logs.get('DICOM_DIR')
         if dicom_dir is not None:
             import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
+
             # Run an upload batch every 1000
             if to_storage is True: 
                 if len(batch_ids) % 1000 == 0:
@@ -172,6 +174,7 @@ def start_queue(subfolder=None, max_count=None, to_storage=True):
     # Upload remaining
     if to_storage is True:
         upload_storage.apply_async(kwargs={"batch_ids": batch_ids})
+        upload_storage.apply_async() # any remaining
     print("Added %s tasks to the active queue." %started)
 
 
