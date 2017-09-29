@@ -1,7 +1,7 @@
 # Storage
-When we get here, we have anonynized our data, and the user can optionally choose to send it off to cloud storage. As a reminder, this is determined in the settings, under [settings.config.py](../sendit/settings.config.py):
+When we get here, we have anonynized our data, and the user can optionally choose to send it off to cloud storage. As a reminder, this is determined in the settings, under [settings/config.py](../sendit/settings/config.py):
 
-We can first choose to send the images to an OrthanCP instance. If we turn this off, we won't, and the images will just stop after anonymization.
+We can first choose to send the images to an OrthanCP instance. If we turn this off, we won't, and the images will just stop after anonymization (note this is not implemented).
 
 ```
 # We can turn on/off send to Orthanc. If turned off, the images would just be processed
@@ -20,7 +20,7 @@ We can also send to Google Cloud, which will allow for easier development of too
 # Should we send to Google at all?
 SEND_TO_GOOGLE=False
 
-# Google Cloud Storage and Datastore
+# Google Cloud Storage
 GOOGLE_CLOUD_STORAGE='som-pacs'
 ```
 
@@ -46,14 +46,19 @@ client = Client(bucket_name=GOOGLE_CLOUD_STORAGE,
 
 The `GOOGLE_APPLICATION_CREDENTIALS` are essential for this to work. If you get permissions errors, you have an issue either with finding this file, or the file (the IAM permissions) in Google Cloud not having Read/Write/Admin access to the resource.
 
-We then create a collection. Given that it already exists, it is just retrieved:
+## Metadata
+We then create a collection, and if we are using DataStore (current production) this means a highest level "ancestor" key, and given BigQuery, it means a Dataset. Given that it already exists, it is just retrieved:
 
 ```
+# DataStore
 collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
 <Key('Collection', 'IRB41449'), project=som-irlearning>
+
+# Storage
+collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
 ```
 
-This collection is called an "entity" in Datastore, and each entity has a unique key (you can think of like a file path) for which any other entities that share some of that path are considered children. We next prepare our entity (one study for a particular patient id) with some basic metadata:
+The collection is called an "entity" in Datastore, and each entity has a unique key (you can think of like a file path) for which any other entities that share some of that path are considered children. For BigQuery, we are working with an actual data table structure. We next prepare our entity (one study for a particular patient id) with some basic metadata:
 
 ```
 metadata = prepare_entity_metadata(cleaned_ids=batch_ids.cleaned,
@@ -83,3 +88,10 @@ client.upload_dataset(images=entity_images,
 ```
 Basically, the images are first uploaded to Storage, and complete metadata about their location , etc, returned. This additional metadata, along with the item metadata in `items` is then uploaded to Datastore. This means that we have a nice strategy for searching very detailed fields (DataStore) to get direct links to items (Storage).
 
+
+## Query in Console
+If you are using the Google Cloud Console, here are some helpful queries:
+
+```
+SELECT * FROM IRB41449:Collection.__TABLES_SUMMARY__;
+```
