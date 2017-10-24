@@ -122,7 +122,7 @@ def upload_storage(batch_ids=None):
             # Stop if no images pass filters
             if len(images) == 0:        
                 change_status(batch,"EMPTY")
-                message = "batch %s has no images for processing, stopping upload" %(bid)
+                message = "batch %s has no images for processing, stopping upload" %(batch.id)
                 batch = add_batch_warning(message,batch)
                 batch.save()
                 continue

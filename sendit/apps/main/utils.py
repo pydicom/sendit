@@ -136,7 +136,7 @@ def update_cached(subfolder=None):
     print("Added %s contenders for processing queue." %count)
 
 
-def start_queue(subfolder=None, max_count=None, to_storage=True):
+def start_queue(subfolder=None, max_count=None):
     '''
     start queue will be used to move new Batches (jobs) from the QUEUE to be
     run with celery tasks. The status is changed from QUEUE to NEW when this is done.
@@ -144,7 +144,7 @@ def start_queue(subfolder=None, max_count=None, to_storage=True):
     This job submission is done all at once to ensure that we don't have race
     conditions of multiple workers trying to grab a job at the same time.
     '''
-    from sendit.apps.main.tasks import import_dicomdir, upload_storage
+    from sendit.apps.main.tasks import import_dicomdir
 
     contenders = Batch.objects.filter(status="QUEUE")
     if len(contenders) == 0:
@@ -152,39 +152,33 @@ def start_queue(subfolder=None, max_count=None, to_storage=True):
         contenders = Batch.objects.filter(status="QUEUE")
 
     started = 0    
-    batch_ids = []
     for batch in contenders:
-
         # not seen folders in queue
         dicom_dir = batch.logs.get('DICOM_DIR')
         if dicom_dir is not None:
             import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
-
-            # Run an upload batch every 1000
-            if to_storage is True: 
-                if len(batch_ids) % 1000 == 0:
-                    upload_storage.apply_async(kwargs={"batch_ids": batch_ids})
-                batch_ids = []
-            batch_ids.append(batch.id)
             started +=1
         if max_count is not None:
             if started >= max_count:
                 break
 
-    # Upload remaining
-    if to_storage is True:
-        upload_storage.apply_async(kwargs={"batch_ids": batch_ids})
-        upload_storage.apply_async() # any remaining
     print("Added %s tasks to the active queue." %started)
 
 
-def upload_finished():
+def upload_finished(batches=False, chunk_size=1000):
     '''upload finished will upload datasets with status DONEPROCESSING
     to google storage. We do this with one worker to reduce the number
     of concurrent API calls. In the future, this will be better optimized.
     '''
     from sendit.apps.main.tasks import upload_storage
-    upload_storage.apply_async()
+    from sendit.apps.main.tasks.utils import chunks
+
+    if batches is False:
+        upload_storage.apply_async()
+    else:
+        batch_ids = [b.id for b in Batch.objects.filter(status="DONEPROCESSING")] 
+        for subset in chunks(batch_ids, chunk_size):
+            upload_storage.apply_async(kwargs={"batch_ids": subset})
 
 
 def get_contenders(base,current=None, filters=None):
