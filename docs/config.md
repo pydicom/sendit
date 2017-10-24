@@ -73,23 +73,8 @@ Note that the fields for `ENTITY_ID` and `ITEM_ID` are set to the default of [de
 The next set of variables are specific to [storage](storage.md), which is the final step in the pipeline.
 
 ```
-# We can turn on/off send to Orthanc. If turned off, the images would just be processed
-SEND_TO_ORTHANC=True
-
-# The ipaddress of the Orthanc server to send the finished dicoms (cloud PACS)
-ORTHANC_IPADDRESS="127.0.0.1"
-
-# The port of the same machine (by default they map it to 4747
-ORTHAC_PORT=4747
-```
-
-Since the Orthanc is a server itself, if we are ever in need of a way to quickly deploy and bring down these intances as needed, we could do that too, and the application would retrieve the ipaddress programatically.
-
-And I would (like) to eventually add the following, meaning that we also send datasets to Google Cloud Storage and Datastore, ideally in compressed nifti instead of dicom, and with some subset of fields. These functions are by default turned off.
-
-```
 # Should we send to Google at all?
-SEND_TO_GOOGLE=False
+SEND_TO_GOOGLE=True
 
 # Google Cloud Storage Bucket (must be created)
 GOOGLE_CLOUD_STORAGE='radiology'
@@ -97,19 +82,9 @@ GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
 GOOGLE_PROJECT_NAME="project-name" # not the id, usually the end of the url in Google Cloud
 ```
 
-Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). If this is set to None, it will not upload. Finally, to add a special header to signify a Google Storage project, you should add the name of the intended project to your header:
-
-```
-GOOGLE_PROJECT_ID_HEADER="12345"
-
-# Will produce this key/value header
-x-goog-project-id: 12345
-```
-
-** Note we aren't currently using this header and it works fine.
+Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). If this is set to None, it will not upload.
 
 Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
-
 
 ## Authentication
 If you look in [sendit/settings/auth.py](../sendit/settings/auth.py) you will see something called `lockdown` and that it is turned on:

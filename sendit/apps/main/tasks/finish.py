@@ -48,11 +48,8 @@ from .utils import (
 )
 
 from sendit.settings import (
-    SEND_TO_ORTHANC,
     SEND_TO_GOOGLE,
-    SOM_STUDY,
-    ORTHANC_IPADDRESS,
-    ORTHANC_PORT
+    SOM_STUDY
 )
 
 from retrying import retry

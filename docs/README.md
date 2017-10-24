@@ -11,6 +11,9 @@ Reasonable updates would be:
 
  - to add a DICOM receiver directly to the application using `pynetdicom3`, so instead of listening for datasets on the filesystem, we can receive them directly.
 
+## Preparation
+The base of the image is distributed via [sendit-base](scripts/docker/README.md). This image has all dependencies for the base so we can easily bring the image up and down.
+
 ## Deployment
 
  - [Setup](setup.md): Basic setup (download and install) of a new application for a server.
