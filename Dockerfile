@@ -8,7 +8,7 @@ RUN python setup.py install
 
 # som
 WORKDIR /opt
-RUN git clone https://github.com/vsoch/som
+RUN git clone -b add/bigquery https://github.com/vsoch/som
 WORKDIR /opt/som
 RUN python setup.py install
 
