@@ -107,6 +107,8 @@ def replace_identifiers(bid, run_upload_storage=False):
     and then trigger the function to send to storage
     '''
 
+    batch.qa['ProcessStartTime'] = time.time()
+
     batch = Batch.objects.get(id=bid)
     batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
 
@@ -174,6 +176,7 @@ def replace_identifiers(bid, run_upload_storage=False):
             batch = add_batch_error(message,batch)                
             dcm.delete()
   
+    batch.qa['ProcessFinishTime'] = time.time()
 
     # We don't get here if the call above failed
     if run_upload_storage is True:

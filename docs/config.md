@@ -1,6 +1,7 @@
 # Configuration
 The configuration for the application consists of the files in the [sendit/settings](../sendit/settings) folder. The files that need attention are `secrets.py` and [config.py](../sendit/settings/config.py).  
 
+
 ## Application Secrets
 First make your secrets.py like this:
 
@@ -13,6 +14,7 @@ Once you have your `secrets.py`, it needs the following added:
 
  - `SECRET_KEY`: Django will not run without one! You can generate one [here](http://www.miniwebtool.com/django-secret-key-generator/)
  - `DEBUG`: Make sure to set this to `False` for production.
+
 
 ## "anonymization" (Coding)
 For [config.py](../sendit/settings/config.py) you should first configure settings for the anonymization process, which is everything that happens after images are import, but before sending to storage. These steps broadly include:
@@ -41,6 +43,7 @@ ANONYMIZE_PIXELS=False
 # The default study to use
 SOM_STUDY="test"
 ```
+
 The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. 
 
 Next, you likely want a custom filter applied to whitelist (accept no matter what), greylist (not accept, but in the future know how to clean the data) and blacklist (not accept). Currently, the deid software applies a [default filter](https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom) to filter out images with known burned in pixels. If you want to add a custom file, currently it must live with the repository, and is referenced by the name of the file after the `deid`. You can specify this string in the config file:
@@ -82,9 +85,9 @@ GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
 GOOGLE_PROJECT_NAME="project-name" # not the id, usually the end of the url in Google Cloud
 ```
 
-Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). If this is set to None, it will not upload.
+Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). For Google Storage, this collection corresponds with a Bucket. For BigQuery, it corresponds with a database (and a table of dicom). If this is set to None, it will not upload.
 
-Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
+Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely in the near future).
 
 ## Authentication
 If you look in [sendit/settings/auth.py](../sendit/settings/auth.py) you will see something called `lockdown` and that it is turned on:
@@ -128,6 +131,7 @@ LOCKDOWN_PASSWORDS = ('mysecretpassword',)
 ```
 
 Note that here we will need to add notes about securing the server (https), etc. For now, I'll just mention that it will come down to changing the [nginx.conf](../nginx.conf) and [docker-compose.yml](../docker-compose.yml) to those provided in the folder [https](../https).
+
 
 
 ### Reading Input

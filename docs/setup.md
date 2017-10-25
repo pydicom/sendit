@@ -19,7 +19,7 @@ This will mean your application base is located at `/opt/sendit` and we recommen
 ```
 uwsgi:
   restart: always
-  image: vanessa/sendit
+  image: pydicom/sendit
   volumes:
     - ./data:/data
 ```
@@ -29,10 +29,9 @@ to change that to `/tmp/dcm` you would change that line to:
 ```
 uwsgi:
   restart: always
-  image: vanessa/sendit
+  image: pydicom/sendit
   volumes:
     - /tmp/dcm:/data
 ```
-
 
 You should next [configure](config.md) your application before building the image.

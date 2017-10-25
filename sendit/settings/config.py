@@ -30,24 +30,18 @@ STUDY_DEID=None
 ENTITY_ID="PatientID"
 ITEM_ID="AccessionNumber"
 
-
 #####################################################
 # WORKER
 #####################################################
 
 # Optionally, parse a subfolder under /data, or set to None
 DATA_BASE = "/data"
-DATA_SUBFOLDER="1_6"  # ignored if DATA_INPUT_FOLDERS is set
+DATA_SUBFOLDER=None  # ignored if DATA_INPUT_FOLDERS is set
 DATA_INPUT_FOLDERS=None
 
 #####################################################
 # STORAGE
 #####################################################
-
-# Orthanc Storage
-SEND_TO_ORTHANC=False
-ORTHANC_IPADDRESS="127.0.0.1"
-ORTHANC_PORT=4747
 
 # Google Storage
 # Should we send to Google at all?
@@ -60,5 +54,4 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 # Google Cloud Storage Bucket (must be created)
 GOOGLE_CLOUD_STORAGE='radiology'
 GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
-GOOGLE_PROJECT_ID_HEADER=None  # define here or in your secrets
-GOOGLE_PROJECT_NAME=None       # define here or in your secrets
+GOOGLE_PROJECT_NAME=None       # define here or in your secretsy

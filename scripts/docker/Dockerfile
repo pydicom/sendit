@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y cmake \
     wget \
     vim
 
+RUN apt-get upgrade python-setuptools
 RUN pip install --upgrade setuptools
 RUN pip install --upgrade pip
 RUN pip install uwsgi
@@ -81,7 +82,7 @@ RUN pip install google-cloud-storage
 RUN pip install google-cloud-datastore
 RUN pip install google-cloud-bigquery
 RUN pip install google-api-python-client
-
+RUN pip install google-cloud
 
 RUN mkdir /code
 RUN mkdir -p /var/www/images

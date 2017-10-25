@@ -24,3 +24,13 @@ and then push
 ```
 docker push pydicom/sendit-base
 ```
+
+If you want to run a pre-existing image, and make changes, do:
+
+```
+docker run -it --name heuristic_raman pydicom/sendit-base bash
+# <make changes>
+NAME=$(docker ps -aqf "name=heuristic_raman")
+docker commit $NAME pydicom/sendit-base
+docker push pydicom/sendit-base
+```
