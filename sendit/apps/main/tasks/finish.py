@@ -186,7 +186,7 @@ def upload_storage(batch_ids=None):
                 # We only expect to have one entity per batch
                 kwargs = {"items":[compressed_file],
                           "table":table,
-                          "metadata":items}
+                          "metadata": metadata}
                 # Batch metadata    
                 upload_dataset(client=client, k=kwargs)
 
