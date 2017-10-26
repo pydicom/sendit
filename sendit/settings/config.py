@@ -9,7 +9,7 @@ import os
 ANONYMIZE_RESTFUL=True
 
 # These credentials are required for the DASHER endpoint
-STANFORD_APPLICATION_CREDENTIALS='/code/.stanford'
+STANFORD_APPLICATION_CREDENTIALS='/var/www/images/.stanford'
 os.environ['STANFORD_CLIENT_SECRETS'] = STANFORD_APPLICATION_CREDENTIALS
 
 # If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
