@@ -39,13 +39,6 @@ ANONYMIZE_PIXELS=False
 
 **Important** the pixel scrubbing is not yet implemented, so this variable will currently only check for the header, and alert you of the image, and skip it. Regardless of the setting that you choose for the variable `ANONYMIZE_PIXELS` the header will always be checked. If you have pixel scrubbing turned on (and it's implemented) the images will be scrubbed, and included. If you have scrubbing turned on (and it's not implemented) it will just yell at you and skip them. The same thing will happen if it's off, just to alert you that they exist.
 
-```
-# The default study to use
-SOM_STUDY="test"
-```
-
-The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. 
-
 Next, you likely want a custom filter applied to whitelist (accept no matter what), greylist (not accept, but in the future know how to clean the data) and blacklist (not accept). Currently, the deid software applies a [default filter](https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom) to filter out images with known burned in pixels. If you want to add a custom file, currently it must live with the repository, and is referenced by the name of the file after the `deid`. You can specify this string in the config file:
 
 ```
@@ -85,7 +78,7 @@ GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
 GOOGLE_PROJECT_NAME="project-name" # not the id, usually the end of the url in Google Cloud
 ```
 
-Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). For Google Storage, this collection corresponds with a Bucket. For BigQuery, it corresponds with a database (and a table of dicom). If this is set to None, it will not upload.
+Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). For Google Storage, this collection corresponds with a Bucket. For BigQuery, it corresponds with a database (and a table of dicom). If this is set to None, it will not upload. Also note that we derive the study name to use with Dasher from this bucket. It's simply the lowercase version of it. This means that a `GOOGLE_STORAGE_COLLECTION` of `IRB12345` maps to a study name `irb12345`.
 
 Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely in the near future).
 

@@ -79,7 +79,6 @@ def upload_storage(batch_ids=None):
     from sendit.settings import (GOOGLE_CLOUD_STORAGE,
                                  SEND_TO_GOOGLE,
                                  GOOGLE_PROJECT_NAME,
-                                 GOOGLE_PROJECT_ID_HEADER,
                                  GOOGLE_STORAGE_COLLECTION)
 
     if batch_ids is None:

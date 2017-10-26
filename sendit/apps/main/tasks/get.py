@@ -244,7 +244,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
 
         # Process all dicoms at once, one call to the API
         dicom_files = batch.get_image_paths()
-        batch.change_images_status('PROCESSING')
+        batch.status = "PROCESSING"
         batch.save() # redundant
 
         try:

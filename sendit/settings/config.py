@@ -15,9 +15,6 @@ os.environ['STANFORD_CLIENT_SECRETS'] = STANFORD_APPLICATION_CREDENTIALS
 # If True, scrub pixel data for images identified by header "Burned in Annotation" = "NO"
 ANONYMIZE_PIXELS=False # currently not supported 
 
-# The default study to use
-SOM_STUDY="test"
-
 # An additional specification for white, black, and greylisting data
 # If None, only the default (for burned pixel filtering) is used
 # Currently, these live with the deid software, eg:
@@ -53,5 +50,7 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 
 # Google Cloud Storage Bucket (must be created)
 GOOGLE_CLOUD_STORAGE='radiology'
-GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
-GOOGLE_PROJECT_NAME=None       # define here or in your secretsy
+GOOGLE_STORAGE_COLLECTION=''  # must be defined before SOM_STUDY
+GOOGLE_PROJECT_NAME=None
+
+SOM_STUDY = GOOGLE_STORAGE_COLLECTION.lower()
