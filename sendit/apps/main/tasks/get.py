@@ -98,7 +98,6 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
             bot.error('%s is not a directory, skipping.' %dicom_dir)
             return
             
-
         bot.debug("Importing %s, found %s .dcm files" %(dicom_dir,len(dicom_files)))        
 
         # The batch --> the folder with a set of dicoms tied to one request
@@ -108,6 +107,8 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
 
         # Data quality check: keep a record of study dates
         study_dates = dict()
+        series = {}
+        all_series = []
         size_bytes = sum(os.path.getsize(f) for f in dicom_files)
         messages = [] # print all unique messages / warnings at end
 
@@ -121,6 +122,10 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
 
                 # Keep track of studyDate
                 study_date = dcm.get('StudyDate')
+                series_id = dcm.get('SeriesNumber')
+                if series_id not in all_series:
+                    all_series.append(series_id)
+
                 if study_date not in study_dates:
                     study_dates[study_date] = 0
                 study_dates[study_date] += 1
@@ -147,6 +152,18 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                     # A dicom instance number must be unique for its batch
                     dicom = Image.objects.create(batch=batch,
                                                  uid=dicom_uid)
+
+                    # Series Number and count of slices (images)
+                    if series_id is not None and series_id not in series:
+                        series[series_id] = {'SeriesNumber': series_id }
+
+                        # Series Description
+                        description = dcm.get('SeriesDescription')
+                        if dcm.get('SeriesDescription') is not None:
+                            series[series_id]['SeriesDescription'] = description
+
+                    else:
+                        series[series_id]['Images'] +=1
 
                     # Save the dicom file to storage
                     # basename = "%s/%s" %(batch.id,os.path.basename(dcm_file))
@@ -181,7 +198,13 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                                                      dcm_file)
             batch = add_batch_error(message,batch)
 
+        # Which series aren't represented with data?
+        removed_series = [x for x in all_series if x not in list(series.keys())]
+
         # Save batch thus far
+        batch.qa['NumberOfSeries'] = len(series)
+        batch.qa['FlaggedSeries'] = removed_series
+        batch.qa['Series'] = series
         batch.qa['StudyDate'] = study_dates
         batch.qa['StartTime'] = start_time
         batch.qa['SizeBytes'] = size_bytes
@@ -245,7 +268,7 @@ def get_identifiers(bid,study=None,run_replace_identifiers=True):
         # Process all dicoms at once, one call to the API
         dicom_files = batch.get_image_paths()
         batch.status = "PROCESSING"
-        batch.save() # redundant
+        batch.save()
 
         try:
             ids = get_ids(dicom_files=dicom_files,

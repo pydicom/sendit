@@ -146,7 +146,7 @@ def replace_identifiers(bid, run_upload_storage=False):
     # Get shared information
     aggregate = ["BodyPartExamined", "Modality", "StudyDescription"]
     shared_ids = get_shared_identifiers(dicom_files=updated_files, 
-                                            aggregate=aggregate)
+                                        aggregate=aggregate)
     batch_ids.shared = shared_ids
     batch_ids.save()
 

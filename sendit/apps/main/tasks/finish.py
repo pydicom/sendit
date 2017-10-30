@@ -147,8 +147,16 @@ def upload_storage(batch_ids=None):
                 if valid is False:
                     continue
 
+            # Add additional shared metadata
             studycode = batch_ids.shared['AccessionNumber']
             coded_mrn = batch_ids.shared['PatientID']
+            batch_ids.shared['CodedPatientID'] = coded_mrn
+            batch_ids.shared['ContentType'] = 'application/gzip'
+            batch_ids.shared['CodedAccessionNumberID'] = studycode
+            batch_ids.shared['NumberOfSeries'] = batch.qa['NumberOfSeries']
+            batch_ids.shared['Series'] = batch.qa['Series']
+            batch_ids.shared['RemovedSeries'] = batch.qa['FlaggedSeries']
+
             timestamp = get_timestamp(batch_ids.shared['StudyDate'],
                                       format = "%Y%m%d")            
 
@@ -174,18 +182,21 @@ def upload_storage(batch_ids=None):
             batch.logs['IMAGE_COUNT'] = len(images)
             batch_ids.save()
             batch.save()
+
             if valid is True:
-                items_metadata = batch_ids.shared
-                items = { compressed_file: items_metadata }
-                cleaned = deepcopy(batch_ids.cleaned)
-                metadata = prepare_entity_metadata(cleaned_ids=cleaned)
+
+                metadata = deepcopy(batch_ids.shared)
+                metadata['DicomHeader'] = json.dumps(metadata)
+                metadata = { compressed_file: metadata }
                 bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
                                                                          len(images),
                                                                          GOOGLE_CLOUD_STORAGE))
                 # We only expect to have one entity per batch
                 kwargs = {"items":[compressed_file],
                           "table":table,
-                          "metadata": metadata}
+                          "metadata": metadata,
+                          "batch": False} # upload in batches at END
+
                 # Batch metadata    
                 upload_dataset(client=client, k=kwargs)
 
@@ -203,6 +214,10 @@ def upload_storage(batch_ids=None):
                                                                 total_time/60))
             batch.qa['ElapsedTime'] = total_time
             batch.save()
+
+        # After image upload, metadata can be uploaded on one batch
+        # If this isn't optimal, change "batch" in kwargs to False
+        return = client.batch.runInsert(table)
 
 
 @shared_task
@@ -241,6 +256,7 @@ def upload_dataset(client, k):
                            mimetype="application/gzip",
                            entity_key=ENTITY_ID,
                            item_key=ITEM_ID,
+                           batch=k['batch'],
                            metadata=k['metadata'],
                            permission="projectPrivate") # default batch=True
 
