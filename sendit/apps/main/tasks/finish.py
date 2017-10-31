@@ -257,7 +257,6 @@ def upload_dataset(client, k):
                           table=k['table'],
                           mimetype="application/gzip",
                           entity_key=ENTITY_ID,
-                          item_key=ITEM_ID,
                           study_name=k['study'],
                           batch=k['batch'],
                           metadata=k['metadata'],
