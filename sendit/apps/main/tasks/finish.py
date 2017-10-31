@@ -217,7 +217,7 @@ def upload_storage(batch_ids=None):
 
         # After image upload, metadata can be uploaded on one batch
         # If this isn't optimal, change "batch" in kwargs to False
-        return = client.batch.runInsert(table)
+        return client.batch.runInsert(table)
 
 
 @shared_task
