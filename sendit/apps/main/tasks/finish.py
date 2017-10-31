@@ -63,6 +63,7 @@ import time
 from random import choice
 from time import sleep
 import os
+import json
 
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sendit.settings')
@@ -194,6 +195,7 @@ def upload_storage(batch_ids=None):
                 # We only expect to have one entity per batch
                 kwargs = {"items":[compressed_file],
                           "table":table,
+                          "study": SOM_STUDY,
                           "metadata": metadata,
                           "batch": False} # upload in batches at END
 
@@ -252,13 +254,14 @@ def upload_dataset(client, k):
     #upload_delay = choice([2,4,6,8,10,12,14,16])
     #sleep(upload_delay)
     client.upload_dataset(items=k['items'],
-                           table=k['table'],
-                           mimetype="application/gzip",
-                           entity_key=ENTITY_ID,
-                           item_key=ITEM_ID,
-                           batch=k['batch'],
-                           metadata=k['metadata'],
-                           permission="projectPrivate") # default batch=True
+                          table=k['table'],
+                          mimetype="application/gzip",
+                          entity_key=ENTITY_ID,
+                          item_key=ITEM_ID,
+                          study_name=k['study'],
+                          batch=k['batch'],
+                          metadata=k['metadata'],
+                          permission="projectPrivate") # default batch=True
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=3)

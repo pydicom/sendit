@@ -146,13 +146,11 @@ def replace_identifiers(bid, run_upload_storage=False):
                                         aggregate=aggregate)
     batch_ids.shared = shared_ids
     batch_ids.save()
-
     # Rename
     for dcm in batch.image_set.all():
         try:
             dicom = dcm.load_dicom()
             item_id = os.path.basename(dcm.image.path)
-
             # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
             if item_id in updated:
@@ -168,6 +166,7 @@ def replace_identifiers(bid, run_upload_storage=False):
             message = "%s for Image Id %s not found in lookup: skipping." %(item_id, dcm.id)
             batch = add_batch_error(message,batch)                
             dcm.delete()
+
     batch.qa['ProcessFinishTime'] = time.time()
 
     # We don't get here if the call above failed
