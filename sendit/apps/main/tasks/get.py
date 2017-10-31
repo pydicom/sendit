@@ -125,7 +125,6 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 series_id = dcm.get('SeriesNumber')
                 if series_id not in all_series:
                     all_series.append(series_id)
-
                 if study_date not in study_dates:
                     study_dates[study_date] = 0
                 study_dates[study_date] += 1
@@ -141,7 +140,6 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                         message = "%s is flagged in %s: %s, skipping" %(dicom_uid, 
                                                                         flag_group,
                                                                         reason)
-
                         batch = add_batch_warning(message,batch,quiet=True)
                         message = "BurnedInAnnotation found for batch %s" %batch.uid
                         if message not in messages:
@@ -155,13 +153,12 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
 
                     # Series Number and count of slices (images)
                     if series_id is not None and series_id not in series:
-                        series[series_id] = {'SeriesNumber': series_id }
-
+                        series[series_id] = {'SeriesNumber': series_id,
+                                             'Images':1 }
                         # Series Description
                         description = dcm.get('SeriesDescription')
                         if dcm.get('SeriesDescription') is not None:
                             series[series_id]['SeriesDescription'] = description
-
                     else:
                         series[series_id]['Images'] +=1
 

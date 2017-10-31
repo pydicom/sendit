@@ -60,6 +60,7 @@ from sendit.settings import (
 
 from django.conf import settings
 import os
+import time
 from copy import deepcopy
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sendit.settings')
@@ -108,7 +109,6 @@ def replace_identifiers(bid, run_upload_storage=False):
     '''
 
     batch.qa['ProcessStartTime'] = time.time()
-
     batch = Batch.objects.get(id=bid)
     batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
 
@@ -125,12 +125,10 @@ def replace_identifiers(bid, run_upload_storage=False):
     cleaned = clean_identifiers(ids=updated,
                                 default="KEEP",
                                 deid=deid)
-
     # Save progress
     batch_ids.cleaned = cleaned 
     batch_ids.updated = updated
     batch_ids.save()
-                                  
     # Get updated files
     dicom_files = batch.get_image_paths()
     output_folder = batch.get_path()
@@ -142,7 +140,6 @@ def replace_identifiers(bid, run_upload_storage=False):
                                 strip_sequences=True,
                                 remove_private=True)  # force = True
                                                       # save = True,
-
     # Get shared information
     aggregate = ["BodyPartExamined", "Modality", "StudyDescription"]
     shared_ids = get_shared_identifiers(dicom_files=updated_files, 
@@ -158,24 +155,19 @@ def replace_identifiers(bid, run_upload_storage=False):
 
             # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
-
             if item_id in updated:
                 item_suid = updated[item_id]['item_id']
                 dcm = dcm.rename(item_suid) # added to [prefix][dcm.name] 
                 dcm.save()
-
             # If we don't have the id, don't risk uploading
             else:
                 message = "%s for Image Id %s file read error: skipping." %(item_id, dcm.id)
                 batch = add_batch_error(message,batch)                
                 dcm.delete()
-
-
         except:
             message = "%s for Image Id %s not found in lookup: skipping." %(item_id, dcm.id)
             batch = add_batch_error(message,batch)                
             dcm.delete()
-  
     batch.qa['ProcessFinishTime'] = time.time()
 
     # We don't get here if the call above failed
