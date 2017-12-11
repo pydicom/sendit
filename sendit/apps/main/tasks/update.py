@@ -170,6 +170,9 @@ def replace_identifiers(bid, run_upload_storage=False):
     batch.qa['ProcessFinishTime'] = time.time()
 
     # We don't get here if the call above failed
+    change_status(batch,"DONEPROCESSING")
+    batch.save()
+
     if run_upload_storage is True:
         return upload_storage(bid=bid)
     else:

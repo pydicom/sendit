@@ -274,4 +274,3 @@ def get_client(bucket_name, project_name):
 
     return Client(bucket_name=bucket_name,
                   project=project_name)
-

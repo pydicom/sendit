@@ -93,7 +93,7 @@ def metrics_view(request):
                 'QUEUE':Batch.objects.filter(status="QUEUE").count()}
 
     response = {"timestamp":timestamp,
-                "data_base": base,
+                "data_root": base,
                 "data_total": len(glob("%s/*" %(base))),
                 "batches": batchlog}
 

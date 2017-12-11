@@ -145,6 +145,7 @@ def start_queue(subfolder=None, max_count=None):
     conditions of multiple workers trying to grab a job at the same time.
     '''
     from sendit.apps.main.tasks import import_dicomdir
+
     contenders = Batch.objects.filter(status="QUEUE")
     if len(contenders) == 0:
         update_cached(subfolder)
@@ -156,7 +157,6 @@ def start_queue(subfolder=None, max_count=None):
         dicom_dir = batch.logs.get('DICOM_DIR')
         if dicom_dir is not None:
             import_dicomdir.apply_async(kwargs={"dicom_dir":dicom_dir})
-            # If user supplies a count, only start first N
             started +=1
         if max_count is not None:
             if started >= max_count:
@@ -164,6 +164,21 @@ def start_queue(subfolder=None, max_count=None):
 
     print("Added %s tasks to the active queue." %started)
 
+
+def upload_finished(batches=False, chunk_size=1000):
+    '''upload finished will upload datasets with status DONEPROCESSING
+    to google storage. We do this with one worker to reduce the number
+    of concurrent API calls. In the future, this will be better optimized.
+    '''
+    from sendit.apps.main.tasks import upload_storage
+    from sendit.apps.main.tasks.utils import chunks
+
+    if batches is False:
+        upload_storage.apply_async()
+    else:
+        batch_ids = [b.id for b in Batch.objects.filter(status="DONEPROCESSING")] 
+        for subset in chunks(batch_ids, chunk_size):
+            upload_storage.apply_async(kwargs={"batch_ids": subset})
 
 
 def get_contenders(base,current=None, filters=None):
