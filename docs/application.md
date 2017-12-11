@@ -1,10 +1,26 @@
 # Application
+
+## Overview
+Sendit generally works as follows:
+
+ 1. datasets are mapped to the application container `/data` folder, and are processed in batches. Each folder associated with an accession number is considered a batch.
+ 2. Header data is extracted for cleaning using the [deid](https://www.github.com/pydicom/deid) module. Sendit stores key/values for header data.
+ 3. Sendit uses the [stanford open modules](https://www.github.com/vsoch/som) to interact with the Stanford (DASHER) API and retrieve anonymous ids for the data.
+ 4. The data structure with headers is updated with the identifiers from DASHER, and the images are anonymized using this data structure per a specific customization defined in a deid recipe.
+ 5. The final images and metadata are uploaded to Google Cloud again using the [stanford open modules](https://www.github.com/vsoch/som).  
+
+From the above, you can see that sendit is akin to a glue to hold several APIs and customizations together.
+
+## Sendit Containers
+
 This application lives in a docker-compose orchestration of images running on `STRIDE-HL71`. This application has the following components (each a Docker image):
 
  - **uwsgi**: is the main python application with Django (python)
+ - **postgres**: is a postgres image database
  - **nginx**: is a web server to make a status web interface for Research IT
  - **worker**: is the same image as uwsgi, but configured to run a distributed job queue called [celery](http://www.celeryproject.org/). 
  - **redis**: is the database used by the worker, with serialization in json.
+
 
 ## Job Queue
 

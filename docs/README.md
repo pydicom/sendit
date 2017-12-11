@@ -8,7 +8,6 @@ The Sendit application is an on demand application that works in two stages to o
  - anonymization is performed (status "PROCESSING"), meaning removing/replacing fields in the header and image data, .
  - when status "DONEPROCESSING" is achieved for all in the queue, the researcher triggers the final job to send data to storage (status "SENT")
 
-
 ## Preparation
 The base of the image is distributed via [sendit-base](scripts/docker/README.md). This image has all dependencies for the base so we can easily bring the image up and down.
 
@@ -16,7 +15,6 @@ The base of the image is distributed via [sendit-base](scripts/docker/README.md)
 
  - [Setup](setup.md): Basic setup (download and install) of a new application for a server.
  - [Configuration](config.md): How to configure the application before starting it up.
- - [Application](application.md): Details about the application infrastructure.
  - [Start](start.md): Start it up!
  - [Interface](interface.md): A simple web interface for monitoring batches.
 
