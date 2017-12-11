@@ -10,12 +10,17 @@ The Sendit application is intended to be a modular application that includes the
 Reasonable updates would be:
 
  - to add a DICOM receiver directly to the application using `pynetdicom3`, so instead of listening for datasets on the filesystem, we can receive them directly.
+ - remove the web interface component and make sendit more of a service.
+
+
+## Application Flow
+
+ - [Application](application.md): If you are a new developer, please read about the application flow and infrastructure first. Sendit is a skeleton that uses other python modules to handle interaction with Stanford and Google APIs, along with anonymization of datasets.
 
 ## Deployment
 
  - [Setup](setup.md): Basic setup (download and install) of a new application for a server.
  - [Configuration](config.md): How to configure the application before starting it up.
- - [Application](application.md): Details about the application infrastructure.
  - [Start](start.md): Start it up!
  - [Interface](interface.md): A simple web interface for monitoring batches.
 
