@@ -1,15 +1,16 @@
 # SendIt Documentation
 
 ## Overview
-The Sendit application is intended to be a modular application that includes the following:
+The Sendit application is an on demand application that works in two stages to optimally anonymize and push anonymized images and metadata to Google Cloud Storage, and Google Cloud BigQuery, respectively. It works as follows:
 
- - a data folder that is watched for complete DICOM datasets.
- - an (optional) pipeline for anonymization, meaning removing/replacing fields in the header and image data.
- - (optionally) sending data to storage, meaning an Orthanc server, and/or Google Cloud Storage/Datastore
+ - the researcher starts the anonymization pipeline with an input of one or mode folders
+ - each folder is added as a "Batch" with status "QUEUE" to indicate they are ready for import
+ - anonymization is performed (status "PROCESSING"), meaning removing/replacing fields in the header and image data, .
+ - when status "DONEPROCESSING" is achieved for all in the queue, the researcher triggers the final job to send data to storage (status "SENT")
 
-Reasonable updates would be:
 
- - to add a DICOM receiver directly to the application using `pynetdicom3`, so instead of listening for datasets on the filesystem, we can receive them directly.
+## Preparation
+The base of the image is distributed via [sendit-base](scripts/docker/README.md). This image has all dependencies for the base so we can easily bring the image up and down.
 
 ## Deployment
 

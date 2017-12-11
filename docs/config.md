@@ -1,6 +1,7 @@
 # Configuration
 The configuration for the application consists of the files in the [sendit/settings](../sendit/settings) folder. The files that need attention are `secrets.py` and [config.py](../sendit/settings/config.py).  
 
+
 ## Application Secrets
 First make your secrets.py like this:
 
@@ -13,6 +14,7 @@ Once you have your `secrets.py`, it needs the following added:
 
  - `SECRET_KEY`: Django will not run without one! You can generate one [here](http://www.miniwebtool.com/django-secret-key-generator/)
  - `DEBUG`: Make sure to set this to `False` for production.
+
 
 ## "anonymization" (Coding)
 For [config.py](../sendit/settings/config.py) you should first configure settings for the anonymization process, which is everything that happens after images are import, but before sending to storage. These steps broadly include:
@@ -36,12 +38,6 @@ ANONYMIZE_PIXELS=False
 ```
 
 **Important** the pixel scrubbing is not yet implemented, so this variable will currently only check for the header, and alert you of the image, and skip it. Regardless of the setting that you choose for the variable `ANONYMIZE_PIXELS` the header will always be checked. If you have pixel scrubbing turned on (and it's implemented) the images will be scrubbed, and included. If you have scrubbing turned on (and it's not implemented) it will just yell at you and skip them. The same thing will happen if it's off, just to alert you that they exist.
-
-```
-# The default study to use
-SOM_STUDY="test"
-```
-The `SOM_STUDY` is part of the Stanford DASHER API to specify a study, and the default should be set before you start the application. If the study needs to vary between calls, please [post an issue](https://www.github.com/pydicom/sendit) and it can be added to be done at runtime. 
 
 Next, you likely want a custom filter applied to whitelist (accept no matter what), greylist (not accept, but in the future know how to clean the data) and blacklist (not accept). Currently, the deid software applies a [default filter](https://github.com/pydicom/deid/blob/development/deid/data/deid.dicom) to filter out images with known burned in pixels. If you want to add a custom file, currently it must live with the repository, and is referenced by the name of the file after the `deid`. You can specify this string in the config file:
 
@@ -73,23 +69,8 @@ Note that the fields for `ENTITY_ID` and `ITEM_ID` are set to the default of [de
 The next set of variables are specific to [storage](storage.md), which is the final step in the pipeline.
 
 ```
-# We can turn on/off send to Orthanc. If turned off, the images would just be processed
-SEND_TO_ORTHANC=True
-
-# The ipaddress of the Orthanc server to send the finished dicoms (cloud PACS)
-ORTHANC_IPADDRESS="127.0.0.1"
-
-# The port of the same machine (by default they map it to 4747
-ORTHAC_PORT=4747
-```
-
-Since the Orthanc is a server itself, if we are ever in need of a way to quickly deploy and bring down these intances as needed, we could do that too, and the application would retrieve the ipaddress programatically.
-
-And I would (like) to eventually add the following, meaning that we also send datasets to Google Cloud Storage and Datastore, ideally in compressed nifti instead of dicom, and with some subset of fields. These functions are by default turned off.
-
-```
 # Should we send to Google at all?
-SEND_TO_GOOGLE=False
+SEND_TO_GOOGLE=True
 
 # Google Cloud Storage Bucket (must be created)
 GOOGLE_CLOUD_STORAGE='radiology'
@@ -97,19 +78,9 @@ GOOGLE_STORAGE_COLLECTION=None # define here or in your secrets
 GOOGLE_PROJECT_NAME="project-name" # not the id, usually the end of the url in Google Cloud
 ```
 
-Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). If this is set to None, it will not upload. Finally, to add a special header to signify a Google Storage project, you should add the name of the intended project to your header:
+Note that the storage collection is set to None, and this should be the id of the study (eg, the IRB). For Google Storage, this collection corresponds with a Bucket. For BigQuery, it corresponds with a database (and a table of dicom). If this is set to None, it will not upload. Also note that we derive the study name to use with Dasher from this bucket. It's simply the lowercase version of it. This means that a `GOOGLE_STORAGE_COLLECTION` of `IRB12345` maps to a study name `irb12345`.
 
-```
-GOOGLE_PROJECT_ID_HEADER="12345"
-
-# Will produce this key/value header
-x-goog-project-id: 12345
-```
-
-** Note we aren't currently using this header and it works fine.
-
-Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely).
-
+Note that this approach isn't suited for having more than one study - when that is the case, the study will likely be registered with the batch. Importantly, for the above, there must be a `GOOGLE_APPLICATION_CREDENTIALS` filepath exported in the environment, or it should be run on a Google Cloud Instance (unlikely in the near future).
 
 ## Authentication
 If you look in [sendit/settings/auth.py](../sendit/settings/auth.py) you will see something called `lockdown` and that it is turned on:
@@ -153,6 +124,7 @@ LOCKDOWN_PASSWORDS = ('mysecretpassword',)
 ```
 
 Note that here we will need to add notes about securing the server (https), etc. For now, I'll just mention that it will come down to changing the [nginx.conf](../nginx.conf) and [docker-compose.yml](../docker-compose.yml) to those provided in the folder [https](../https).
+
 
 
 ### Reading Input

@@ -48,12 +48,13 @@ from .utils import (
 )
 
 from sendit.settings import (
-    SEND_TO_ORTHANC,
     SEND_TO_GOOGLE,
     SOM_STUDY,
-    ORTHANC_IPADDRESS,
-    ORTHANC_PORT
+    ENTITY_ID,
+    ITEM_ID
 )
+
+from som.api.google.bigquery.schema import dicom_schema
 
 from retrying import retry
 from copy import deepcopy
@@ -62,6 +63,7 @@ import time
 from random import choice
 from time import sleep
 import os
+import json
 
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sendit.settings')
@@ -78,7 +80,6 @@ def upload_storage(batch_ids=None):
     from sendit.settings import (GOOGLE_CLOUD_STORAGE,
                                  SEND_TO_GOOGLE,
                                  GOOGLE_PROJECT_NAME,
-                                 GOOGLE_PROJECT_ID_HEADER,
                                  GOOGLE_STORAGE_COLLECTION)
 
     if batch_ids is None:
@@ -99,21 +100,28 @@ def upload_storage(batch_ids=None):
     if SEND_TO_GOOGLE is True:
         from deid.identifiers import get_timestamp
 
-        # I'm not sure we need this
-        #if GOOGLE_PROJECT_ID_HEADER is not None:
-        #    client.headers["x-goog-project-id"] = GOOGLE_PROJECT_ID_HEADER
         try:
             client = get_client(bucket_name=GOOGLE_CLOUD_STORAGE,
                                 project_name=GOOGLE_PROJECT_NAME)
+
         # Client is unreachable, usually network is being stressed
- 
+        # this is why we instantiate in batches to upload 
         except: #OSError and ServiceUnavailable
             bot.error("Cannot connect to client.")
             return
 
-        collection = client.create_collection(uid=GOOGLE_STORAGE_COLLECTION)
+        # Create/get BigQuery dataset, collection should be IRB
+        dataset = client.get_or_create_dataset(GOOGLE_STORAGE_COLLECTION)
+
+        # Create a table based on ...
+        table = client.get_or_create_table(dataset=dataset,    # All tables named dicom
+                                           table_name='dicom',
+                                           schema=dicom_schema)
+        
         for batch in batches:
             valid = True
+
+            batch.qa['UploadStartTime'] = time.time()
             batch_ids = BatchIdentifiers.objects.get(batch=batch)
 
             # Retrieve only images that aren't in PHI folder
@@ -122,7 +130,7 @@ def upload_storage(batch_ids=None):
             # Stop if no images pass filters
             if len(images) == 0:        
                 change_status(batch,"EMPTY")
-                message = "batch %s has no images for processing, stopping upload" %(batch.id)
+                message = "batch %s has no images for processing, stopping upload" %(bid)
                 batch = add_batch_warning(message,batch)
                 batch.save()
                 continue
@@ -140,8 +148,16 @@ def upload_storage(batch_ids=None):
                 if valid is False:
                     continue
 
+            # Add additional shared metadata
             studycode = batch_ids.shared['AccessionNumber']
             coded_mrn = batch_ids.shared['PatientID']
+            batch_ids.shared['CodedPatientID'] = coded_mrn
+            batch_ids.shared['ContentType'] = 'application/gzip'
+            batch_ids.shared['CodedAccessionNumberID'] = studycode
+            batch_ids.shared['NumberOfSeries'] = batch.qa['NumberOfSeries']
+            batch_ids.shared['Series'] = batch.qa['Series']
+            batch_ids.shared['RemovedSeries'] = batch.qa['FlaggedSeries']
+
             timestamp = get_timestamp(batch_ids.shared['StudyDate'],
                                       format = "%Y%m%d")            
 
@@ -149,6 +165,7 @@ def upload_storage(batch_ids=None):
                                                          coded_mrn,
                                                          timestamp,
                                                          studycode)
+
             compressed_file = generate_compressed_file(files=images, # mode="w:gz"
                                                        filename=compressed_filename) 
 
@@ -166,21 +183,21 @@ def upload_storage(batch_ids=None):
             batch.logs['IMAGE_COUNT'] = len(images)
             batch_ids.save()
             batch.save()
+
             if valid is True:
-                items_metadata = batch_ids.shared
-                items = { compressed_file: items_metadata }
-                cleaned = deepcopy(batch_ids.cleaned)
-                metadata = prepare_entity_metadata(cleaned_ids=cleaned)
+
+                metadata = deepcopy(batch_ids.shared)
+                metadata['DicomHeader'] = json.dumps(metadata)
+                metadata = { compressed_file: metadata }
                 bot.log("Uploading %s with %s images to Google Storage %s" %(os.path.basename(compressed_file),
                                                                          len(images),
                                                                          GOOGLE_CLOUD_STORAGE))
                 # We only expect to have one entity per batch
-                uid = list(metadata.keys())[0]
-                kwargs = {"images":[compressed_file],
-                          "collection":collection,
-                          "uid":uid,
-                          "entity_metadata": metadata[uid],
-                          "images_metadata":items}
+                kwargs = {"items":[compressed_file],
+                          "table":table,
+                          "study": SOM_STUDY,
+                          "metadata": metadata,
+                          "batch": False} # upload in batches at END
 
                 # Batch metadata    
                 upload_dataset(client=client, k=kwargs)
@@ -192,13 +209,17 @@ def upload_storage(batch_ids=None):
                 # Finish and record time elapsed
                 change_status(batch,"DONE")
 
-            batch.qa['FinishTime'] = time.time()
+            batch.qa['UploadFinishTime'] = time.time()
             total_time = batch.qa['FinishTime'] - batch.qa['StartTime']
             bot.info("Total time for %s: %s images is %f min" %(batch.uid,
                                                                 batch.image_set.count(),
                                                                 total_time/60))
             batch.qa['ElapsedTime'] = total_time
             batch.save()
+
+        # After image upload, metadata can be uploaded on one batch
+        # If this isn't optimal, change "batch" in kwargs to False
+        return client.batch.runInsert(table)
 
 
 @shared_task
@@ -229,34 +250,27 @@ def clean_up(bid, remove_batch=False):
 
 # We need to make this a function, so we can apply retrying to it
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=3)
-
 def upload_dataset(client, k):
     #upload_delay = choice([2,4,6,8,10,12,14,16])
     #sleep(upload_delay)
-    client.upload_dataset(images=k['images'],
-                          collection=k["collection"],
-                          uid=k['uid'],
-                          images_mimetype="application/gzip",
-                          images_metadata=k["images_metadata"],
-                          entity_metadata=k['entity_metadata'],
-                          permission="projectPrivate")
-
-
-def batch_upload(client,d):
-    '''batch upload images, to not stress the datastore api
-       not in use, we are uploading a single compressed image.
-    '''
-    images = d['images']
-
-    # Run the storage/datastore upload in chunks
-    for imageset in chunks(d['images'], 500):
-        upload_dataset(images=imageset,
-                       client=client,
-                       k=d)
+    client.upload_dataset(items=k['items'],
+                          table=k['table'],
+                          mimetype="application/gzip",
+                          entity_key=ENTITY_ID,
+                          study_name=k['study'],
+                          batch=k['batch'],
+                          metadata=k['metadata'],
+                          permission="projectPrivate") # default batch=True
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=3)
 def get_client(bucket_name, project_name):
-    from som.api.google.storage import Client
+    '''get client is a wrapper for creating the BigQuery client, in the case that
+       there is network error or other.
+    ''' 
+
+    # BigQuery client
+    from som.api.google.bigquery import BigQueryClient as Client
+
     return Client(bucket_name=bucket_name,
-                  project_name=project_name)
+                  project=project_name)

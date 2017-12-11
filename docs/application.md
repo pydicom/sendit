@@ -7,29 +7,53 @@ This application lives in a docker-compose orchestration of images running on `S
  - **redis**: is the database used by the worker, with serialization in json.
 
 ## Job Queue
-The job queue generally works by processing tasks when the server has available resources. There will be likely 5 workers for a single application deployment. The worker will do the following:
 
- 1. First receive a job from the queue to run the [import dicom](import_dicom.md) task when a finished folder is detected by the [watcher](watcher.md)
- 2. When import is done, hand to the next task to [anonymize](anomymize.md) images. If the user doesn't want to do this based on [settings](../sendit/settings/config.py), a task is fired off to send to storage. If they do, the request is made to the DASHER endpoint, and the identifiers saved.
-     a. In the case of anonymization, the next job will do the data strubbing with the identifiers, and then trigger sending to storage.
- 3. Sending to storage can be enabled to work with any or none of OrthanC and Google Cloud storage. If no storage is taken, then the application works as a static storage.
+### Step 1: Start Queue
+The job queue accepts a manual request to import one or more dicom directories, subfolderes under `/data`. We call it a "queue" because it is handled by the worker and redis images, where the worker is a set of threads that can process multiple (~16) batches at once, and redis is the database to manage the queue. The queue can "pile up" and the workers will process tasks when the server has available resources. Thus, to start the pipeline:
 
-**Important note**: for this first testing when we are starting with many pre-existing folders, we are using instead a continuous worker queue with 16 threads (over 16 cores). 
+ 1. You should make sure your `DATA_INPUT_FOLDERS` are defined in [sendit/settings/config.py](../sendit/settings/config.py).
+ 2. You should then start the queue, which means performing dicom import, get_identifiers, replace identifiers (not upload). This means that images go from having status "QUEUE" to "DONEPROCESSING"
+ 
+```
+# Start the queue
+python manage.py start_queue
+
+# The defaults are max count 1, /data folder
+python manage.py start_queue --number 1 --subfolder /data
+
+```
+
+When you call the above, the workers will do the following:
+
+ 1. Check for any Batch objects with status "QUEUE," meaning they were added and not started yet. If there are none in the QUEUE (the default when you haven't used it yet!) then the function uses the `DATA_INPUT_FOLDERS` to find new "contenders." The contender folders each have a Batch created for them, and the Batch is given status QUEUE. We do this up to the max count provided by the "number" variable in the `start_queue` request above.
+ 2. Up to the max count, the workers then launch the [import dicom](import_dicom.md) task to run async. This function changes the Batch status to "PROCESSING," imports the dicom, extracts header information, prepares/sends/receives a request for [anonymized identifiers](anonymize.md) from DASHER, and then saves a BatchIdentifiers objects. The Batch then is given status "DONEPROCESSING".
+
+It is expected that a set of folders (batches) will do these steps first, meaning that there are no Batches with status "QUEUE" and all are "DONEPROCESSING." We do this because we want to upload to storage in large batches to optimize using the client.
+
+
+### Step 2: Upload to Storage
+When all Batches have status "DONEPROCESSING" we launch a second request to the application to upload to storage:
+
+```
+python manage.py upload_finished
+```
+
+This task looks for Batches that are "DONEPROCESSING" and distributes the Batches equally among 10 workers. 10 is not a magic number, but I found in testing was a good balance to not trigger weird connection errors that likely come from the fact we are trying to use network resources from inside a Docker container. Sending to storage means two steps:
+
+ 1. Upload Images (compressed .tar.gz) to Google Storage, and receive back metadata about bucket locations
+ 2. Send image metadata + storage metadata to BigQuery
+
+If you are more interested in reading about the storage formats, read more about [storage](storage.md).
 
 ## Status
-In order to track status of images, we have status states for images and batches. 
+In order to track status of images, we have status states for batches. 
 
 
 ```
-IMAGE_STATUS = (('NEW', 'The image was just added to the application.'),
-               ('PROCESSING', 'The image is currently being processed, and has not been sent.'),
-               ('DONEPROCESSING','The image is done processing, but has not been sent.'),
-               ('SENT','The image has been sent, and verified received.'),
-               ('DONE','The image has been received, and is ready for cleanup.'))
-
-BATCH_STATUS = (('NEW', 'The batch was just added to the application.'),
+BATCH_STATUS = (('QUEUE', 'The batch is queued and not picked up by worker.'),
+               ('NEW', 'The batch was just added to the application.'),
+               ('EMPTY', 'After processing, no images passed filtering.'),
                ('PROCESSING', 'The batch currently being processed.'),
-               ('EMPTY', 'No images passed filters'),
                ('DONE','The batch is done, and images are ready for cleanup.'))
 ```
 
@@ -40,23 +64,6 @@ python manage.py export_metrics
 sendit-process-time-2017-08-26.tsv
 ```
 
-### Image Status
-Image statuses are updated at each appropriate timepoint, for example:
-
- - All new images by default are given `NEW`
- - When an image starts any anonymization, but before any request to send to storage, it will have status `PROCESSING`. This means that if an image is not to be processed, it will immediately be flagged with `DONEPROCESSING`
- - As soon as the image is done processing, or if it is intended to go right to storage, it gets status `DONEPROCESSING`.
- - After being send to storage, the image gets status `SENT`, and only when it is ready for cleanup is gets status `DONE`. Note that this means that if a user has no requests to send to storage, the image will remain with the application (and not be deleted.)
-
-### Batch Status
-A batch status is less granular, but more informative for alerting the user about possible errors.
-
- - All new batches by default are given `NEW`.
- - `PROCESSING` is added to a batch as soon as the job to anonymize is triggered.
- - `DONEPROCESSING` is added when the batch finished anonimization, or if it skips and is intended to go to storage.
- - `DONE` is added after all images are sent to storage, and are ready for cleanup.
-
-
 ## Errors
 The most likely error would be an inability to read a dicom file, which could happen for any number of reasons. This, and generally any errors that are triggered during the lifecycle of a batch, will flag the batch as having an error. The variable `has_error` is a boolean that belongs to a batch, and a matching JSONField `errors` will hold a list of errors for the user. This error flag will be most relevant during cleanup.
 
@@ -66,10 +73,7 @@ For server errors, the application is configured to be set up with Opbeat. @vsoc
 ## Cleanup
 Upon completion, we will want some level of cleanup of both the database, and the corresponding files. It is already the case that the application moves the input files from `/data` into its own media folder (`images`), and cleanup might look like any of the following:
 
- - In the most ideal case, there are no errors, no flags for the batch, and the original data folder was removed by the `dicom_import` task, and the database and media files removed after successful upload to storage. This application is not intended as some kind of archive for data, but a node that filters and passes along.
+ - In the most ideal case, there are no errors, no flags for the batch, and the database and media files removed after successful upload to storage. Eventually we would want to delete the original files too. This application is not intended as some kind of archive for data, but a node that filters and passes along.
  - Given an error to `dicom_import`, a file will be left in the original folder, and the batch `has_error` will be true. In this case, we don't delete files, and we rename the original folder to have extension `.err`
-
-If any further logging is needed (beyond the watcher) we should discuss (see questions below)
-
 
 Now let's [start the application](start.md)!
