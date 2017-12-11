@@ -11,6 +11,8 @@ The Sendit application is an on demand application that works in two stages to o
 ## Preparation
 The base of the image is distributed via [sendit-base](scripts/docker/README.md). This image has all dependencies for the base so we can easily bring the image up and down.
 
+ - [Application](application.md): If you are a new developer, please read about the application flow and infrastructure first. Sendit is a skeleton that uses other python modules to handle interaction with Stanford and Google APIs, along with anonymization of datasets.
+
 ## Deployment
 
  - [Setup](setup.md): Basic setup (download and install) of a new application for a server.
