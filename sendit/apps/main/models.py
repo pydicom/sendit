@@ -64,12 +64,6 @@ def get_upload_folder(instance,filename):
 
 
 
-IMAGE_STATUS = (('NEW', 'The image was just added to the application.'),
-               ('PROCESSING', 'The image is currently being processed, and has not been sent.'),
-               ('DONEPROCESSING','The image is done processing, but has not been sent.'),
-               ('SENT','The image has been sent, and verified received.'),
-               ('DONE','The image has been received, and is ready for cleanup.'))
-
 BATCH_STATUS = (('QUEUE', 'The batch is queued and not picked up by worker.'),
                ('NEW', 'The batch was just added to the application.'),
                ('EMPTY', 'After processing, no images passed filtering.'),
@@ -160,10 +154,6 @@ class Image(models.Model):
     '''
     uid = models.CharField(max_length=250, null=False, blank=False)
     name = models.CharField(max_length=250, null=False, blank=False)
-
-    status = models.CharField(choices=IMAGE_STATUS,
-                              default="NEW",
-                              max_length=250)
 
     image = models.FileField(upload_to=get_upload_folder,null=True,blank=False)
     add_date = models.DateTimeField('date added', auto_now_add=True)

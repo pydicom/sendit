@@ -54,7 +54,4 @@ if [ ! -d $INSTALL_ROOT/sendit ]
 then
   cd $INSTALL_ROOT
   git clone https://www.github.com/pydicom/sendit.git
-  cd sendit
-  docker build -t vanessa/sendit .
-  docker-compose up -d
 fi
