@@ -127,22 +127,30 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                 if study_date not in study_dates:
                     study_dates[study_date] = 0
                 study_dates[study_date] += 1
-                flag, flag_group, reason = has_burned_pixels(dicom_file=dcm_file,
-                                                             quiet=True,
-                                                             deid=STUDY_DEID)
 
-                # If the image is flagged, we don't include and move on
-                continue_processing = True
-                if flag is True:
-                    if flag_group not in ["whitelist"]:
+                if ANONYMIZE_PIXELS is True:
+                    flag, flag_group, reason = has_burned_pixels(dicom_file=dcm_file,
+                                                                 quiet=True,
+                                                                 deid=STUDY_DEID)
+
+                    # If the image is flagged, we don't include and move on
+                    continue_processing = True
+                    if flag is True:
+                        if flag_group not in ["whitelist"]:
+                            continue_processing = False
+                            message = "%s is flagged in %s: %s, skipping" %(dicom_uid, 
+                                                                            flag_group,
+                                                                            reason)
+                            batch = add_batch_warning(message,batch,quiet=True)
+                            message = "BurnedInAnnotation found for batch %s" %batch.uid
+                            if message not in messages:
+                                messages.append(message)
+
+                else:
+                    continue_processing = True
+                    if dcm.get('BurnedInAnnotation') is not None:
                         continue_processing = False
-                        message = "%s is flagged in %s: %s, skipping" %(dicom_uid, 
-                                                                        flag_group,
-                                                                        reason)
-                        batch = add_batch_warning(message,batch,quiet=True)
-                        message = "BurnedInAnnotation found for batch %s" %batch.uid
-                        if message not in messages:
-                            messages.append(message)
+
 
                 if continue_processing is True:
                     # Create the Image object in the database
