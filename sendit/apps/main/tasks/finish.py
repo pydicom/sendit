@@ -120,13 +120,10 @@ def upload_storage(batch_ids=None):
         
         for batch in batches:
             valid = True
-
             batch.qa['UploadStartTime'] = time.time()
             batch_ids = BatchIdentifiers.objects.get(batch=batch)
-
             # Retrieve only images that aren't in PHI folder
             images = batch.get_finished()
-
             # Stop if no images pass filters
             if len(images) == 0:        
                 change_status(batch,"EMPTY")
@@ -157,18 +154,14 @@ def upload_storage(batch_ids=None):
             batch_ids.shared['NumberOfSeries'] = batch.qa['NumberOfSeries']
             batch_ids.shared['Series'] = batch.qa['Series']
             batch_ids.shared['RemovedSeries'] = batch.qa['FlaggedSeries']
-
             timestamp = get_timestamp(batch_ids.shared['StudyDate'],
                                       format = "%Y%m%d")            
-
             compressed_filename = "%s/%s_%s_%s.tar.gz" %(batch.get_path(),
                                                          coded_mrn,
                                                          timestamp,
                                                          studycode)
-
             compressed_file = generate_compressed_file(files=images, # mode="w:gz"
                                                        filename=compressed_filename) 
-
             # File will be None if no files added
             if compressed_file is None:        
                 change_status(batch,"ERROR")
@@ -183,9 +176,7 @@ def upload_storage(batch_ids=None):
             batch.logs['IMAGE_COUNT'] = len(images)
             batch_ids.save()
             batch.save()
-
             if valid is True:
-
                 metadata = deepcopy(batch_ids.shared)
                 metadata['DicomHeader'] = json.dumps(metadata)
                 metadata = { compressed_file: metadata }
@@ -210,7 +201,7 @@ def upload_storage(batch_ids=None):
                 change_status(batch,"DONE")
 
             batch.qa['UploadFinishTime'] = time.time()
-            total_time = batch.qa['FinishTime'] - batch.qa['StartTime']
+            total_time = batch.qa['UploadFinishTime'] - batch.qa['UploadStartTime']
             bot.info("Total time for %s: %s images is %f min" %(batch.uid,
                                                                 batch.image_set.count(),
                                                                 total_time/60))

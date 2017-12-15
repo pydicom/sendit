@@ -121,7 +121,7 @@ def update_cached(subfolder=None):
     current = [x.uid for x in Batch.objects.all()]
     for base in CHECK_FOLDERS:
         print('Checking base %s' %base)
-        if os.path.exists(base):
+        if os.path.exists(base) and os.path.isdir(base):
             contenders = get_contenders(base=base,current=current)
             for contender in contenders:
                 dicom_dir = "%s/%s" %(base,contender)
@@ -151,7 +151,7 @@ def start_queue(subfolder=None, max_count=None):
         update_cached(subfolder)
         contenders = Batch.objects.filter(status="QUEUE")
 
-    started = 0    
+    started = 0
     for batch in contenders:
         # not seen folders in queue
         dicom_dir = batch.logs.get('DICOM_DIR')
