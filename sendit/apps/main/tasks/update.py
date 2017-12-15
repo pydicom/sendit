@@ -108,8 +108,8 @@ def replace_identifiers(bid, run_upload_storage=False):
     and then trigger the function to send to storage
     '''
 
-    batch.qa['ProcessStartTime'] = time.time()
     batch = Batch.objects.get(id=bid)
+    batch.qa['ProcessStartTime'] = time.time()
     batch_ids = BatchIdentifiers.objects.get(batch=batch)                  
 
     # 1) use response from API to generate new fields
@@ -129,6 +129,7 @@ def replace_identifiers(bid, run_upload_storage=False):
     batch_ids.cleaned = cleaned 
     batch_ids.updated = updated
     batch_ids.save()
+
     # Get updated files
     dicom_files = batch.get_image_paths()
     output_folder = batch.get_path()
@@ -146,6 +147,7 @@ def replace_identifiers(bid, run_upload_storage=False):
                                         aggregate=aggregate)
     batch_ids.shared = shared_ids
     batch_ids.save()
+
     # Rename
     for dcm in batch.image_set.all():
         try:
@@ -174,7 +176,7 @@ def replace_identifiers(bid, run_upload_storage=False):
     batch.save()
 
     if run_upload_storage is True:
-        return upload_storage(bid=bid)
+        return upload_storage(batch_ids=[bid])
     else:
         updated_files = batch.get_image_paths()
         return updated_files
