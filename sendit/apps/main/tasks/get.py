@@ -150,7 +150,8 @@ def import_dicomdir(dicom_dir, run_get_identifiers=True):
                     continue_processing = True
                     if dcm.get('BurnedInAnnotation') is not None:
                         continue_processing = False
-
+                    if "AXIAL" not in dcm.get('ImageType'):
+                        continue_processing = False
 
                 if continue_processing is True:
                     # Create the Image object in the database

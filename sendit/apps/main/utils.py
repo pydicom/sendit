@@ -37,6 +37,7 @@ from sendit.apps.main.models import (
 import time
 from sendit.logger import bot
 import sys
+import re
 import os
 
 
@@ -122,7 +123,11 @@ def update_cached(subfolder=None):
     for base in CHECK_FOLDERS:
         print('Checking base %s' %base)
         if os.path.exists(base) and os.path.isdir(base):
-            contenders = get_contenders(base=base,current=current)
+            # If it's not a date
+            if not re.search('[0-9]{10}$', base):
+                contenders = [base]
+            else:
+                contenders = get_contenders(base=base,current=current)
             for contender in contenders:
                 dicom_dir = "%s/%s" %(base,contender)
                 dcm_folder = os.path.basename(dicom_dir)
