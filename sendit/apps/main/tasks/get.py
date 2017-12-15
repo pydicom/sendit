@@ -45,7 +45,7 @@ from sendit.apps.main.tasks.utils import (
 
 from deid.dicom import (
     get_identifiers as get_ids,
-    has_burned_pixels_single as has_burned_pixels
+    has_burned_pixels
 )
 from retrying import retry
 
