@@ -150,9 +150,9 @@ def replace_identifiers(bid, run_upload_storage=False):
 
     # Rename
     for dcm in batch.image_set.all():
+        item_id = os.path.basename(dcm.image.path)
         try:
             dicom = dcm.load_dicom()
-            item_id = os.path.basename(dcm.image.path)
             # S6M0<MRN-SUID>_<JITTERED-REPORT-DATE>_<ACCESSIONNUMBER-SUID>
             # Rename the dicom based on suid
             if item_id in updated:
